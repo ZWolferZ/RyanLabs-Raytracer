@@ -7,7 +7,6 @@ class DXRRuntime
 private:
 	ComPtr<ID3D12Device5> m_device;
 	DXRApp* m_app;
-	bool m_raster = true;
 
 private:
 	void PopulateCommandList();
