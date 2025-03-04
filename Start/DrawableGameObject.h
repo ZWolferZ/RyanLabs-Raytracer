@@ -42,6 +42,7 @@ private:
 	MaterialPropertiesConstantBuffer	m_material;
 	ID3D11Buffer*						m_pMaterialConstantBuffer = nullptr;*/
 	XMFLOAT3							m_position;
+	XMFLOAT3							m_rotation;
 	unsigned int						m_indexCount;
 	unsigned int						m_vertexCount;
 };

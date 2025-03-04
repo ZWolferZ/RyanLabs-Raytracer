@@ -60,7 +60,6 @@ void DXRRuntime::OnKeyUp(UINT8 key)
 	{
 		PostQuitMessage(0);
 	}
-
 }
 
 void DXRRuntime::PopulateCommandList() {

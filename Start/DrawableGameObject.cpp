@@ -15,6 +15,7 @@ DrawableGameObject::DrawableGameObject()
 	// Initialize the world matrix
 	XMStoreFloat4x4(&m_World, XMMatrixIdentity());
 	m_position = XMFLOAT3(0, 0, 0);
+	m_rotation = XMFLOAT3(0, 0, 0);
 }
 
 DrawableGameObject::~DrawableGameObject()
@@ -127,7 +128,13 @@ void DrawableGameObject::update(float t)
 	static float cummulativeTime = 0;
 	cummulativeTime += t;
 
-	XMMATRIX rotation = XMMatrixRotationX(0) * XMMatrixRotationY(0) * XMMatrixRotationZ(cummulativeTime);
+	if (m_rotation.x > 360.0f) m_rotation.x = 0.0f;
+
+	if (m_rotation.y > 360.0f) m_rotation.y = 0.0f;
+
+	if (m_rotation.z > 360.0f) m_rotation.z = 0.0f;
+
+	XMMATRIX rotation = XMMatrixRotationX(m_rotation.x) * XMMatrixRotationY(m_rotation.y) * XMMatrixRotationZ(m_rotation.z + t);
 	XMMATRIX translation = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
 
 	XMStoreFloat4x4(&m_World, rotation * translation);
