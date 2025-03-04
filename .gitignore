@@ -399,3 +399,5 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 /Start/bin
+Start/bin/x64/Debug/D3D12DXR.exe
+Start/bin/x64/Debug/D3D12DXR.pdb

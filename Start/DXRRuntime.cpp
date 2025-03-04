@@ -60,10 +60,7 @@ void DXRRuntime::OnKeyUp(UINT8 key)
 	{
 		PostQuitMessage(0);
 	}
-	if (key == VK_SPACE)
-	{
-		m_raster = !m_raster;
-	}
+
 }
 
 void DXRRuntime::PopulateCommandList() {
