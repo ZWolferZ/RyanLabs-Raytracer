@@ -21,7 +21,6 @@ DrawableGameObject::DrawableGameObject()
 
 	// Initialize the world matrix
 	XMStoreFloat4x4(&m_World, scale * rotation * translation);
-	
 }
 
 DrawableGameObject::~DrawableGameObject()
@@ -57,25 +56,45 @@ HRESULT DrawableGameObject::initMesh(ComPtr<ID3D12Device5> device)
 {
 	// Create the vertex buffer.
 	{
-		//// Define the geometry for a triangle.
-		//Vertex triangleVertices[] = {
-		//	{{0.0f, 0.25f * 1.0f, 0.0f}, {1.0f,0.0f,0.0f,1.0f}},
-		//	{{0.25f, -0.25f * 1.0f, 0.0f},{0.0f,1.0f,0.0f,1.0f}},
-		//	{{-0.25f, -0.25f * 1.0f, 0.0f},{0.0f,0.0f,1.0f,1.0f}} };
-
 		Vertex cubeVertices[] = {
-			{{1.0f, 1.0f, 1.0f,},{1.0f,0.0f,0.0f,1.0f}},
-			{{-1.0f, 1.0f, 1.0f,},{0.0f,1.0f,0.0f,1.0f}},
-			{{-1.0f, -1.0f, 1.0f,},{0.0f,0.0f,1.0f,1.0f}},
-			{{1.0f, -1.0f, 1.0f,},{1.0f,0.0f,0.0f,1.0f}},
-			{{1.0f, -1.0f, -1.0f,},{0.0f,1.0f,0.0f,1.0f}},
-			{{1.0f, 1.0f, -1.0f,},{0.0f,0.0f,1.0f,1.0f}},
-			{{-1.0f, 1.0f, -1.0f,},{1.0f,0.0f,0.0f,1.0f}},
-			{{-1.0f, -1.0f, -1.0f,},{0.0f,1.0f,0.0f,1.0f}}
+			// Front face
+			{{1.0f,1.0f,1.0f},{1.0f,1.0f,1.0f,1.0f}},
+			{{-1.0f,1.0f,1.0f},{1.0f,1.0f,1.0f,1.0f}},
+			{{-1.0f,-1.0f,1.0f},{1.0f,1.0f,1.0f,1.0f}},
+			{{1.0f,-1.0f,1.0f},{1.0f,1.0f,1.0f,1.0f}},
 
+			// Right face
+			{{1.0f,1.0f,1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{1.0f,-1.0f,1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{1.0f,1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
+
+			// Back face
+			{{1.0f,1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{-1.0f,1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{-1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
+
+			// Left face
+			{{-1.0f,1.0f,1.0f},{0.68f,0.85f,0.90f,1.0f}},
+			{{-1.0f,-1.0f,1.0f},{0.68f,0.85f,0.90f,1.0f}},
+			{{-1.0f,-1.0f,-1.0f},{0.68f,0.85f,0.90f,1.0f}},
+			{{-1.0f,1.0f,-1.0f},{0.68f,0.85f,0.90f,1.0f}},
+
+			// Top face
+			{{1.0f,1.0f,1.0f},{1.0f,0.75f,0.8f,1.0f}},
+			{{-1.0f,1.0f,1.0f},{1.0f,0.75f,0.8f,1.0f}},
+			{{-1.0f,1.0f,-1.0f},{1.0f,0.75f,0.8f,1.0f}},
+			{{1.0f,1.0f,-1.0f},{1.0f,0.75f,0.8f,1.0f}},
+
+			// Bottom face
+			{{1.0f,-1.0f,1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{-1.0f,-1.0f,1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{-1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
 		};
 
-		m_vertexCount = 8;
+		m_vertexCount = 24;
 
 		const UINT vertexBufferSize = sizeof(cubeVertices);
 
@@ -103,14 +122,24 @@ HRESULT DrawableGameObject::initMesh(ComPtr<ID3D12Device5> device)
 	// create the index buffer
 	{
 		// indices.
-		UINT indices[] =
-		{
-			0, 1, 2, 2, 3, 0, // FRONT FACE
-			0, 3, 4, 4, 5, 0, // RIGHT FACE
-			0, 5, 6, 6, 1, 0, // TOP FACE
-			1, 6, 7, 7, 2, 1, // LEFT FACE
-			7, 4, 3, 3, 2, 7, // BOTTOM FACE
-			4, 7, 6, 6, 5, 4 // BACK FACE
+		UINT indices[] = {
+			// Front face
+			0,1,2,2,3,0,
+
+			// Right face
+			4,5,6,6,7,4,
+
+			// Top face
+			8,9,10,10,11,8,
+
+			// Left face
+			12,13,14,14,15,12,
+
+			// Bottom face
+			16,17,18,18,19,16,
+
+			// Back face
+			20,21,22,22,23,20
 		};
 
 		m_indexCount = sizeof(indices) / sizeof(UINT);

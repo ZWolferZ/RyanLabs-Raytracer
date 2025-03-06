@@ -1,15 +1,41 @@
 #include "Common.hlsl"
 
-[shader("miss")]void Miss(inout HitInfo payload : SV_RayPayload)
-{
+// TODO SET UP CONSTANT BUFFER WITH DAVID
 
+[shader("miss")]
+void Miss(inout HitInfo payload : SV_RayPayload)
+{
     float3 rayDir = WorldRayOrigin();
 
-    float3 red = float3(1.0f, 0.0f, 0.0f);
+    float3 lightBlue = float3(0.68f,0.85f,0.90f);
+    float3 pink = float3(1.0f,0.75f,0.8f);
+    float3 white = float3(1.0f,1.0f,1.0f);
 
-    float3 blue = float3(0.0f, 0.0f, 1.0f);
+    float yScreenRange = (rayDir.g + 1.0f) * 0.5f;
 
-    float3 colorOut = lerp(red, blue, (rayDir.g + 1) * 0.5f);
+    float3 colorOut = float3(1.0f, 0.0f, 0.0f);
 
-    payload.colorAndDistance = float4(colorOut, 1.0);
+
+        if (yScreenRange < 0.2f)
+        {
+            colorOut = lightBlue;
+        }
+        else if (yScreenRange < 0.4f)
+        {
+            colorOut = pink;
+        }
+        else if (yScreenRange < 0.6f)
+        {
+            colorOut = white;
+        }
+        else if (yScreenRange < 0.8f)
+        {
+            colorOut = pink;
+        }
+        else
+        {
+            colorOut = lightBlue;
+        }
+
+    payload.colorAndDistance = float4(colorOut, 1.0f);
 }
