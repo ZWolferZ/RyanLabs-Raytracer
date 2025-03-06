@@ -24,6 +24,7 @@ void DXRRuntime::Render()
 	bool resize = true;
 	ImGui::Begin("DXR Path Tracer", &resize, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("ImGUI version: (%s)", IMGUI_VERSION);
+	
 	ImGui::End();
 
 	// Record all the commands we need to render the scene into the command list.
@@ -39,6 +40,8 @@ void DXRRuntime::Render()
 	m_app->WaitForPreviousFrame();
 }
 
+
+
 void DXRRuntime::Update()
 {
 	//Static initializes this value only once
@@ -47,6 +50,8 @@ void DXRRuntime::Update()
 	ULONGLONG frameNow = GetTickCount64();
 	deltaTime = (frameNow - frameStart) / 1000.0f;
 	frameStart = frameNow;
+
+
 
 	for (DrawableGameObject* dgo : m_app->m_drawableObjects)
 	{

@@ -275,6 +275,7 @@ void DXRSetup::CreateAccelerationStructures()
 		CreateBottomLevelAS({ {m_app->m_drawableObjects[0]->getVertexBuffer().Get(), m_app->m_drawableObjects[0]->getVertexCount()} },
 			{ {m_app->m_drawableObjects[0]->getIndexBuffer().Get(), m_app->m_drawableObjects[0]->getIndexCount()} });
 
+
 	// Just one instance for now
 	m_app->m_instances = { {bottomLevelBuffers.pResult, m_app->m_drawableObjects[0]->getTransform()} };
 	CreateTopLevelAS(m_app->m_instances);

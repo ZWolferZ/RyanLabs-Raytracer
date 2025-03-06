@@ -11,11 +11,17 @@ DrawableGameObject::DrawableGameObject()
 	//m_pIndexBuffer = nullptr;
 	//m_pTextureResourceView = nullptr;
 	//m_pSamplerLinear = nullptr;
+	m_position = { 0, 0, 0 };
+	m_rotation = { 45, 45, 0 };
+	m_scale = { 0.25f, 0.25f,0.25f };
+
+	XMMATRIX rotation = XMMatrixRotationX(XMConvertToRadians(m_rotation.x)) * XMMatrixRotationY(XMConvertToRadians(m_rotation.y)) * XMMatrixRotationZ(m_rotation.z);
+	XMMATRIX translation = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
+	XMMATRIX scale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 
 	// Initialize the world matrix
-	XMStoreFloat4x4(&m_World, XMMatrixIdentity());
-	m_position = XMFLOAT3(0, 0, 0);
-	m_rotation = XMFLOAT3(0, 0, 0);
+	XMStoreFloat4x4(&m_World, scale * rotation * translation);
+	
 }
 
 DrawableGameObject::~DrawableGameObject()
@@ -51,15 +57,27 @@ HRESULT DrawableGameObject::initMesh(ComPtr<ID3D12Device5> device)
 {
 	// Create the vertex buffer.
 	{
-		// Define the geometry for a triangle.
-		Vertex triangleVertices[] = {
-			{{0.0f, 0.25f * 1.0f, 0.0f}, {1.0f,0.0f,0.0f,1.0f}},
-			{{0.25f, -0.25f * 1.0f, 0.0f},{0.0f,1.0f,0.0f,1.0f}},
-			{{-0.25f, -0.25f * 1.0f, 0.0f},{0.0f,0.0f,1.0f,1.0f}} };
+		//// Define the geometry for a triangle.
+		//Vertex triangleVertices[] = {
+		//	{{0.0f, 0.25f * 1.0f, 0.0f}, {1.0f,0.0f,0.0f,1.0f}},
+		//	{{0.25f, -0.25f * 1.0f, 0.0f},{0.0f,1.0f,0.0f,1.0f}},
+		//	{{-0.25f, -0.25f * 1.0f, 0.0f},{0.0f,0.0f,1.0f,1.0f}} };
 
-		m_vertexCount = 3;
+		Vertex cubeVertices[] = {
+			{{1.0f, 1.0f, 1.0f,},{1.0f,0.0f,0.0f,1.0f}},
+			{{-1.0f, 1.0f, 1.0f,},{0.0f,1.0f,0.0f,1.0f}},
+			{{-1.0f, -1.0f, 1.0f,},{0.0f,0.0f,1.0f,1.0f}},
+			{{1.0f, -1.0f, 1.0f,},{1.0f,0.0f,0.0f,1.0f}},
+			{{1.0f, -1.0f, -1.0f,},{0.0f,1.0f,0.0f,1.0f}},
+			{{1.0f, 1.0f, -1.0f,},{0.0f,0.0f,1.0f,1.0f}},
+			{{-1.0f, 1.0f, -1.0f,},{1.0f,0.0f,0.0f,1.0f}},
+			{{-1.0f, -1.0f, -1.0f,},{0.0f,1.0f,0.0f,1.0f}}
 
-		const UINT vertexBufferSize = sizeof(triangleVertices);
+		};
+
+		m_vertexCount = 8;
+
+		const UINT vertexBufferSize = sizeof(cubeVertices);
 
 		// Note: using upload heaps to transfer static data like vert buffers is not
 		// recommended. Every time the GPU needs it, the upload heap will be
@@ -78,7 +96,7 @@ HRESULT DrawableGameObject::initMesh(ComPtr<ID3D12Device5> device)
 			0, 0); // We do not intend to read from this resource on the CPU.
 		ThrowIfFailed(m_vertexBuffer->Map(
 			0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-		memcpy(pVertexDataBegin, triangleVertices, sizeof(triangleVertices));
+		memcpy(pVertexDataBegin, cubeVertices, sizeof(cubeVertices));
 		m_vertexBuffer->Unmap(0, nullptr);
 	}
 
@@ -87,7 +105,12 @@ HRESULT DrawableGameObject::initMesh(ComPtr<ID3D12Device5> device)
 		// indices.
 		UINT indices[] =
 		{
-			0,1,2,
+			0, 1, 2, 2, 3, 0, // FRONT FACE
+			0, 3, 4, 4, 5, 0, // RIGHT FACE
+			0, 5, 6, 6, 1, 0, // TOP FACE
+			1, 6, 7, 7, 2, 1, // LEFT FACE
+			7, 4, 3, 3, 2, 7, // BOTTOM FACE
+			4, 7, 6, 6, 5, 4 // BACK FACE
 		};
 
 		m_indexCount = sizeof(indices) / sizeof(UINT);
@@ -134,8 +157,9 @@ void DrawableGameObject::update(float t)
 
 	if (m_rotation.z > 360.0f) m_rotation.z = 0.0f;
 
-	XMMATRIX rotation = XMMatrixRotationX(m_rotation.x) * XMMatrixRotationY(m_rotation.y) * XMMatrixRotationZ(m_rotation.z + t);
+	XMMATRIX rotation = XMMatrixRotationX(XMConvertToRadians(m_rotation.x)) * XMMatrixRotationY(XMConvertToRadians(m_rotation.y)) * XMMatrixRotationZ(XMConvertToRadians(m_rotation.z + t));
 	XMMATRIX translation = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
+	XMMATRIX scale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 
-	XMStoreFloat4x4(&m_World, rotation * translation);
+	XMStoreFloat4x4(&m_World, scale * rotation * translation);
 }

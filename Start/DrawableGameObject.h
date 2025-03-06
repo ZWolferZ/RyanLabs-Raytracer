@@ -43,6 +43,7 @@ private:
 	ID3D11Buffer*						m_pMaterialConstantBuffer = nullptr;*/
 	XMFLOAT3							m_position;
 	XMFLOAT3							m_rotation;
+	XMFLOAT3							m_scale;
 	unsigned int						m_indexCount;
 	unsigned int						m_vertexCount;
 };
