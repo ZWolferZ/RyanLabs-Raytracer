@@ -17,4 +17,9 @@ public:
 	void Render();
 	void Update();
 	void OnKeyUp(UINT8 key);
+
+	void DrawIMGUI();
+
+	void DrawVersionWindow();
+	void DrawPerformanceWindow();
 };

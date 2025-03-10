@@ -16,16 +16,7 @@ void DXRRuntime::Render()
 {
 	DXRContext* context = m_app->GetContext();
 
-	// Start the Dear ImGui frame
-	ImGui_ImplDX12_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-	//ImGui::ShowDemoWindow(); // Show demo window
-	bool resize = true;
-	ImGui::Begin("DXR Path Tracer", &resize, ImGuiWindowFlags_AlwaysAutoResize);
-	ImGui::Text("ImGUI version: (%s)", IMGUI_VERSION);
-	
-	ImGui::End();
+	DrawIMGUI();
 
 	// Record all the commands we need to render the scene into the command list.
 	PopulateCommandList();
@@ -40,8 +31,6 @@ void DXRRuntime::Render()
 	m_app->WaitForPreviousFrame();
 }
 
-
-
 void DXRRuntime::Update()
 {
 	//Static initializes this value only once
@@ -50,8 +39,6 @@ void DXRRuntime::Update()
 	ULONGLONG frameNow = GetTickCount64();
 	deltaTime = (frameNow - frameStart) / 1000.0f;
 	frameStart = frameNow;
-
-
 
 	for (DrawableGameObject* dgo : m_app->m_drawableObjects)
 	{
@@ -65,6 +52,51 @@ void DXRRuntime::OnKeyUp(UINT8 key)
 	{
 		PostQuitMessage(0);
 	}
+}
+
+void DXRRuntime::DrawIMGUI()
+{
+	// Start the Dear ImGui frame
+	ImGui_ImplDX12_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	// Draw the UI Windows
+	DrawVersionWindow();
+	DrawPerformanceWindow();
+}
+
+void DXRRuntime::DrawPerformanceWindow()
+{
+	static float fpsHistory[100] = {};
+	static int fpsIndex = 0;
+	float currentFPS = ImGui::GetIO().Framerate;
+
+	if (fpsIndex >= std::size(fpsHistory))
+	{
+		fpsIndex = 0;
+	}
+
+	fpsHistory[fpsIndex] = currentFPS;
+	fpsIndex++;
+
+	ImGui::SetNextWindowPos(ImVec2(850, 10), ImGuiCond_FirstUseEver);
+
+	ImGui::Begin("Performance");
+	ImGui::Text("Current FPS: %.3f", currentFPS);
+	ImGui::Text("Current Frame-Time: %.3f ms", 1000 / currentFPS);
+	ImGui::Separator();
+	ImGui::PlotLines("FPS History", fpsHistory, 100, fpsIndex, "FPS",
+		0, 100, ImVec2(300, 100));
+	ImGui::Separator();
+	ImGui::End();
+}
+
+void DXRRuntime::DrawVersionWindow()
+{
+	ImGui::Begin("DXR Path Tracer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Text("ImGUI version: (%s)", IMGUI_VERSION);
+	ImGui::End();
 }
 
 void DXRRuntime::PopulateCommandList() {
