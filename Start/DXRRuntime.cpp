@@ -82,7 +82,7 @@ void DXRRuntime::DrawPerformanceWindow()
 
 	ImGui::SetNextWindowPos(ImVec2(850, 10), ImGuiCond_FirstUseEver);
 
-	ImGui::Begin("Performance");
+	ImGui::Begin("Performance", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("Current FPS: %.3f", currentFPS);
 	ImGui::Text("Current Frame-Time: %.3f ms", 1000 / currentFPS);
 	ImGui::Separator();
