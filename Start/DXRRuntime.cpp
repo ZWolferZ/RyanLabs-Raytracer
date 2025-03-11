@@ -86,7 +86,7 @@ void DXRRuntime::DrawPerformanceWindow()
 	ImGui::Text("Current FPS: %.3f", currentFPS);
 	ImGui::Text("Current Frame-Time: %.3f ms", 1000 / currentFPS);
 	ImGui::Separator();
-	ImGui::PlotLines("FPS History", fpsHistory, 100, fpsIndex, "FPS",
+	ImGui::PlotLines("FPS History", fpsHistory, std::size(fpsHistory), fpsIndex, "FPS",
 		0, 100, ImVec2(300, 100));
 	ImGui::Separator();
 	ImGui::End();

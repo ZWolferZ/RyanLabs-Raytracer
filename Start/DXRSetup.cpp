@@ -706,7 +706,7 @@ void DXRSetup::CreateTopLevelAS(
 			instances[i].second, static_cast<UINT>(i),
 			static_cast<UINT>(0));
 
-		if (i == 1)
+		if (i == 1) // What
 		{
 			context->m_topLevelASGenerator.AddInstance(instances[PLANE_INDEX].first.Get(), instances[PLANE_INDEX].second, static_cast<UINT>(PLANE_INDEX), static_cast<UINT>(1));
 		}
