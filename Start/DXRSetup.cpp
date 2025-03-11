@@ -14,6 +14,12 @@
 
 #include "DrawableGameObject.h"
 
+#define CUBE1_INDEX 0
+#define CUBE2_INDEX 1
+#define PLANE_INDEX 2
+#define OBJ_DONUT_INDEX 3
+#define OBJ_BALL_INDEX 4
+
 DXRSetup::DXRSetup(DXRApp* app)
 {
 	m_app = app;
@@ -241,7 +247,42 @@ void DXRSetup::LoadAssets()
 
 	DrawableGameObject* pDrawableObject = new DrawableGameObject();
 	pDrawableObject->initMesh(m_device);
+	pDrawableObject->setPosition(XMFLOAT3(-0.5f, 0.0f, 0.0f));
+	pDrawableObject->setRotation(XMFLOAT3(45, 45, 0));
+	pDrawableObject->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+	pDrawableObject->update(0.0f);
 	m_app->m_drawableObjects.push_back(pDrawableObject);
+
+	DrawableGameObject* pCopy = pDrawableObject->createCopy();
+	pCopy->setPosition(XMFLOAT3(0.5, 0.0f, 0.0f));
+	pCopy->setRotation(XMFLOAT3(45, 45, 0));
+	pCopy->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+	pCopy->update(0.0f);
+	m_app->m_drawableObjects.push_back(pCopy);
+
+	DrawableGameObject* pPlane = new DrawableGameObject();
+	pPlane->initPlaneMesh(m_device);
+	pPlane->setPosition(XMFLOAT3(0.0f, 0.0f, -5.0f));
+	pPlane->setScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
+	pPlane->setRotation(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	pPlane->update(0.0f);
+	m_app->m_drawableObjects.push_back(pPlane);
+
+	DrawableGameObject* pOBJ = new DrawableGameObject();
+	pOBJ->initOBJMesh(m_device, R"(Objects\donut.obj)");
+	pOBJ->setPosition(XMFLOAT3(0.8f, -0.8f, 0.0f));
+	pOBJ->setRotation(XMFLOAT3(90, 0, 0));
+	pOBJ->setScale(XMFLOAT3(0.15f, 0.15f, 0.15f));
+	pOBJ->update(0.0f);
+	m_app->m_drawableObjects.push_back(pOBJ);
+
+	DrawableGameObject* pOBJ2 = new DrawableGameObject();
+	pOBJ2->initOBJMesh(m_device, R"(Objects\ball.obj)");
+	pOBJ2->setPosition(XMFLOAT3(-0.8f, -0.8f, 0.0f));
+	pOBJ2->setRotation(XMFLOAT3(0, 0, 0));
+	pOBJ2->setScale(XMFLOAT3(0.15f, 0.15f, 0.15f));
+	pOBJ2->update(0.0f);
+	m_app->m_drawableObjects.push_back(pOBJ2);
 
 	// Create synchronization objects and wait until assets have been uploaded to
 	// the GPU.
@@ -277,8 +318,25 @@ void DXRSetup::CreateAccelerationStructures()
 		CreateBottomLevelAS({ {m_app->m_drawableObjects[0]->getVertexBuffer().Get(), m_app->m_drawableObjects[0]->getVertexCount()} },
 			{ {m_app->m_drawableObjects[0]->getIndexBuffer().Get(), m_app->m_drawableObjects[0]->getIndexCount()} });
 
+	AccelerationStructureBuffers planeBuffer =
+		CreateBottomLevelAS({ {m_app->m_drawableObjects[PLANE_INDEX]->getVertexBuffer().Get(), m_app->m_drawableObjects[PLANE_INDEX]->getVertexCount()} },
+			{ {m_app->m_drawableObjects[PLANE_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[PLANE_INDEX]->getIndexCount()} });
+
+	AccelerationStructureBuffers objDonutBuffer =
+		CreateBottomLevelAS({ {m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getVertexBuffer().Get(), m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getVertexCount()} },
+			{ {m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getIndexCount()} });
+
+	AccelerationStructureBuffers objBallBuffer =
+		CreateBottomLevelAS({ {m_app->m_drawableObjects[OBJ_BALL_INDEX]->getVertexBuffer().Get(), m_app->m_drawableObjects[OBJ_BALL_INDEX]->getVertexCount()} },
+			{ {m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexCount()} });
+
 	// Just one instance for now
-	m_app->m_instances = { {bottomLevelBuffers.pResult, m_app->m_drawableObjects[0]->getTransform()} };
+	m_app->m_instances.push_back(std::make_pair(bottomLevelBuffers.pResult, m_app->m_drawableObjects[CUBE1_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(bottomLevelBuffers.pResult, m_app->m_drawableObjects[CUBE2_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(planeBuffer.pResult, m_app->m_drawableObjects[PLANE_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(objDonutBuffer.pResult, m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(objBallBuffer.pResult, m_app->m_drawableObjects[OBJ_BALL_INDEX]->getTransform()));
+
 	CreateTopLevelAS(m_app->m_instances);
 
 	// Flush the command list and wait for it to finish
@@ -368,7 +426,7 @@ void DXRSetup::CreateRaytracingPipeline()
 	// using the [shader("xxx")] syntax
 	pipeline.AddLibrary(context->m_rayGenLibrary.Get(), { L"RayGen" });
 	pipeline.AddLibrary(context->m_missLibrary.Get(), { L"Miss" });
-	pipeline.AddLibrary(context->m_hitLibrary.Get(), { L"ClosestHit" });
+	pipeline.AddLibrary(context->m_hitLibrary.Get(), { L"ClosestHit", L"PlaneClosestHit" });
 
 	// To be used, each DX12 shader needs a root signature defining which
 	// parameters and buffers will be accessed.
@@ -394,6 +452,7 @@ void DXRSetup::CreateRaytracingPipeline()
 	// Hit group for the triangles, with a shader simply interpolating vertex
 	// colors
 	pipeline.AddHitGroup(L"HitGroup", L"ClosestHit");
+	pipeline.AddHitGroup(L"PlaneHitGroup", L"PlaneClosestHit");
 
 	// The following section associates the root signature to each shader. Note
 	// that we can explicitly show that some shaders share the same root signature
@@ -402,7 +461,7 @@ void DXRSetup::CreateRaytracingPipeline()
 	// closest-hit shaders share the same root signature.
 	pipeline.AddRootSignatureAssociation(context->m_rayGenSignature.Get(), { L"RayGen" });
 	pipeline.AddRootSignatureAssociation(context->m_missSignature.Get(), { L"Miss" });
-	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"HitGroup" });
+	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"HitGroup" , L"PlaneHitGroup" });
 
 	// The payload size defines the maximum size of the data carried by the rays,
 	// ie. the the data
@@ -544,6 +603,11 @@ void DXRSetup::CreateShaderBindingTable()
 			(void*)(m_app->m_drawableObjects[0]->getIndexBuffer()->GetGPUVirtualAddress())
 		});
 
+	context->m_sbtHelper.AddHitGroup(L"PlaneHitGroup",
+		{ (void*)(m_app->m_drawableObjects[PLANE_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[PLANE_INDEX]->getIndexBuffer()->GetGPUVirtualAddress())
+		});
+
 	// Compute the size of the SBT given the number of shaders and their
 	// parameters
 	uint32_t sbtSize = context->m_sbtHelper.ComputeSBTSize();
@@ -641,6 +705,11 @@ void DXRSetup::CreateTopLevelAS(
 		context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
 			instances[i].second, static_cast<UINT>(i),
 			static_cast<UINT>(0));
+
+		if (i == 1)
+		{
+			context->m_topLevelASGenerator.AddInstance(instances[PLANE_INDEX].first.Get(), instances[PLANE_INDEX].second, static_cast<UINT>(PLANE_INDEX), static_cast<UINT>(1));
+		}
 	}
 
 	// As for the bottom-level AS, the building the AS requires some scratch space

@@ -12,8 +12,8 @@ DrawableGameObject::DrawableGameObject()
 	//m_pTextureResourceView = nullptr;
 	//m_pSamplerLinear = nullptr;
 	m_position = { 0, 0, 0 };
-	m_rotation = { 45, 45, 0 };
-	m_scale = { 0.25f, 0.25f,0.25f };
+	m_rotation = { 0, 0, 0 };
+	m_scale = { 1.0f, 1.0f,1.0f };
 
 	XMMATRIX rotation = XMMatrixRotationX(XMConvertToRadians(m_rotation.x)) * XMMatrixRotationY(XMConvertToRadians(m_rotation.y)) * XMMatrixRotationZ(m_rotation.z);
 	XMMATRIX translation = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
@@ -58,43 +58,43 @@ HRESULT DrawableGameObject::initMesh(ComPtr<ID3D12Device5> device)
 	{
 		Vertex cubeVertices[] = {
 			// Front face
-			{{1.0f,1.0f,1.0f},{1.0f,1.0f,1.0f,1.0f}},
-			{{-1.0f,1.0f,1.0f},{1.0f,1.0f,1.0f,1.0f}},
-			{{-1.0f,-1.0f,1.0f},{1.0f,1.0f,1.0f,1.0f}},
-			{{1.0f,-1.0f,1.0f},{1.0f,1.0f,1.0f,1.0f}},
+			{{1.0f,1.0f,1.0f},{0.0f,0.0f,1.0f,0.0f},{1.0f,1.0f}},
+			{{-1.0f,1.0f,1.0f},{0.0f,0.0f,1.0f,0.0f},{0.0f,1.0f}},
+			{{-1.0f,-1.0f,1.0f},{0.0f,0.0f,1.0f,0.0f},{0.0f,0.0f}},
+			{{1.0f,-1.0f,1.0f},{0.0f,0.0f,1.0f,0.0f},{1.0f,0.0f}},
 
 			// Right face
-			{{1.0f,1.0f,1.0f},{1.0f,0.0f,0.0f,1.0f}},
-			{{1.0f,-1.0f,1.0f},{1.0f,0.0f,0.0f,1.0f}},
-			{{1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
-			{{1.0f,1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{1.0f,1.0f,1.0f},{1.0f,0.0f,0.0f,0.0f},{1.0f,1.0f}},
+			{{1.0f,-1.0f,1.0f},{1.0f,0.0f,0.0f,0.0f},{0.0f,1.0f}},
+			{{1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,0.0f},{0.0f,0.0f}},
+			{{1.0f,1.0f,-1.0f},{1.0f,0.0f,0.0f,0.0f},{1.0f,0.0f}},
 
 			// Back face
-			{{1.0f,1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
-			{{-1.0f,1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
-			{{-1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
-			{{1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{1.0f,1.0f,-1.0f},{0.0f,0.0f,-1.0f,0.0f},{1.0f,1.0f}},
+			{{-1.0f,1.0f,-1.0f},{0.0f,0.0f,-1.0f,0.0f},{0.0f,1.0f}},
+			{{-1.0f,-1.0f,-1.0f},{0.0f,0.0f,-1.0f,0.0f},{0.0f,0.0f}},
+			{{1.0f,-1.0f,-1.0f},{0.0f,0.0f,-1.0f,0.0f},{1.0f,0.0f}},
 
 			// Left face
-			{{-1.0f,1.0f,1.0f},{0.68f,0.85f,0.90f,1.0f}},
-			{{-1.0f,-1.0f,1.0f},{0.68f,0.85f,0.90f,1.0f}},
-			{{-1.0f,-1.0f,-1.0f},{0.68f,0.85f,0.90f,1.0f}},
-			{{-1.0f,1.0f,-1.0f},{0.68f,0.85f,0.90f,1.0f}},
+			{{-1.0f,1.0f,1.0f},{-1.0f,0.0f,0.0f,0.0f},{1.0f,1.0f}},
+			{{-1.0f,-1.0f,1.0f},{-1.0f,0.0f,0.0f,0.0f},{0.0f,1.0f}},
+			{{-1.0f,-1.0f,-1.0f},{-1.0f,0.0f,0.0f,0.0f},{0.0f,0.0f}},
+			{{-1.0f,1.0f,-1.0f},{-1.0f,0.0f,0.0f,0.0f},{1.0f,0.0f}},
 
 			// Top face
-			{{1.0f,1.0f,1.0f},{1.0f,0.75f,0.8f,1.0f}},
-			{{-1.0f,1.0f,1.0f},{1.0f,0.75f,0.8f,1.0f}},
-			{{-1.0f,1.0f,-1.0f},{1.0f,0.75f,0.8f,1.0f}},
-			{{1.0f,1.0f,-1.0f},{1.0f,0.75f,0.8f,1.0f}},
+			{{1.0f,1.0f,1.0f},{0.0f,1.0f,0.0f,0.0f},{1.0f,1.0f}},
+			{{-1.0f,1.0f,1.0f},{0.0f,1.0f,0.0f,0.0f},{0.0f,1.0f}},
+			{{-1.0f,1.0f,-1.0f},{0.0f,1.0f,0.0f,0.0f},{0.0f,0.0f}},
+			{{1.0f,1.0f,-1.0f},{0.0f,1.0f,0.0f,0.0f},{1.0f,0.0f}},
 
 			// Bottom face
-			{{1.0f,-1.0f,1.0f},{1.0f,0.0f,0.0f,1.0f}},
-			{{-1.0f,-1.0f,1.0f},{1.0f,0.0f,0.0f,1.0f}},
-			{{-1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
-			{{1.0f,-1.0f,-1.0f},{1.0f,0.0f,0.0f,1.0f}},
+			{{1.0f,-1.0f,1.0f},{0.0f,-1.0f,0.0f,0.0f},{1.0f,1.0f}},
+			{{-1.0f,-1.0f,1.0f},{0.0f,-1.0f,0.0f,0.0f},{0.0f,1.0f}},
+			{{-1.0f,-1.0f,-1.0f},{0.0f,-1.0f,0.0f,0.0f},{0.0f,0.0f}},
+			{{1.0f,-1.0f,-1.0f},{0.0f,-1.0f,0.0f,0.0f},{1.0f,0.0f}}
 		};
 
-		m_vertexCount = 24;
+		m_meshData.VertexCount = 24;
 
 		const UINT vertexBufferSize = sizeof(cubeVertices);
 
@@ -107,16 +107,16 @@ HRESULT DrawableGameObject::initMesh(ComPtr<ID3D12Device5> device)
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
 			&CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
 			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-			IID_PPV_ARGS(&m_vertexBuffer)));
+			IID_PPV_ARGS(&m_meshData.VertexBuffer)));
 
 		// Copy the triangle data to the vertex buffer.
 		UINT8* pVertexDataBegin;
 		CD3DX12_RANGE readRange(
 			0, 0); // We do not intend to read from this resource on the CPU.
-		ThrowIfFailed(m_vertexBuffer->Map(
+		ThrowIfFailed(m_meshData.VertexBuffer->Map(
 			0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
 		memcpy(pVertexDataBegin, cubeVertices, sizeof(cubeVertices));
-		m_vertexBuffer->Unmap(0, nullptr);
+		m_meshData.VertexBuffer->Unmap(0, nullptr);
 	}
 
 	// create the index buffer
@@ -142,24 +142,97 @@ HRESULT DrawableGameObject::initMesh(ComPtr<ID3D12Device5> device)
 			20,21,22,22,23,20
 		};
 
-		m_indexCount = sizeof(indices) / sizeof(UINT);
+		m_meshData.IndexCount = sizeof(indices) / sizeof(UINT);
 
 		const UINT indexBufferSize = sizeof(indices);
 		CD3DX12_HEAP_PROPERTIES heapProperty = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC bufferResource = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
 		ThrowIfFailed(device->CreateCommittedResource(
 			&heapProperty, D3D12_HEAP_FLAG_NONE, &bufferResource, //
-			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_indexBuffer)));
+			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_meshData.IndexBuffer)));
 
 		// Copy the triangle data to the index buffer.
 		CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
 
 		UINT8* pIndexDataBegin;
-		ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+		ThrowIfFailed(m_meshData.IndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
 		memcpy(pIndexDataBegin, indices, indexBufferSize);
-		m_indexBuffer->Unmap(0, nullptr);
+		m_meshData.IndexBuffer->Unmap(0, nullptr);
 	}
 
+	return S_OK;
+}
+
+HRESULT DrawableGameObject::initPlaneMesh(ComPtr<ID3D12Device5> device)
+{
+	// Create the vertex buffer.
+	{
+		float diameter = 0.5f;
+		Vertex planeVertices[] = {
+					{XMFLOAT3(-diameter, diameter, 0), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}, // 0
+					{XMFLOAT3(-diameter, -diameter, -0), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}, // 1
+					{ XMFLOAT3(diameter, diameter, 0), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}, // 2
+					{ XMFLOAT3(diameter, -diameter, -0), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}  // 3
+		};
+
+		m_meshData.VertexCount = 4;
+
+		const UINT vertexBufferSize = sizeof(planeVertices);
+
+		// Note: using upload heaps to transfer static data like vert buffers is not
+		// recommended. Every time the GPU needs it, the upload heap will be
+		// marshalled over. Please read up on Default Heap usage. An upload heap is
+		// used here for code simplicity and because there are very few verts to
+		// actually transfer.
+		ThrowIfFailed(device->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
+			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+			IID_PPV_ARGS(&m_meshData.VertexBuffer)));
+
+		// Copy the triangle data to the vertex buffer.
+		UINT8* pVertexDataBegin;
+		CD3DX12_RANGE readRange(
+			0, 0); // We do not intend to read from this resource on the CPU.
+		ThrowIfFailed(m_meshData.VertexBuffer->Map(
+			0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+		memcpy(pVertexDataBegin, planeVertices, sizeof(planeVertices));
+		m_meshData.VertexBuffer->Unmap(0, nullptr);
+	}
+
+	// create the index buffer
+	{
+		UINT indices[] =
+		{
+			0,1,2,
+			2,1,3,
+		};
+
+		m_meshData.IndexCount = sizeof(indices) / sizeof(UINT);
+
+		const UINT indexBufferSize = sizeof(indices);
+		CD3DX12_HEAP_PROPERTIES heapProperty = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		CD3DX12_RESOURCE_DESC bufferResource = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
+		ThrowIfFailed(device->CreateCommittedResource(
+			&heapProperty, D3D12_HEAP_FLAG_NONE, &bufferResource, //
+			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_meshData.IndexBuffer)));
+
+		// Copy the triangle data to the index buffer.
+		CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
+
+		UINT8* pIndexDataBegin;
+		ThrowIfFailed(m_meshData.IndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+		memcpy(pIndexDataBegin, indices, indexBufferSize);
+		m_meshData.IndexBuffer->Unmap(0, nullptr);
+	}
+
+	return S_OK;
+}
+
+HRESULT DrawableGameObject::initOBJMesh(ComPtr<ID3D12Device5> device, char* szOBJName)
+{
+	m_meshData = OBJLoader::Load(szOBJName, device.Get());
+	assert(m_meshData.VertexBuffer);
 	return S_OK;
 }
 
@@ -173,6 +246,16 @@ DrawableGameObject* DrawableGameObject::createCopy()
 void DrawableGameObject::setPosition(XMFLOAT3 position)
 {
 	m_position = position;
+}
+
+void DrawableGameObject::setRotation(XMFLOAT3 rotation)
+{
+	m_rotation = rotation;
+}
+
+void DrawableGameObject::setScale(XMFLOAT3 scale)
+{
+	m_scale = scale;
 }
 
 void DrawableGameObject::update(float t)

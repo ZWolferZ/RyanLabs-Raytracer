@@ -1,6 +1,6 @@
 #include "Common.hlsl"
 
-// TODO SET UP CONSTANT BUFFER WITH DAVID
+// TODO SET UP BUFFER WITH DAVID
 
 [shader("miss")]
 void Miss(inout HitInfo payload : SV_RayPayload)

@@ -8,7 +8,8 @@ using namespace DirectX;
 
 struct Vertex { // IMPORTANT - the hlsl version of this is STriVertex
 	XMFLOAT3 position;
-	XMFLOAT4 color;
+	XMFLOAT4 normal;
+	XMFLOAT2 tex;
 };
 
 struct AccelerationStructureBuffers {
