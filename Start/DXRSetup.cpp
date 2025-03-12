@@ -14,11 +14,13 @@
 
 #include "DrawableGameObject.h"
 
-#define CUBE1_INDEX 0
-#define CUBE2_INDEX 1
-#define PLANE_INDEX 2
-#define OBJ_DONUT_INDEX 3
-#define OBJ_BALL_INDEX 4
+constexpr auto CUBE1_INDEX = 0;
+constexpr auto CUBE2_INDEX = 1;
+constexpr auto PLANE_INDEX = 2;
+constexpr auto OBJ_DONUT_INDEX = 3;
+constexpr auto OBJ_BALL_INDEX = 4;
+constexpr auto PLANEHITGROUP_INDEX = 1;
+constexpr auto OBJECTHITGROUP_INDEX = 0;
 
 DXRSetup::DXRSetup(DXRApp* app)
 {
@@ -704,11 +706,11 @@ void DXRSetup::CreateTopLevelAS(
 	for (size_t i = 0; i < instances.size(); i++) {
 		context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
 			instances[i].second, static_cast<UINT>(i),
-			static_cast<UINT>(0));
+			static_cast<UINT>(OBJECTHITGROUP_INDEX));
 
-		if (i == 1) // What
+		if (i == PLANEHITGROUP_INDEX) // What
 		{
-			context->m_topLevelASGenerator.AddInstance(instances[PLANE_INDEX].first.Get(), instances[PLANE_INDEX].second, static_cast<UINT>(PLANE_INDEX), static_cast<UINT>(1));
+			context->m_topLevelASGenerator.AddInstance(instances[PLANE_INDEX].first.Get(), instances[PLANE_INDEX].second, static_cast<UINT>(PLANE_INDEX), static_cast<UINT>(PLANEHITGROUP_INDEX));
 		}
 	}
 
