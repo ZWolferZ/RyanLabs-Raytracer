@@ -428,7 +428,7 @@ void DXRSetup::CreateRaytracingPipeline()
 	// using the [shader("xxx")] syntax
 	pipeline.AddLibrary(context->m_rayGenLibrary.Get(), { L"RayGen" });
 	pipeline.AddLibrary(context->m_missLibrary.Get(), { L"Miss" });
-	pipeline.AddLibrary(context->m_hitLibrary.Get(), { L"ClosestHit", L"PlaneClosestHit" });
+	pipeline.AddLibrary(context->m_hitLibrary.Get(), { L"ClosestHit",L"AnyHit",L"PlaneClosestHit" });
 
 	// To be used, each DX12 shader needs a root signature defining which
 	// parameters and buffers will be accessed.
@@ -453,7 +453,7 @@ void DXRSetup::CreateRaytracingPipeline()
 
 	// Hit group for the triangles, with a shader simply interpolating vertex
 	// colors
-	pipeline.AddHitGroup(L"HitGroup", L"ClosestHit");
+	pipeline.AddHitGroup(L"HitGroup", L"ClosestHit", L"AnyHit");
 	pipeline.AddHitGroup(L"PlaneHitGroup", L"PlaneClosestHit");
 
 	// The following section associates the root signature to each shader. Note

@@ -30,6 +30,16 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	payload.colorAndDistance = float4(colorOut, RayTCurrent());
 }
 
+[shader("anyhit")]
+void AnyHit(inout HitInfo payload, Attributes attrib)
+{
+
+	IgnoreHit();
+
+}
+
+
+
 [shader("closesthit")]
 void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 {
@@ -49,3 +59,4 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 	payload.colorAndDistance = float4(colorOut, RayTCurrent());
 }
+
