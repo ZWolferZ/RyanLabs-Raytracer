@@ -27,15 +27,16 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 		colorOut = float3(0.0, 0.0, 0.0);
 	}
 
-	payload.colorAndDistance = float4(colorOut, RayTCurrent());
+	payload.colorAndDistance += float4(colorOut, RayTCurrent());
 }
 
 [shader("anyhit")]
 void AnyHit(inout HitInfo payload, Attributes attrib)
 {
 
-	IgnoreHit();
+	float3 colorOut = { 0.0f, 0.0f, 0.0f };
 
+	payload.colorAndDistance += float4(colorOut, RayTCurrent());
 }
 
 
