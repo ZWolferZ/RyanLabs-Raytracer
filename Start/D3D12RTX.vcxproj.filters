@@ -161,6 +161,9 @@
     <ClInclude Include="OBJLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="IMGui">
@@ -181,5 +184,18 @@
     <Filter Include="Header Files">
       <UniqueIdentifier>{acd441f0-cc0f-4b03-ad9b-dfbf86c9567c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{26fb4630-caf4-4ac1-a37c-13aa7f2d15f4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="RyanLabs.ico">
+      <Filter>Resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

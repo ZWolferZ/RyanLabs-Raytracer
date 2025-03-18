@@ -13,6 +13,8 @@ public:
 
 	void cleanup();
 
+	string m_objectName;
+
 	DrawableGameObject* createCopy(); // creates a copy
 
 	HRESULT								initMesh(ComPtr<ID3D12Device5> device);
@@ -28,10 +30,17 @@ public:
 	//ID3D11SamplerState**				getTextureSamplerState() { return &m_pSamplerLinear; }
 	//ID3D11Buffer*						getMaterialConstantBuffer() { return m_pMaterialConstantBuffer;}
 	void								setPosition(XMFLOAT3 position);
+	XMFLOAT3							getPosition() { return m_position; }
 	void 								setRotation(XMFLOAT3 rotation);
+	XMFLOAT3							getRotation() { return m_rotation; }
 	void 								setScale(XMFLOAT3 scale);
+	XMFLOAT3							getScale() { return m_scale; }
 	unsigned int						getVertexCount() { return m_meshData.VertexCount; }
 	unsigned int						getIndexCount() { return m_meshData.IndexCount; }
+	string 								getObjectName() { return m_objectName; }
+	void								setObjectName(string name) { m_objectName = name; }
+	void								setOrginalTransformValues(XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale);
+	void								resetTransform();
 
 private:
 
@@ -44,6 +53,10 @@ private:
 	XMFLOAT3							m_position;
 	XMFLOAT3							m_rotation;
 	XMFLOAT3							m_scale;
+
+	XMFLOAT3							m_orginalPosition;
+	XMFLOAT3							m_orginalRotation;
+	XMFLOAT3							m_orginalScale;
 
 	MeshData 						m_meshData;
 };

@@ -7,6 +7,8 @@ class DXRRuntime
 private:
 	ComPtr<ID3D12Device5> m_device;
 	DXRApp* m_app;
+	float m_currentDeltaTime;
+	DrawableGameObject* m_selectedObject = nullptr;
 
 private:
 	void PopulateCommandList();
@@ -22,4 +24,6 @@ public:
 
 	void DrawVersionWindow();
 	void DrawPerformanceWindow();
+	void DrawObjectSelectionWindow();
+	void DrawObjectMovementWindow();
 };

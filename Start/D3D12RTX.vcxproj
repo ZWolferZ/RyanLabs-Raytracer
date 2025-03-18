@@ -144,6 +144,7 @@
     <ClInclude Include="nv_helpers_dx12\ShaderBindingTableGenerator.h" />
     <ClInclude Include="nv_helpers_dx12\TopLevelASGenerator.h" />
     <ClInclude Include="OBJLoader.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Win32Application.h" />
     <ClInclude Include="DXRApp.h" />
     <ClInclude Include="d3dx12.h" />
@@ -210,6 +211,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="RyanLabs.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

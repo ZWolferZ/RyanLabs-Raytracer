@@ -5,6 +5,7 @@
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
 #include "DrawableGameObject.h"
+#include "DXRSetup.h"
 
 DXRRuntime::DXRRuntime(DXRApp* app)
 {
@@ -38,11 +39,15 @@ void DXRRuntime::Update()
 	static float deltaTime = 0.0f;
 	ULONGLONG frameNow = GetTickCount64();
 	deltaTime = (frameNow - frameStart) / 1000.0f;
+	m_currentDeltaTime = deltaTime;
 	frameStart = frameNow;
 
+	unsigned int i = 0;
 	for (DrawableGameObject* dgo : m_app->m_drawableObjects)
 	{
 		dgo->update(deltaTime);
+		m_app->m_instances[i].second = dgo->getTransform();
+		i++;
 	}
 }
 
@@ -64,6 +69,8 @@ void DXRRuntime::DrawIMGUI()
 	// Draw the UI Windows
 	DrawVersionWindow();
 	DrawPerformanceWindow();
+	DrawObjectSelectionWindow();
+	DrawObjectMovementWindow();
 }
 
 void DXRRuntime::DrawPerformanceWindow()
@@ -80,7 +87,7 @@ void DXRRuntime::DrawPerformanceWindow()
 	fpsHistory[fpsIndex] = currentFPS;
 	fpsIndex++;
 
-	ImGui::SetNextWindowPos(ImVec2(850, 10), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(875, 10), ImGuiCond_FirstUseEver);
 
 	ImGui::Begin("Performance", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("Current FPS: %.3f", currentFPS);
@@ -92,8 +99,80 @@ void DXRRuntime::DrawPerformanceWindow()
 	ImGui::End();
 }
 
+void DXRRuntime::DrawObjectSelectionWindow()
+{
+	ImGui::SetNextWindowPos(ImVec2(10, 70), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Object Selection", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Text("Choose an object to select!");
+	ImGui::Separator();
+
+	for (DrawableGameObject* dgo : m_app->m_drawableObjects)
+	{
+		bool isSelected = (m_selectedObject == dgo);
+
+		if (ImGui::Selectable(dgo->getObjectName().c_str(), isSelected))
+		{
+			if (isSelected)
+			{
+				m_selectedObject = nullptr;
+			}
+			else
+			{
+				m_selectedObject = dgo;
+			}
+		}
+	}
+
+	ImGui::End();
+}
+
+void DXRRuntime::DrawObjectMovementWindow()
+{
+	if (m_selectedObject != nullptr)
+	{
+		ImGui::SetNextWindowPos(ImVec2(10, 220), ImGuiCond_FirstUseEver);
+		ImGui::Begin("Object Movement", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+		ImGui::Text("Manipulate the selected object:");
+
+		ImGui::Text("Selected Object: %s", m_selectedObject->getObjectName().c_str());
+		ImGui::Separator();
+
+		// Gross and dirty re-casting of XMFLOAT3 to float* to make ImGui happy
+
+		XMFLOAT3 position = m_selectedObject->getPosition();
+		if (ImGui::DragFloat3("Position", reinterpret_cast<float*>(&position), 0.005f))
+		{
+			m_selectedObject->setPosition(position);
+		}
+
+		XMFLOAT3 rotation = m_selectedObject->getRotation();
+		if (ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&rotation), 0.5f, -361, 361))
+		{
+			m_selectedObject->setRotation(rotation);
+		}
+
+		XMFLOAT3 scale = m_selectedObject->getScale();
+		if (ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&scale), 0.01f, -INFINITY, INFINITY))
+		{
+			m_selectedObject->setScale(scale);
+		}
+		ImGui::Text("(Drag the box or enter a number)");
+		ImGui::Separator();
+
+		if (ImGui::Button("Reset Transform"))
+		{
+			m_selectedObject->resetTransform();
+		}
+
+		ImGui::End();
+	}
+}
+
 void DXRRuntime::DrawVersionWindow()
 {
+	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
 	ImGui::Begin("DXR Path Tracer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("ImGUI version: (%s)", IMGUI_VERSION);
 	ImGui::End();
@@ -181,6 +260,8 @@ void DXRRuntime::PopulateCommandList() {
 	desc.Width = m_app->GetWidth();
 	desc.Height = m_app->GetHeight();
 	desc.Depth = 1;
+
+	m_app->m_DXSetup->CreateTopLevelAS(m_app->m_instances, true);
 
 	// Bind the raytracing pipeline
 	context->m_commandList->SetPipelineState1(context->m_rtStateObject.Get());

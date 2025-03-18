@@ -252,14 +252,18 @@ void DXRSetup::LoadAssets()
 	pDrawableObject->setPosition(XMFLOAT3(-0.5f, 0.0f, 0.0f));
 	pDrawableObject->setRotation(XMFLOAT3(45, 45, 0));
 	pDrawableObject->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+	pDrawableObject->setOrginalTransformValues(pDrawableObject->getPosition(), pDrawableObject->getRotation(), pDrawableObject->getScale());
 	pDrawableObject->update(0.0f);
+	pDrawableObject->setObjectName("Cube 1");
 	m_app->m_drawableObjects.push_back(pDrawableObject);
 
 	DrawableGameObject* pCopy = pDrawableObject->createCopy();
 	pCopy->setPosition(XMFLOAT3(0.5, 0.0f, 0.0f));
 	pCopy->setRotation(XMFLOAT3(45, 45, 0));
 	pCopy->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+	pCopy->setOrginalTransformValues(pCopy->getPosition(), pCopy->getRotation(), pCopy->getScale());
 	pCopy->update(0.0f);
+	pCopy->setObjectName("Cube 2");
 	m_app->m_drawableObjects.push_back(pCopy);
 
 	DrawableGameObject* pPlane = new DrawableGameObject();
@@ -267,7 +271,9 @@ void DXRSetup::LoadAssets()
 	pPlane->setPosition(XMFLOAT3(0.0f, 0.0f, -5.0f));
 	pPlane->setScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
 	pPlane->setRotation(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	pPlane->setOrginalTransformValues(pPlane->getPosition(), pPlane->getRotation(), pPlane->getScale());
 	pPlane->update(0.0f);
+	pPlane->setObjectName("Plane 1");
 	m_app->m_drawableObjects.push_back(pPlane);
 
 	DrawableGameObject* pOBJ = new DrawableGameObject();
@@ -275,7 +281,9 @@ void DXRSetup::LoadAssets()
 	pOBJ->setPosition(XMFLOAT3(0.8f, -0.8f, 0.0f));
 	pOBJ->setRotation(XMFLOAT3(90, 0, 0));
 	pOBJ->setScale(XMFLOAT3(0.15f, 0.15f, 0.15f));
+	pOBJ->setOrginalTransformValues(pOBJ->getPosition(), pOBJ->getRotation(), pOBJ->getScale());
 	pOBJ->update(0.0f);
+	pOBJ->setObjectName("Donut 1");
 	m_app->m_drawableObjects.push_back(pOBJ);
 
 	DrawableGameObject* pOBJ2 = new DrawableGameObject();
@@ -283,7 +291,9 @@ void DXRSetup::LoadAssets()
 	pOBJ2->setPosition(XMFLOAT3(-0.8f, -0.8f, 0.0f));
 	pOBJ2->setRotation(XMFLOAT3(0, 0, 0));
 	pOBJ2->setScale(XMFLOAT3(0.15f, 0.15f, 0.15f));
+	pOBJ2->setOrginalTransformValues(pOBJ2->getPosition(), pOBJ2->getRotation(), pOBJ2->getScale());
 	pOBJ2->update(0.0f);
+	pOBJ2->setObjectName("Ball 1");
 	m_app->m_drawableObjects.push_back(pOBJ2);
 
 	// Create synchronization objects and wait until assets have been uploaded to
@@ -339,7 +349,7 @@ void DXRSetup::CreateAccelerationStructures()
 	m_app->m_instances.push_back(std::make_pair(objDonutBuffer.pResult, m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(objBallBuffer.pResult, m_app->m_drawableObjects[OBJ_BALL_INDEX]->getTransform()));
 
-	CreateTopLevelAS(m_app->m_instances);
+	CreateTopLevelAS(m_app->m_instances, false);
 
 	// Flush the command list and wait for it to finish
 	context->m_commandList->Close();
@@ -597,7 +607,7 @@ void DXRSetup::CreateShaderBindingTable()
 
 	// The miss and hit shaders do not access any external resources: instead they
 	// communicate their results through the ray payload
-	context->m_sbtHelper.AddMissProgram(L"Miss", {});
+	context->m_sbtHelper.AddMissProgram(L"Miss", { nullptr });
 
 	// Adding the triangle hit shader
 	context->m_sbtHelper.AddHitGroup(L"HitGroup",
@@ -698,9 +708,11 @@ AccelerationStructureBuffers DXRSetup::CreateBottomLevelAS(std::vector<std::pair
 //
 void DXRSetup::CreateTopLevelAS(
 	const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>
-	& instances // pair of bottom level AS and matrix of the instance
+	& instances, bool update // pair of bottom level AS and matrix of the instance
 ) {
 	DXRContext* context = m_app->GetContext();
+
+	context->m_topLevelASGenerator.RemoveAllInstances();
 
 	// Gather all the instances into the builder helper
 	for (size_t i = 0; i < instances.size(); i++) {
@@ -714,35 +726,37 @@ void DXRSetup::CreateTopLevelAS(
 		}
 	}
 
-	// As for the bottom-level AS, the building the AS requires some scratch space
-	// to store temporary data in addition to the actual AS. In the case of the
-	// top-level AS, the instance descriptors also need to be stored in GPU
-	// memory. This call outputs the memory requirements for each (scratch,
-	// results, instance descriptors) so that the application can allocate the
-	// corresponding memory
-	UINT64 scratchSize, resultSize, instanceDescsSize;
+	if (!update)
+	{
+		// As for the bottom-level AS, the building the AS requires some scratch space
+		// to store temporary data in addition to the actual AS. In the case of the
+		// top-level AS, the instance descriptors also need to be stored in GPU
+		// memory. This call outputs the memory requirements for each (scratch,
+		// results, instance descriptors) so that the application can allocate the
+		// corresponding memory
+		UINT64 scratchSize, resultSize, instanceDescsSize;
 
-	context->m_topLevelASGenerator.ComputeASBufferSizes(m_device.Get(), true, &scratchSize,
-		&resultSize, &instanceDescsSize);
+		context->m_topLevelASGenerator.ComputeASBufferSizes(m_device.Get(), true, &scratchSize,
+			&resultSize, &instanceDescsSize);
 
-	// Create the scratch and result buffers. Since the build is all done on GPU,
-	// those can be allocated on the default heap
-	context->m_topLevelASBuffers.pScratch = nv_helpers_dx12::CreateBuffer(
-		m_device.Get(), scratchSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		nv_helpers_dx12::kDefaultHeapProps);
-	context->m_topLevelASBuffers.pResult = nv_helpers_dx12::CreateBuffer(
-		m_device.Get(), resultSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
-		nv_helpers_dx12::kDefaultHeapProps);
+		// Create the scratch and result buffers. Since the build is all done on GPU,
+		// those can be allocated on the default heap
+		context->m_topLevelASBuffers.pScratch = nv_helpers_dx12::CreateBuffer(
+			m_device.Get(), scratchSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			nv_helpers_dx12::kDefaultHeapProps);
+		context->m_topLevelASBuffers.pResult = nv_helpers_dx12::CreateBuffer(
+			m_device.Get(), resultSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+			nv_helpers_dx12::kDefaultHeapProps);
 
-	// The buffer describing the instances: ID, shader binding information,
-	// matrices ... Those will be copied into the buffer by the helper through
-	// mapping, so the buffer has to be allocated on the upload heap.
-	context->m_topLevelASBuffers.pInstanceDesc = nv_helpers_dx12::CreateBuffer(
-		m_device.Get(), instanceDescsSize, D3D12_RESOURCE_FLAG_NONE,
-		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
-
+		// The buffer describing the instances: ID, shader binding information,
+		// matrices ... Those will be copied into the buffer by the helper through
+		// mapping, so the buffer has to be allocated on the upload heap.
+		context->m_topLevelASBuffers.pInstanceDesc = nv_helpers_dx12::CreateBuffer(
+			m_device.Get(), instanceDescsSize, D3D12_RESOURCE_FLAG_NONE,
+			D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
+	}
 	// After all the buffers are allocated, or if only an update is required, we
 	// can build the acceleration structure. Note that in the case of the update
 	// we also pass the existing AS as the 'previous' AS, so that it can be

@@ -20,7 +20,7 @@ DrawableGameObject::DrawableGameObject()
 	XMMATRIX scale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 
 	// Initialize the world matrix
-	XMStoreFloat4x4(&m_World, scale * rotation * translation);
+	XMStoreFloat4x4(&m_World, translation * rotation * scale);
 }
 
 DrawableGameObject::~DrawableGameObject()
@@ -258,18 +258,39 @@ void DrawableGameObject::setScale(XMFLOAT3 scale)
 	m_scale = scale;
 }
 
+void DrawableGameObject::setOrginalTransformValues(XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale)
+{
+	m_orginalPosition = position;
+	m_orginalRotation = rotation;
+	m_orginalScale = scale;
+}
+
+void DrawableGameObject::resetTransform()
+{
+	m_position = m_orginalPosition;
+	m_rotation = m_orginalRotation;
+	m_scale = m_orginalScale;
+}
+
 void DrawableGameObject::update(float t)
 {
 	static float cummulativeTime = 0;
 	cummulativeTime += t;
 
+	// Don't overflow the rotation
 	if (m_rotation.x > 360.0f) m_rotation.x = 0.0f;
+
+	if (m_rotation.x < -360.0f) m_rotation.x = 0.0f;
 
 	if (m_rotation.y > 360.0f) m_rotation.y = 0.0f;
 
+	if (m_rotation.y < -360.0f) m_rotation.y = 0.0f;
+
 	if (m_rotation.z > 360.0f) m_rotation.z = 0.0f;
 
-	XMMATRIX rotation = XMMatrixRotationX(XMConvertToRadians(m_rotation.x)) * XMMatrixRotationY(XMConvertToRadians(m_rotation.y)) * XMMatrixRotationZ(XMConvertToRadians(m_rotation.z + t));
+	if (m_rotation.z < -360.0f) m_rotation.z = 0.0f;
+
+	XMMATRIX rotation = XMMatrixRotationX(XMConvertToRadians(m_rotation.x)) * XMMatrixRotationY(XMConvertToRadians(m_rotation.y)) * XMMatrixRotationZ(XMConvertToRadians(m_rotation.z));
 	XMMATRIX translation = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
 	XMMATRIX scale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 

@@ -5,6 +5,7 @@
 
 class DXRSetup
 {
+	friend class DXRRuntime;
 private:
 	static const UINT FrameCount = FRAME_COUNT;
 	DXRApp* m_app;
@@ -23,14 +24,13 @@ private:
 
 	void LoadPipeline();
 	void LoadAssets();
-	
 
 	/// Create all acceleration structures, bottom and top
 	void CreateAccelerationStructures();
 
 	/// Create the main acceleration structure that holds all instances of the scene
 	/// \param     instances : pair of BLAS and transform
-	void CreateTopLevelAS(const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>& instances);
+	void CreateTopLevelAS(const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>& instances, bool update);
 
 	/// Create the acceleration structure of an instance
 	///
@@ -39,7 +39,6 @@ private:
 	AccelerationStructureBuffers CreateBottomLevelAS(std::vector<std::pair<ComPtr<ID3D12Resource>, uint32_t>> vVertexBuffers,
 		std::vector<std::pair<ComPtr<ID3D12Resource>, uint32_t>> vIndexBuffers);
 
-
 	// #DXR
 	ComPtr<ID3D12RootSignature> CreateRayGenSignature();
 	ComPtr<ID3D12RootSignature> CreateMissSignature();
@@ -47,13 +46,8 @@ private:
 
 	void CreateRaytracingPipeline();
 
-
-
-
 	void CreateRaytracingOutputBuffer();
 	void CreateShaderResourceHeap();
 
 	void CreateShaderBindingTable();
-
 };
-
