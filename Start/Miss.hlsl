@@ -1,17 +1,31 @@
 #include "Common.hlsl"
 
-// TODO SET UP BUFFER WITH DAVID
+cbuffer CameraParams : register(b0)
+{
+    float4x4 viewI;
+    float4x4 projectionI;
+
+    float4x4 pad1;
+    float4x4 pad2;
+}
 
 [shader("miss")]
 void Miss(inout HitInfo payload : SV_RayPayload)
 {
-    float3 rayDir = WorldRayOrigin();
+    uint2 launchIndex = DispatchRaysIndex().xy;
+    float2 dims = float2(DispatchRaysDimensions().xy);
+    float2 d = (((launchIndex.xy + 0.5f) / dims.xy) * 2.f - 1.f);
+
+    float4 target = mul(projectionI, float4(d.x, -d.y, 1, 1));
+    float3 rayDir = mul(viewI, float4(target.xyz, 0));
+
+
 
     float3 lightBlue = float3(0.68f,0.85f,0.90f);
     float3 pink = float3(1.0f,0.75f,0.8f);
     float3 white = float3(1.0f,1.0f,1.0f);
 
-    float yScreenRange = (rayDir.g + 1.0f) * 0.5f;
+    float yScreenRange = (rayDir.g + 1.0f) * 0.5;
 
     float3 colorOut = float3(1.0f, 0.0f, 0.0f);
 

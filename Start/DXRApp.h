@@ -17,7 +17,6 @@
 #include <dxcapi.h>
 #include <vector>
 
-
 class DrawableGameObject;
 
 using namespace DirectX;
@@ -30,7 +29,6 @@ class DXRRuntime;
 typedef std::vector<DrawableGameObject*> vecDrawables;
 
 #define FRAME_COUNT 2
-
 
 // Note that while ComPtr is used to manage the lifetime of resources on the
 // CPU, it has no understanding of the lifetime of resources on the GPU. Apps
@@ -51,18 +49,22 @@ public:
 	virtual void OnRender();
 	virtual void OnDestroy();
 	DXRContext* GetContext() { return m_DXRContext; }
-	
+
+	float GetAspectRatio() const { return m_aspectRatio; }
+
+	virtual void OnKeyUp(UINT8 key);
+	virtual void OnKeyDown(UINT8 key);
+
+	void OnMouseMoveDelta(POINTS Delta);
+	void OnMouseMove(int x, int y);
 
 private:
 	DXRContext* m_DXRContext;
 	DXRRuntime* m_DXRuntime;
 	DXRSetup* m_DXSetup;
 
-	
-	virtual void OnKeyUp(UINT8 key);
 	void WaitForPreviousFrame();
 
-	
 	std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>> m_instances;
 
 	vecDrawables m_drawableObjects;

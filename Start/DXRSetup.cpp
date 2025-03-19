@@ -54,6 +54,8 @@ void DXRSetup::initialise()
 	// as the target image
 	CreateRaytracingOutputBuffer(); // #DXR
 
+	CreateCamera();
+
 	// Create the buffer containing the raytracing result (always output in a
 	// UAV), and create the heap referencing the resources used by the raytracing,
 	// such as the acceleration structure
@@ -64,6 +66,38 @@ void DXRSetup::initialise()
 	CreateShaderBindingTable();
 
 	SetupIMGUI();
+}
+
+void DXRSetup::CreateCamera()
+{
+	DXRContext* context = m_app->GetContext();
+
+	context->m_pCamera = new Camera(XMFLOAT3(0, 0, 5), XMFLOAT3(0, 0, -1), XMFLOAT3(0, 1, 0));
+
+	context->m_cameraBuffer = nv_helpers_dx12::CreateBuffer(
+		m_device.Get(), context->m_cameraBufferSize, D3D12_RESOURCE_FLAG_NONE,
+		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
+}
+
+void DXRSetup::UpdateCamera()
+{
+	DXRContext* context = m_app->GetContext();
+
+	std::vector<XMMATRIX> matrices(4);
+
+	XMMATRIX view = context->m_pCamera->GetViewMatrix();
+
+	float fovAngleY = 45.0f * XM_PI / 180.0f;
+	XMMATRIX perspective = XMMatrixPerspectiveFovLH(fovAngleY, m_app->GetAspectRatio(), 0.1f, 1000.0f);
+
+	matrices[0] = XMMatrixInverse(nullptr, view);
+	matrices[1] = XMMatrixInverse(nullptr, perspective);
+
+	// Copy the matrix contents
+	uint8_t* pData;
+	ThrowIfFailed(context->m_cameraBuffer->Map(0, nullptr, (void**)&pData));
+	memcpy(pData, matrices.data(), context->m_cameraBufferSize);
+	context->m_cameraBuffer->Unmap(0, nullptr);
 }
 
 void DXRSetup::SetupIMGUI()
@@ -384,7 +418,7 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateRayGenSignature() {
 		  0 /*heap slot where the UAV is defined*/},
 		 {0 /*t0*/, 1, 0,
 		  D3D12_DESCRIPTOR_RANGE_TYPE_SRV /*Top-level acceleration structure*/,
-		  1} });
+		  1},{0 /*b0*/, 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_CBV /*Camera parameters*/, 2} });
 
 	return rsc.Generate(m_device.Get(), true);
 }
@@ -406,6 +440,13 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 //
 ComPtr<ID3D12RootSignature> DXRSetup::CreateMissSignature() {
 	nv_helpers_dx12::RootSignatureGenerator rsc;
+	rsc.AddHeapRangesParameter(
+		{ {0 /*u0*/, 1 /*1 descriptor */, 0 /*use the implicit register space 0*/,
+		  D3D12_DESCRIPTOR_RANGE_TYPE_UAV /* UAV representing the output buffer*/,
+		  0 /*heap slot where the UAV is defined*/},
+		 {0 /*t0*/, 1, 0,
+		  D3D12_DESCRIPTOR_RANGE_TYPE_SRV /*Top-level acceleration structure*/,
+		  1},{0 /*b0*/, 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_CBV /*Camera parameters*/, 2} });
 	return rsc.Generate(m_device.Get(), true);
 }
 
@@ -545,7 +586,7 @@ void DXRSetup::CreateShaderResourceHeap()
 	// Create a SRV/UAV/CBV descriptor heap. We need 2 entries - 1 UAV for the
 	// raytracing output and 1 SRV for the TLAS
 	context->m_srvUavHeap = nv_helpers_dx12::CreateDescriptorHeap(
-		m_device.Get(), 2, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+		m_device.Get(), 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
 
 	// Get a handle to the heap memory on the CPU side, to be able to write the
 	// descriptors directly
@@ -570,8 +611,18 @@ void DXRSetup::CreateShaderResourceHeap()
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.RaytracingAccelerationStructure.Location =
 		context->m_topLevelASBuffers.pResult->GetGPUVirtualAddress();
+
 	// Write the acceleration structure view in the heap
 	m_device->CreateShaderResourceView(nullptr, &srvDesc, srvHandle);
+
+	// Constant Buffer Increment Size
+	srvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+	cbvDesc.BufferLocation = context->m_cameraBuffer->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = context->m_cameraBufferSize;
+	m_device->CreateConstantBufferView(&cbvDesc, srvHandle);
 }
 
 //-----------------------------------------------------------------------------
@@ -607,7 +658,7 @@ void DXRSetup::CreateShaderBindingTable()
 
 	// The miss and hit shaders do not access any external resources: instead they
 	// communicate their results through the ray payload
-	context->m_sbtHelper.AddMissProgram(L"Miss", { nullptr });
+	context->m_sbtHelper.AddMissProgram(L"Miss", { heapPointer });
 
 	// Adding the triangle hit shader
 	context->m_sbtHelper.AddHitGroup(L"HitGroup",

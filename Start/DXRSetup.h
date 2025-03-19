@@ -16,6 +16,9 @@ public:
 
 	void initialise();
 
+	void CreateCamera();
+	void UpdateCamera();
+
 private:
 
 	void SetupIMGUI();

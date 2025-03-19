@@ -42,6 +42,8 @@ void DXRRuntime::Update()
 	m_currentDeltaTime = deltaTime;
 	frameStart = frameNow;
 
+	m_app->m_DXSetup->UpdateCamera();
+
 	unsigned int i = 0;
 	for (DrawableGameObject* dgo : m_app->m_drawableObjects)
 	{
@@ -53,10 +55,46 @@ void DXRRuntime::Update()
 
 void DXRRuntime::OnKeyUp(UINT8 key)
 {
+}
+
+void DXRRuntime::OnKeyDown(UINT8 key)
+{
+	DXRContext* context = m_app->GetContext();
 	if (key == VK_ESCAPE)
 	{
 		PostQuitMessage(0);
 	}
+
+	if (key == VK_TAB)
+	{
+		m_selectedObject = nullptr;
+	}
+
+	if (GetAsyncKeyState('W') & 0xFFFF) context->m_pCamera->MoveForward(0.1f);
+
+	if (GetAsyncKeyState('A') & 0xFFFF) context->m_pCamera->StrafeLeft(0.1f);
+
+	if (GetAsyncKeyState('S') & 0xFFFF) context->m_pCamera->MoveBackward(0.1f);
+
+	if (GetAsyncKeyState('D') & 0xFFFF) context->m_pCamera->StrafeRight(0.1f);
+
+	if (GetAsyncKeyState('E') & 0xFFFF) context->m_pCamera->MoveUp(0.1f);
+
+	if (GetAsyncKeyState('Q') & 0xFFFF) context->m_pCamera->MoveDown(0.1f);
+
+	if (GetAsyncKeyState(VK_NUMPAD8) & 0xFFFF) context->m_pCamera->RotatePitch(-0.1f);
+
+	if (GetAsyncKeyState(VK_NUMPAD5) & 0xFFFF) context->m_pCamera->RotatePitch(0.1f);
+
+	if (GetAsyncKeyState(VK_NUMPAD4) & 0xFFFF) context->m_pCamera->RotateYaw(-0.1f);
+
+	if (GetAsyncKeyState(VK_NUMPAD6) & 0xFFFF) context->m_pCamera->RotateYaw(0.1f);
+
+	if (GetAsyncKeyState(VK_NUMPAD7) & 0xFFFF) context->m_pCamera->RotateRoll(-0.1f);
+
+	if (GetAsyncKeyState(VK_NUMPAD9) & 0xFFFF) context->m_pCamera->RotateRoll(0.1f);
+
+	if (key == 'R') context->m_pCamera->Reset();
 }
 
 void DXRRuntime::DrawIMGUI()
@@ -71,6 +109,7 @@ void DXRRuntime::DrawIMGUI()
 	DrawPerformanceWindow();
 	DrawObjectSelectionWindow();
 	DrawObjectMovementWindow();
+	DrawCameraStatsWindow();
 }
 
 void DXRRuntime::DrawPerformanceWindow()
@@ -168,6 +207,27 @@ void DXRRuntime::DrawObjectMovementWindow()
 
 		ImGui::End();
 	}
+}
+
+void DXRRuntime::DrawCameraStatsWindow()
+{
+	DXRContext* context = m_app->GetContext();
+
+	XMFLOAT3 cameraPosition = context->m_pCamera->GetPosition();
+
+	ImGui::SetNextWindowPos(ImVec2(250, 10), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Camera Statistics", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Separator();
+	ImGui::Text("Camera Position: X - %.3f", cameraPosition.x);
+	ImGui::Text("Camera Position: Y - %.3f", cameraPosition.y);
+	ImGui::Text("Camera Position: Z - %.3f", cameraPosition.z);
+	ImGui::Separator();
+	if (ImGui::Button("Reset Camera"))
+	{
+		context->m_pCamera->Reset();
+	}
+
+	ImGui::End();
 }
 
 void DXRRuntime::DrawVersionWindow()

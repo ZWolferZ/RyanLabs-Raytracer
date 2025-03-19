@@ -76,3 +76,17 @@ void DXRApp::WaitForPreviousFrame() {
 void DXRApp::OnKeyUp(UINT8 key) {
 	m_DXRuntime->OnKeyUp(key);
 }
+
+void DXRApp::OnKeyDown(UINT8 key)
+{
+	m_DXRuntime->OnKeyDown(key);
+}
+
+void DXRApp::OnMouseMoveDelta(POINTS Delta)
+{
+	m_DXRContext->m_pCamera->UpdateLookAt(Delta);
+}
+
+void DXRApp::OnMouseMove(int x, int y)
+{
+}

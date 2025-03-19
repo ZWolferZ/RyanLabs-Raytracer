@@ -12,6 +12,8 @@
 #include "stdafx.h"
 
 #include "Win32Application.h"
+
+#include "DXRApp.h"
 #include "resource.h"
 
 HWND Win32Application::m_hwnd = nullptr;
@@ -85,6 +87,8 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message,
 	DXSample* pSample =
 		reinterpret_cast<DXSample*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
+	static bool mouseDown = false;
+
 	switch (message) {
 	case WM_CREATE: {
 		// Save the DXSample* passed in to CreateWindow.
@@ -101,6 +105,49 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message,
 		if (static_cast<UINT8>(wParam) == VK_ESCAPE)
 			PostQuitMessage(0);
 		return 0;
+	case WM_RBUTTONDOWN:
+		mouseDown = true;
+		break;
+	case WM_RBUTTONUP:
+		mouseDown = false;
+		break;
+
+	case WM_MOUSEMOVE:
+	{
+		if (!mouseDown)
+		{
+			break;
+		}
+
+		// Get the dimensions of the window
+		RECT rect;
+		GetClientRect(hWnd, &rect);
+
+		// Calculate the center position of the window
+		POINT windowCenter;
+		windowCenter.x = (rect.right - rect.left) / 2;
+		windowCenter.y = (rect.bottom - rect.top) / 2;
+
+		// Convert the client area point to screen coordinates
+		ClientToScreen(hWnd, &windowCenter);
+
+		// Get the current cursor position
+		POINTS mousePos = MAKEPOINTS(lParam);
+		POINT cursorPos = { mousePos.x, mousePos.y };
+		ClientToScreen(hWnd, &cursorPos);
+
+		// Calculate the delta from the window center
+		POINTS delta;
+		delta.x = cursorPos.x - windowCenter.x;
+		delta.y = cursorPos.y - windowCenter.y;
+
+		reinterpret_cast<DXRApp*>(pSample)->OnMouseMoveDelta(delta);
+		reinterpret_cast<DXRApp*>(pSample)->OnMouseMove(cursorPos.x, cursorPos.y);
+
+		// Recenter the cursor
+		SetCursorPos(windowCenter.x, windowCenter.y);
+	}
+	break;
 
 	case WM_KEYUP:
 		if (pSample) {

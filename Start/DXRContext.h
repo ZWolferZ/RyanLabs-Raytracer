@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Camera.h"
 #include "DXRApp.h"
 
 #include "nv_helpers_dx12/TopLevelASGenerator.h"
@@ -11,6 +12,10 @@ class DXRContext
 public:
 
 	DXRContext(UINT width, UINT height);
+
+	Camera* m_pCamera;
+	ComPtr< ID3D12Resource > m_cameraBuffer;
+	uint32_t m_cameraBufferSize = 256;
 
 	ComPtr<ID3D12DescriptorHeap> m_IMGUIDescHeap;
 
