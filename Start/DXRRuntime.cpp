@@ -223,6 +223,13 @@ void DXRRuntime::DrawCameraStatsWindow()
 	ImGui::Text("Camera Position: Y - %.3f", cameraPosition.y);
 	ImGui::Text("Camera Position: Z - %.3f", cameraPosition.z);
 	ImGui::Separator();
+
+	if (ImGui::DragFloat3("Camera Position", reinterpret_cast<float*>(&cameraPosition), 0.01f, -INFINITY, INFINITY))
+	{
+		context->m_pCamera->SetPosition(cameraPosition);
+	}
+	ImGui::Text("(Drag the box or enter a number)");
+	ImGui::Separator();
 	if (ImGui::Button("Reset Camera"))
 	{
 		context->m_pCamera->Reset();

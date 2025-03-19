@@ -23,6 +23,7 @@ public:
 	}
 
 	XMFLOAT3 GetPosition() { return position; }
+	void SetPosition(XMFLOAT3 newPosition) { position = newPosition; }
 
 	void MoveForward(float distance)
 	{
