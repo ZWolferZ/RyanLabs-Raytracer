@@ -11,13 +11,21 @@ StructuredBuffer<STriVertex> BTriVertex : register(t0);
 StructuredBuffer<int> indices : register(t1);
 
 
+cbuffer ColourBuffer : register(b0)
+{
+	float4 objectColour;
+	float4 planeColour;
+}
+
+
+
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
 {
 	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
 
 
-	float3 colorOut ={1.0f,0.75f, 0.8f};
+	float3 colorOut = objectColour;
 
 	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
 
@@ -28,7 +36,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 		colorOut = float3(0.0, 0.0, 0.0);
 	}
 
-	payload.colorAndDistance += float4(colorOut, RayTCurrent());
+	payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
 }
 
 [shader("anyhit")]
@@ -48,7 +56,7 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
 
-	float3 colorOut = { 0.68f, 0.85f, 0.90f };
+	float3 colorOut = planeColour;
 
 	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
 
@@ -59,6 +67,6 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 		colorOut = float3(0.0, 0.0, 0.0);
 	}
 
-	payload.colorAndDistance = float4(colorOut, RayTCurrent());
+	payload.colorAndDistance = float4(colorOut.xyz, RayTCurrent());
 }
 

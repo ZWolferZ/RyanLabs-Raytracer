@@ -110,6 +110,7 @@ void DXRRuntime::DrawIMGUI()
 	DrawObjectSelectionWindow();
 	DrawObjectMovementWindow();
 	DrawCameraStatsWindow();
+	DrawHitColourWindow();
 }
 
 void DXRRuntime::DrawPerformanceWindow()
@@ -225,6 +226,32 @@ void DXRRuntime::DrawCameraStatsWindow()
 	if (ImGui::Button("Reset Camera"))
 	{
 		context->m_pCamera->Reset();
+	}
+
+	ImGui::End();
+}
+
+void DXRRuntime::DrawHitColourWindow()
+{
+	ImGui::SetNextWindowPos(ImVec2(10, 420), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Hit Colour", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Text("Change the colour of the object and plane hit shader!");
+	ImGui::Separator();
+	XMFLOAT4 objectColour = m_app->m_DXSetup->m_objectColour;
+	XMFLOAT4 planeColour = m_app->m_DXSetup->m_planeColour;
+	if (ImGui::DragFloat3("Object Colour", reinterpret_cast<float*>(&objectColour), 0.01f, 0.0f, 1.0f))
+	{
+	}
+	if (ImGui::DragFloat3("Plane Colour", reinterpret_cast<float*>(&planeColour), 0.01f, 0.0f, 1.0f))
+	{
+	}
+	ImGui::Text("(Drag the box or enter a number)");
+	ImGui::Separator();
+	m_app->m_DXSetup->UpdateColourBuffer(objectColour, planeColour);
+
+	if (ImGui::Button("Reset Colours"))
+	{
+		m_app->m_DXSetup->UpdateColourBuffer(m_app->m_DXSetup->m_originalObjectColour, m_app->m_DXSetup->m_originalPlaneColour);
 	}
 
 	ImGui::End();

@@ -56,6 +56,8 @@ void DXRSetup::initialise()
 
 	CreateCamera();
 
+	CreateColourBuffer();
+
 	// Create the buffer containing the raytracing result (always output in a
 	// UAV), and create the heap referencing the resources used by the raytracing,
 	// such as the acceleration structure
@@ -72,7 +74,7 @@ void DXRSetup::CreateCamera()
 {
 	DXRContext* context = m_app->GetContext();
 
-	context->m_pCamera = new Camera(XMFLOAT3(0, 0, 5), XMFLOAT3(0, 0, -1), XMFLOAT3(0, 1, 0));
+	context->m_pCamera = new Camera(XMFLOAT3(0, 0, 5), XMFLOAT3(0, 0, -1.0f), XMFLOAT3(0, 1, 0));
 
 	context->m_cameraBuffer = nv_helpers_dx12::CreateBuffer(
 		m_device.Get(), context->m_cameraBufferSize, D3D12_RESOURCE_FLAG_NONE,
@@ -98,6 +100,46 @@ void DXRSetup::UpdateCamera()
 	ThrowIfFailed(context->m_cameraBuffer->Map(0, nullptr, (void**)&pData));
 	memcpy(pData, matrices.data(), context->m_cameraBufferSize);
 	context->m_cameraBuffer->Unmap(0, nullptr);
+}
+
+void DXRSetup::CreateColourBuffer()
+{
+	DXRContext* context = m_app->GetContext();
+
+	context->m_colourBuffer = nv_helpers_dx12::CreateBuffer(
+		m_device.Get(), context->m_colourBufferSize, D3D12_RESOURCE_FLAG_NONE,
+		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
+
+	std::vector<XMFLOAT4> colours(2);
+
+	colours[0] = m_originalObjectColour;
+	colours[1] = m_originalPlaneColour;
+
+	m_objectColour = colours[0];
+	m_planeColour = colours[1];
+
+	uint8_t* pData;
+	ThrowIfFailed(context->m_colourBuffer->Map(0, nullptr, (void**)&pData));
+	memcpy(pData, colours.data(), sizeof(XMFLOAT4) * 2);
+	context->m_colourBuffer->Unmap(0, nullptr);
+}
+
+void DXRSetup::UpdateColourBuffer(XMFLOAT4 objectColour, XMFLOAT4 planeColour)
+{
+	DXRContext* context = m_app->GetContext();
+
+	std::vector<XMFLOAT4> colours(2);
+
+	colours[0] = objectColour;
+	colours[1] = planeColour;
+
+	m_objectColour = colours[0];
+	m_planeColour = colours[1];
+
+	uint8_t* pData;
+	ThrowIfFailed(context->m_colourBuffer->Map(0, nullptr, (void**)&pData));
+	memcpy(pData, colours.data(), sizeof(XMFLOAT4) * 2);
+	context->m_colourBuffer->Unmap(0, nullptr);
 }
 
 void DXRSetup::SetupIMGUI()
@@ -431,6 +473,7 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 	nv_helpers_dx12::RootSignatureGenerator rsc;
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_SRV, 0 /*t0*/); // vertex data
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_SRV, 1 /*t1*/); // indices
+	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 0 /*b0*/); // Colour buffer
 	return rsc.Generate(m_device.Get(), true);
 }
 
@@ -663,12 +706,14 @@ void DXRSetup::CreateShaderBindingTable()
 	// Adding the triangle hit shader
 	context->m_sbtHelper.AddHitGroup(L"HitGroup",
 		{ (void*)(m_app->m_drawableObjects[0]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[0]->getIndexBuffer()->GetGPUVirtualAddress())
+			(void*)(m_app->m_drawableObjects[0]->getIndexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress())
 		});
 
 	context->m_sbtHelper.AddHitGroup(L"PlaneHitGroup",
 		{ (void*)(m_app->m_drawableObjects[PLANE_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[PLANE_INDEX]->getIndexBuffer()->GetGPUVirtualAddress())
+			(void*)(m_app->m_drawableObjects[PLANE_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress())
 		});
 
 	// Compute the size of the SBT given the number of shaders and their

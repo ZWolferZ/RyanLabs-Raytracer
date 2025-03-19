@@ -28,4 +28,5 @@ public:
 	void DrawObjectSelectionWindow();
 	void DrawObjectMovementWindow();
 	void DrawCameraStatsWindow();
+	void DrawHitColourWindow();
 };

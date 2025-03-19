@@ -18,6 +18,14 @@ public:
 
 	void CreateCamera();
 	void UpdateCamera();
+	void CreateColourBuffer();
+	void UpdateColourBuffer(XMFLOAT4 objectColour, XMFLOAT4 planeColour);
+
+	XMFLOAT4 m_objectColour;
+	XMFLOAT4 m_planeColour;
+
+	XMFLOAT4 m_originalObjectColour = { 1.0f, 0.75f, 0.8f, 1.0f };
+	XMFLOAT4 m_originalPlaneColour = { 0.68f, 0.85f, 0.90f, 1.0f };
 
 private:
 
