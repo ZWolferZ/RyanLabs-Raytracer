@@ -10,6 +10,9 @@ private:
 	float m_currentDeltaTime;
 	DrawableGameObject* m_selectedObject = nullptr;
 
+	float rayXWidth = 1;
+	float rayYWidth = 1;
+
 private:
 	void PopulateCommandList();
 

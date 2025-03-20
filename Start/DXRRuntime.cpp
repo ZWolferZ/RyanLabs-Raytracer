@@ -42,7 +42,7 @@ void DXRRuntime::Update()
 	m_currentDeltaTime = deltaTime;
 	frameStart = frameNow;
 
-	m_app->m_DXSetup->UpdateCamera();
+	m_app->m_DXSetup->UpdateCamera(rayXWidth, rayYWidth);
 
 	unsigned int i = 0;
 	for (DrawableGameObject* dgo : m_app->m_drawableObjects)
@@ -90,9 +90,9 @@ void DXRRuntime::OnKeyDown(UINT8 key)
 
 	if (GetAsyncKeyState(VK_NUMPAD6) & 0xFFFF) context->m_pCamera->RotateYaw(0.1f);
 
-	if (GetAsyncKeyState(VK_NUMPAD7) & 0xFFFF) context->m_pCamera->RotateRoll(-0.1f);
+	if (GetAsyncKeyState(VK_NUMPAD9) & 0xFFFF) context->m_pCamera->RotateRoll(-0.1f);
 
-	if (GetAsyncKeyState(VK_NUMPAD9) & 0xFFFF) context->m_pCamera->RotateRoll(0.1f);
+	if (GetAsyncKeyState(VK_NUMPAD7) & 0xFFFF) context->m_pCamera->RotateRoll(0.1f);
 
 	if (key == 'R') context->m_pCamera->Reset();
 }
@@ -227,6 +227,13 @@ void DXRRuntime::DrawCameraStatsWindow()
 	if (ImGui::DragFloat3("Camera Position", reinterpret_cast<float*>(&cameraPosition), 0.01f, -INFINITY, INFINITY))
 	{
 		context->m_pCamera->SetPosition(cameraPosition);
+	}
+
+	float rayWidth[2] = { rayXWidth, rayYWidth };
+	if (ImGui::DragFloat2("Ray Launch Index (X & Y)", reinterpret_cast<float*>(&rayWidth), 1.0f, 1, 10))
+	{
+		rayXWidth = rayWidth[0];
+		rayYWidth = rayWidth[1];
 	}
 	ImGui::Text("(Drag the box or enter a number)");
 	ImGui::Separator();

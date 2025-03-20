@@ -11,8 +11,14 @@ cbuffer CameraParams : register(b0)
     float4x4 viewI;
     float4x4 projectionI;
 
-    float4x4 pad1;
-    float4x4 pad2;
+    float4x4 pad1[2];
+   
+
+    float rX;
+    float rY;
+    
+    float padding[2];
+
 }
 
 
@@ -36,7 +42,7 @@ cbuffer CameraParams : register(b0)
   ray.TMin = 0;
   ray.TMax = 100000;
 
-    if ((launchIndex.x % 1 == 0) && (launchIndex.y % 1 == 0))
+    if ((launchIndex.x % rX == 0) && (launchIndex.y % rY == 0))
     {
   // Trace the ray
         TraceRay(

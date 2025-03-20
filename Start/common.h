@@ -17,3 +17,14 @@ struct AccelerationStructureBuffers {
 	ComPtr<ID3D12Resource> pResult;       // Where the AS is
 	ComPtr<ID3D12Resource> pInstanceDesc; // Hold the matrices of the instances
 };
+
+struct CameraBuffer
+{
+	XMMATRIX invView;
+	XMMATRIX invProj;
+	XMMATRIX MatrixPadding[2];
+
+	float rX;
+	float rY;
+	float padding[2];
+};

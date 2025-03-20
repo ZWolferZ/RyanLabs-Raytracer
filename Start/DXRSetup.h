@@ -17,7 +17,7 @@ public:
 	void initialise();
 
 	void CreateCamera();
-	void UpdateCamera();
+	void UpdateCamera(float rX, float rY);
 	void CreateColourBuffer();
 	void UpdateColourBuffer(XMFLOAT4 objectColour, XMFLOAT4 planeColour);
 

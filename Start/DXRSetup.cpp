@@ -81,24 +81,27 @@ void DXRSetup::CreateCamera()
 		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
 }
 
-void DXRSetup::UpdateCamera()
+void DXRSetup::UpdateCamera(float rX, float rY)
 {
 	DXRContext* context = m_app->GetContext();
 
-	std::vector<XMMATRIX> matrices(4);
-
 	XMMATRIX view = context->m_pCamera->GetViewMatrix();
-
 	float fovAngleY = 45.0f * XM_PI / 180.0f;
 	XMMATRIX perspective = XMMatrixPerspectiveFovLH(fovAngleY, m_app->GetAspectRatio(), 0.1f, 1000.0f);
 
-	matrices[0] = XMMatrixInverse(nullptr, view);
-	matrices[1] = XMMatrixInverse(nullptr, perspective);
+	XMMATRIX invView = XMMatrixInverse(nullptr, view);
+	XMMATRIX invProj = XMMatrixInverse(nullptr, perspective);
 
-	// Copy the matrix contents
-	uint8_t* pData;
-	ThrowIfFailed(context->m_cameraBuffer->Map(0, nullptr, (void**)&pData));
-	memcpy(pData, matrices.data(), context->m_cameraBufferSize);
+	CameraBuffer cb;
+	cb.invView = invView;
+	cb.invProj = invProj;
+	cb.rX = rX;
+	cb.rY = rY;
+
+	// Map and update the constant buffer
+	uint8_t* pData = nullptr;
+	ThrowIfFailed(context->m_cameraBuffer->Map(0, nullptr, reinterpret_cast<void**>(&pData)));
+	memcpy(pData, &cb, sizeof(CameraBuffer));
 	context->m_cameraBuffer->Unmap(0, nullptr);
 }
 
