@@ -70,8 +70,9 @@ void DXRRuntime::OnKeyDown(UINT8 key)
 		m_selectedObject = nullptr;
 	}
 
-	if (GetAsyncKeyState('W') & 0xFFFF) context->m_pCamera->MoveForward(0.1f);
 
+	if (GetAsyncKeyState('W') & 0xFFFF) context->m_pCamera->MoveForward(0.1f);
+	
 	if (GetAsyncKeyState('A') & 0xFFFF) context->m_pCamera->StrafeLeft(0.1f);
 
 	if (GetAsyncKeyState('S') & 0xFFFF) context->m_pCamera->MoveBackward(0.1f);

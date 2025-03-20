@@ -22,7 +22,6 @@ struct CameraBuffer
 {
 	XMMATRIX invView;
 	XMMATRIX invProj;
-	XMMATRIX MatrixPadding[2];
 
 	float rX;
 	float rY;
