@@ -1,10 +1,16 @@
 #pragma once
 
+#include <map>
+#include <unordered_map>
+
 #include "DXRApp.h"
 
 class DXRRuntime
 {
 private:
+
+	std::unordered_map<UINT8, bool > inputs;
+
 	ComPtr<ID3D12Device5> m_device;
 	DXRApp* m_app;
 	float m_currentDeltaTime;
@@ -12,6 +18,9 @@ private:
 
 	float rayXWidth = 1;
 	float rayYWidth = 1;
+
+	float m_cameraMoveSpeed = 2.0f;
+	float m_cameraRotateSpeed = 1.0f;
 
 private:
 	void PopulateCommandList();

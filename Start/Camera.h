@@ -129,7 +129,7 @@ public:
 		// Get the current look direction and up vector
 		XMVECTOR lookDirVec = XMLoadFloat3(&lookDir);
 		lookDirVec = XMVector3Normalize(lookDirVec);
-		XMVECTOR upVec = XMLoadFloat3(&up);
+		XMVECTOR upVec = XMLoadFloat3(&originalUp);
 		upVec = XMVector3Normalize(upVec);
 
 		// Calculate the camera's right vector

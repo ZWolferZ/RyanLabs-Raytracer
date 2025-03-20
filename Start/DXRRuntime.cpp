@@ -34,6 +34,8 @@ void DXRRuntime::Render()
 
 void DXRRuntime::Update()
 {
+	DXRContext* context = m_app->GetContext();
+
 	//Static initializes this value only once
 	static ULONGLONG frameStart = GetTickCount64();
 	static float deltaTime = 0.0f;
@@ -51,51 +53,43 @@ void DXRRuntime::Update()
 		m_app->m_instances[i].second = dgo->getTransform();
 		i++;
 	}
+
+	if (inputs['W'] == true) context->m_pCamera->MoveForward(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs['A'] == true) context->m_pCamera->StrafeLeft(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs['S'] == true) context->m_pCamera->MoveBackward(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs['D'] == true) context->m_pCamera->StrafeRight(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs['E'] == true) context->m_pCamera->MoveUp(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs['Q'] == true) context->m_pCamera->MoveDown(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD8] == true) context->m_pCamera->RotatePitch(-m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD5] == true) context->m_pCamera->RotatePitch(m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD4] == true) context->m_pCamera->RotateYaw(-m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD6] == true) context->m_pCamera->RotateYaw(m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD9] == true) context->m_pCamera->RotateRoll(-m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD7] == true) context->m_pCamera->RotateRoll(m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs['R'] == true) context->m_pCamera->Reset();
+	if (inputs[VK_ESCAPE] == true) PostQuitMessage(0);
+	if (inputs[VK_TAB] == true) m_selectedObject = nullptr;
 }
 
 void DXRRuntime::OnKeyUp(UINT8 key)
 {
+	if (inputs.find(key) == inputs.end())
+	{
+		inputs.insert({ key, false });
+		return;
+	}
+
+	inputs[key] = false;
 }
 
 void DXRRuntime::OnKeyDown(UINT8 key)
 {
-	DXRContext* context = m_app->GetContext();
-	if (key == VK_ESCAPE)
+	if (inputs.find(key) == inputs.end())
 	{
-		PostQuitMessage(0);
+		inputs.insert({ key, true });
+		return;
 	}
-
-	if (key == VK_TAB)
-	{
-		m_selectedObject = nullptr;
-	}
-
-
-	if (GetAsyncKeyState('W') & 0xFFFF) context->m_pCamera->MoveForward(0.1f);
-	
-	if (GetAsyncKeyState('A') & 0xFFFF) context->m_pCamera->StrafeLeft(0.1f);
-
-	if (GetAsyncKeyState('S') & 0xFFFF) context->m_pCamera->MoveBackward(0.1f);
-
-	if (GetAsyncKeyState('D') & 0xFFFF) context->m_pCamera->StrafeRight(0.1f);
-
-	if (GetAsyncKeyState('E') & 0xFFFF) context->m_pCamera->MoveUp(0.1f);
-
-	if (GetAsyncKeyState('Q') & 0xFFFF) context->m_pCamera->MoveDown(0.1f);
-
-	if (GetAsyncKeyState(VK_NUMPAD8) & 0xFFFF) context->m_pCamera->RotatePitch(-0.1f);
-
-	if (GetAsyncKeyState(VK_NUMPAD5) & 0xFFFF) context->m_pCamera->RotatePitch(0.1f);
-
-	if (GetAsyncKeyState(VK_NUMPAD4) & 0xFFFF) context->m_pCamera->RotateYaw(-0.1f);
-
-	if (GetAsyncKeyState(VK_NUMPAD6) & 0xFFFF) context->m_pCamera->RotateYaw(0.1f);
-
-	if (GetAsyncKeyState(VK_NUMPAD9) & 0xFFFF) context->m_pCamera->RotateRoll(-0.1f);
-
-	if (GetAsyncKeyState(VK_NUMPAD7) & 0xFFFF) context->m_pCamera->RotateRoll(0.1f);
-
-	if (key == 'R') context->m_pCamera->Reset();
+	inputs[key] = true;
 }
 
 void DXRRuntime::DrawIMGUI()
