@@ -298,6 +298,7 @@ void DXRRuntime::DrawCameraSplineWindow()
 	ImGui::Checkbox("Start / Stop Camera Animation", &m_playCameraSplineAnimation);
 	ImGui::Separator();
 	ImGui::SliderFloat("Animation Duration", &m_totalSplineAnimation, 1.0f, 10.0f);
+	ImGui::SliderFloat("Current Animation Time", &m_app->GetContext()->m_pCamera->m_splineTransition, 0.0f, 0.98f);
 	ImGui::Separator();
 	if (ImGui::Button("Add Point"))
 	{
