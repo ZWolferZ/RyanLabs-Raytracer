@@ -46,6 +46,8 @@ void DXRRuntime::Update()
 	m_currentDeltaTime = deltaTime;
 	frameStart = frameNow;
 
+	KeyInputs(context);
+
 	if (m_playCameraSplineAnimation)
 	{
 		context->m_pCamera->CameraSplineAnimation(deltaTime, m_controlPoints, m_totalSplineAnimation);
@@ -59,22 +61,6 @@ void DXRRuntime::Update()
 		dgo->update(deltaTime);
 		m_app->m_instances[i].second = dgo->getTransform();
 	}
-
-	if (inputs['W'] == true) context->m_pCamera->MoveForward(m_cameraMoveSpeed * m_currentDeltaTime);
-	if (inputs['A'] == true) context->m_pCamera->StrafeLeft(m_cameraMoveSpeed * m_currentDeltaTime);
-	if (inputs['S'] == true) context->m_pCamera->MoveBackward(m_cameraMoveSpeed * m_currentDeltaTime);
-	if (inputs['D'] == true) context->m_pCamera->StrafeRight(m_cameraMoveSpeed * m_currentDeltaTime);
-	if (inputs['E'] == true) context->m_pCamera->MoveUp(m_cameraMoveSpeed * m_currentDeltaTime);
-	if (inputs['Q'] == true) context->m_pCamera->MoveDown(m_cameraMoveSpeed * m_currentDeltaTime);
-	if (inputs[VK_NUMPAD8] == true) context->m_pCamera->RotatePitch(-m_cameraRotateSpeed * m_currentDeltaTime);
-	if (inputs[VK_NUMPAD5] == true) context->m_pCamera->RotatePitch(m_cameraRotateSpeed * m_currentDeltaTime);
-	if (inputs[VK_NUMPAD4] == true) context->m_pCamera->RotateYaw(-m_cameraRotateSpeed * m_currentDeltaTime);
-	if (inputs[VK_NUMPAD6] == true) context->m_pCamera->RotateYaw(m_cameraRotateSpeed * m_currentDeltaTime);
-	if (inputs[VK_NUMPAD9] == true) context->m_pCamera->RotateRoll(-m_cameraRotateSpeed * m_currentDeltaTime);
-	if (inputs[VK_NUMPAD7] == true) context->m_pCamera->RotateRoll(m_cameraRotateSpeed * m_currentDeltaTime);
-	if (inputs['R'] == true) context->m_pCamera->Reset();
-	if (inputs[VK_ESCAPE] == true) PostQuitMessage(0);
-	if (inputs[VK_TAB] == true) m_selectedObject = nullptr;
 }
 
 void DXRRuntime::OnKeyUp(UINT8 key)
@@ -96,6 +82,27 @@ void DXRRuntime::OnKeyDown(UINT8 key)
 		return;
 	}
 	inputs[key] = true;
+}
+
+void DXRRuntime::KeyInputs(DXRContext* context)
+{
+	if (inputs['W'] == true) context->m_pCamera->MoveForward(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs['A'] == true) context->m_pCamera->StrafeLeft(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs['S'] == true) context->m_pCamera->MoveBackward(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs['D'] == true) context->m_pCamera->StrafeRight(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs['E'] == true) context->m_pCamera->MoveUp(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs[VK_SPACE] == true) context->m_pCamera->MoveUp(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs['Q'] == true) context->m_pCamera->MoveDown(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs[VK_SHIFT] == true) context->m_pCamera->MoveDown(m_cameraMoveSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD8] == true) context->m_pCamera->RotatePitch(-m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD5] == true) context->m_pCamera->RotatePitch(m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD4] == true) context->m_pCamera->RotateYaw(-m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD6] == true) context->m_pCamera->RotateYaw(m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD9] == true) context->m_pCamera->RotateRoll(-m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs[VK_NUMPAD7] == true) context->m_pCamera->RotateRoll(m_cameraRotateSpeed * m_currentDeltaTime);
+	if (inputs['R'] == true) context->m_pCamera->Reset();
+	if (inputs[VK_ESCAPE] == true) PostQuitMessage(0);
+	if (inputs[VK_TAB] == true) m_selectedObject = nullptr;
 }
 
 void DXRRuntime::DrawIMGUI()

@@ -44,6 +44,7 @@ public:
 	void Update();
 	void OnKeyUp(UINT8 key);
 	void OnKeyDown(UINT8 key);
+	void KeyInputs(DXRContext* context);
 
 	void DrawIMGUI();
 
