@@ -14,7 +14,19 @@ private:
 	ComPtr<ID3D12Device5> m_device;
 	DXRApp* m_app;
 	float m_currentDeltaTime;
+	float m_totalTime = 0.0f;
 	DrawableGameObject* m_selectedObject = nullptr;
+
+	bool m_playCameraSplineAnimation = false;
+
+	float m_totalSplineAnimation = 3.0f;
+
+	std::vector<XMVECTOR> m_controlPoints = {
+	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // Initial velocity
+	XMVectorSet(0.0f,  0.0f, 5.0f, 0.0f),
+	XMVectorSet(1.0f,  0.0f, 5.0f, 0.0f),
+	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f)   // Final velocity
+	};
 
 	float rayXWidth = 1;
 	float rayYWidth = 1;
@@ -41,4 +53,5 @@ public:
 	void DrawObjectMovementWindow();
 	void DrawCameraStatsWindow();
 	void DrawHitColourWindow();
+	void DrawCameraSplineWindow();
 };

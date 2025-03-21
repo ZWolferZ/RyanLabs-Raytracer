@@ -39,19 +39,25 @@ void DXRRuntime::Update()
 	//Static initializes this value only once
 	static ULONGLONG frameStart = GetTickCount64();
 	static float deltaTime = 0.0f;
+
 	ULONGLONG frameNow = GetTickCount64();
 	deltaTime = (frameNow - frameStart) / 1000.0f;
+	m_totalTime += deltaTime;
 	m_currentDeltaTime = deltaTime;
 	frameStart = frameNow;
 
+	if (m_playCameraSplineAnimation)
+	{
+		context->m_pCamera->CameraSplineAnimation(deltaTime, m_controlPoints, m_totalSplineAnimation);
+	}
+
 	m_app->m_DXSetup->UpdateCamera(rayXWidth, rayYWidth);
 
-	unsigned int i = 0;
-	for (DrawableGameObject* dgo : m_app->m_drawableObjects)
+	for (size_t i = 0; i < m_app->m_drawableObjects.size(); ++i)
 	{
+		DrawableGameObject* dgo = m_app->m_drawableObjects[i];
 		dgo->update(deltaTime);
 		m_app->m_instances[i].second = dgo->getTransform();
-		i++;
 	}
 
 	if (inputs['W'] == true) context->m_pCamera->MoveForward(m_cameraMoveSpeed * m_currentDeltaTime);
@@ -106,6 +112,7 @@ void DXRRuntime::DrawIMGUI()
 	DrawObjectMovementWindow();
 	DrawCameraStatsWindow();
 	DrawHitColourWindow();
+	DrawCameraSplineWindow();
 }
 
 void DXRRuntime::DrawPerformanceWindow()
@@ -136,7 +143,7 @@ void DXRRuntime::DrawPerformanceWindow()
 
 void DXRRuntime::DrawObjectSelectionWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(10, 70), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(10, 80), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Object Selection", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImGui::Text("Choose an object to select!");
@@ -170,11 +177,8 @@ void DXRRuntime::DrawObjectMovementWindow()
 		ImGui::Begin("Object Movement", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 		ImGui::Text("Manipulate the selected object:");
-
 		ImGui::Text("Selected Object: %s", m_selectedObject->getObjectName().c_str());
 		ImGui::Separator();
-
-		// Gross and dirty re-casting of XMFLOAT3 to float* to make ImGui happy
 
 		XMFLOAT3 position = m_selectedObject->getPosition();
 		if (ImGui::DragFloat3("Position", reinterpret_cast<float*>(&position), 0.005f))
@@ -193,7 +197,20 @@ void DXRRuntime::DrawObjectMovementWindow()
 		{
 			m_selectedObject->setScale(scale);
 		}
+
 		ImGui::Text("(Drag the box or enter a number)");
+		ImGui::Separator();
+
+		ImGui::Text("Auto Rotate:");
+
+		ImGui::SliderFloat("Rotation Speed", &m_selectedObject->m_autoRotationSpeed, 0.0f, 360.0f);
+
+		ImGui::Checkbox("Auto Rotate (X+)", &m_selectedObject->m_autoRotateX);
+
+		ImGui::Checkbox("Auto Rotate (Y+)", &m_selectedObject->m_autoRotateY);
+
+		ImGui::Checkbox("Auto Rotate (Z+)", &m_selectedObject->m_autoRotateZ);
+
 		ImGui::Separator();
 
 		if (ImGui::Button("Reset Transform"))
@@ -242,7 +259,7 @@ void DXRRuntime::DrawCameraStatsWindow()
 
 void DXRRuntime::DrawHitColourWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(10, 420), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(10, 530), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Hit Colour", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("Change the colour of the object and plane hit shader!");
 	ImGui::Separator();
@@ -266,11 +283,52 @@ void DXRRuntime::DrawHitColourWindow()
 	ImGui::End();
 }
 
+void DXRRuntime::DrawCameraSplineWindow()
+{
+	ImGui::SetNextWindowPos(ImVec2(875, 200), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Camera Spline Animation", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Checkbox("Start / Stop Camera Animation", &m_playCameraSplineAnimation);
+	ImGui::Separator();
+	ImGui::SliderFloat("Animation Duration", &m_totalSplineAnimation, 1.0f, 10.0f);
+	ImGui::Separator();
+	if (ImGui::Button("Add Point"))
+	{
+		if (m_controlPoints.size() < 10) m_controlPoints.push_back(XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f));
+	}
+
+	if (ImGui::Button("Remove Point"))
+	{
+		if (m_controlPoints.size() > 4) m_controlPoints.erase(m_controlPoints.end() - 1);
+	}
+
+	// Okay, IMGUI is pretty cool
+	for (size_t i = 0; i < m_controlPoints.size(); i++)
+	{
+		XMFLOAT3 point;
+		XMStoreFloat3(&point, m_controlPoints[i]);
+
+		string pointName = "Spline Point " + to_string(i);
+
+		if (i == 0) pointName = "Initial Velocity";
+
+		if (i == m_controlPoints.size() - 1) pointName = "Final Velocity";
+
+		if (ImGui::DragFloat3(pointName.c_str(), reinterpret_cast<float*>(&point), 0.1f))
+		{
+			m_controlPoints[i] = XMLoadFloat3(&point);
+		}
+	}
+
+	ImGui::End();
+}
+
 void DXRRuntime::DrawVersionWindow()
 {
 	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
-	ImGui::Begin("DXR Path Tracer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("RyanLabs Path Tracer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("ImGUI version: (%s)", IMGUI_VERSION);
+	ImGui::Text("Application Runtime (%f)", m_totalTime);
 	ImGui::End();
 }
 

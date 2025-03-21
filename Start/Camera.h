@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include <windows.h>
 #include <windowsx.h>
+#include  <vector>
 
 using namespace DirectX;
 
@@ -22,8 +23,11 @@ public:
 		XMStoreFloat4x4(&viewMatrix, XMMatrixIdentity());
 	}
 
+	float m_splineTransition = 0.0f;
+
 	XMFLOAT3 GetPosition() { return position; }
 	void SetPosition(XMFLOAT3 newPosition) { position = newPosition; }
+	void SetPosition(XMVECTOR newPosition) { XMStoreFloat3(&position, newPosition); }
 
 	void MoveForward(float distance)
 	{
@@ -115,6 +119,83 @@ public:
 		position = originalPosition;
 		lookDir = originalLookDir;
 		up = originalUp;
+	}
+
+	XMVECTOR CatmullRom(XMVECTOR p0, XMVECTOR p1, XMVECTOR p2, XMVECTOR p3, float t)
+	{
+		float t2 = t * t;
+		float t3 = t2 * t;
+		return 0.5f * (
+			(2.0f * p1) +
+			(-p0 + p2) * t +
+			(2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
+			(-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3
+			);
+	}
+
+	void CameraSplineAnimation(float deltaTime, std::vector<XMVECTOR> controlPoints, float duration)
+	{
+		m_splineTransition += deltaTime / duration;
+
+		if (m_splineTransition > 1.0f) // BETWEEN 0 AND 1
+		{
+			m_splineTransition = 0.0f;
+		}
+
+		float smoothTransition;
+
+		// Blatant Theft from the lecture slides
+		if (m_splineTransition < 0.5f)
+		{
+			smoothTransition = 2.0f * m_splineTransition * m_splineTransition;
+		}
+		else
+		{
+			smoothTransition = 1.0f - (pow(-2.0f * m_splineTransition + 2.0f, 2) / 2.0f);
+		}
+
+		int sections = controlPoints.size() - 3; // Why 3 and not 2, I have no clue
+
+		// Super fucked way to find the which part of the spline we are on
+		float currentSplinePosition = smoothTransition * static_cast<float>(sections);
+		int sectionIndex = static_cast<int>(floor(currentSplinePosition));
+
+		// Uhh, don't go out of bounds forehead
+		if (sectionIndex >= sections)
+		{
+			sectionIndex = sections - 1;
+		}
+
+		float currentSectionTime = currentSplinePosition - static_cast<float>(sectionIndex);
+
+		XMVECTOR intialVelocity = controlPoints[sectionIndex];
+		XMVECTOR p1 = controlPoints[sectionIndex + 1];
+		XMVECTOR p2 = controlPoints[sectionIndex + 2];
+		XMVECTOR endingVelocity = controlPoints[sectionIndex + 3];
+
+		XMVECTOR newCameraPosition = CatmullRom(intialVelocity, p1, p2, endingVelocity, currentSectionTime);
+
+		SetPosition(newCameraPosition);
+
+		// No clue how do reconstruct the view matrix without it crashing
+
+		/*XMVECTOR futureCameraPosition = CatmullRom(intialVelocity, p1, p2, endingVelocity, currentSectionTime + deltaTime);
+
+		XMVECTOR splineForward = XMVector3Normalize(futureCameraPosition - newCameraPosition);
+
+		// Define a world-up vector (assumes Y-up world)
+		XMVECTOR splineUp = XMVectorSet(0, 1, 0, 0);
+
+		// Compute right vector using cross product (ensuring perpendicularity)
+		XMVECTOR splineRight = XMVector3Normalize(XMVector3Cross(splineUp, splineForward));
+
+		// Recompute up vector to ensure it remains perpendicular
+		splineUp = XMVector3Normalize(XMVector3Cross(splineForward, splineRight));
+
+		// Construct view matrix
+		XMMATRIX splineViewMatrix = XMMatrixLookToLH(newCameraPosition, splineForward, splineUp);
+
+		XMStoreFloat4x4(&viewMatrix, splineViewMatrix); */
 	}
 
 	void UpdateLookAt(POINTS delta)

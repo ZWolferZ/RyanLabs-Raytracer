@@ -15,6 +15,12 @@ public:
 
 	string m_objectName;
 
+	bool m_autoRotateX = false;
+	bool m_autoRotateY = false;
+	bool m_autoRotateZ = false;
+
+	float m_autoRotationSpeed = 50.0f;
+
 	DrawableGameObject* createCopy(); // creates a copy
 
 	HRESULT								initMesh(ComPtr<ID3D12Device5> device);

@@ -270,6 +270,10 @@ void DrawableGameObject::resetTransform()
 	m_position = m_orginalPosition;
 	m_rotation = m_orginalRotation;
 	m_scale = m_orginalScale;
+
+	m_autoRotateX = false;
+	m_autoRotateY = false;
+	m_autoRotateZ = false;
 }
 
 void DrawableGameObject::update(float t)
@@ -289,6 +293,21 @@ void DrawableGameObject::update(float t)
 	if (m_rotation.z > 360.0f) m_rotation.z = 0.0f;
 
 	if (m_rotation.z < -360.0f) m_rotation.z = 0.0f;
+
+	if (m_autoRotateX)
+	{
+		m_rotation.x += m_autoRotationSpeed * t;
+	}
+
+	if (m_autoRotateY)
+	{
+		m_rotation.y += m_autoRotationSpeed * t;
+	}
+
+	if (m_autoRotateZ)
+	{
+		m_rotation.z += m_autoRotationSpeed * t;
+	}
 
 	XMMATRIX rotation = XMMatrixRotationX(XMConvertToRadians(m_rotation.x)) * XMMatrixRotationY(XMConvertToRadians(m_rotation.y)) * XMMatrixRotationZ(XMConvertToRadians(m_rotation.z));
 	XMMATRIX translation = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
