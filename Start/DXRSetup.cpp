@@ -17,8 +17,9 @@
 constexpr auto CUBE1_INDEX = 0;
 constexpr auto CUBE2_INDEX = 1;
 constexpr auto PLANE_INDEX = 2;
-constexpr auto OBJ_DONUT_INDEX = 3;
-constexpr auto OBJ_BALL_INDEX = 4;
+constexpr auto PLANE2_INDEX = 3;
+constexpr auto OBJ_DONUT_INDEX = 4;
+constexpr auto OBJ_BALL_INDEX = 5;
 constexpr auto PLANEHITGROUP_INDEX = 1;
 constexpr auto OBJECTHITGROUP_INDEX = 0;
 
@@ -347,13 +348,22 @@ void DXRSetup::LoadAssets()
 
 	DrawableGameObject* pPlane = new DrawableGameObject();
 	pPlane->initPlaneMesh(m_device);
-	pPlane->setPosition(XMFLOAT3(0.0f, 0.0f, -5.0f));
-	pPlane->setScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
-	pPlane->setRotation(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	pPlane->setPosition(XMFLOAT3(0.0f, -1.5f, 0.0f));
+	pPlane->setScale(XMFLOAT3(10.0f, 10.0f, 1.0f));
+	pPlane->setRotation(XMFLOAT3(90.0f, 0.0f, 0.0f));
 	pPlane->setOrginalTransformValues(pPlane->getPosition(), pPlane->getRotation(), pPlane->getScale());
 	pPlane->update(0.0f);
 	pPlane->setObjectName("Plane 1");
 	m_app->m_drawableObjects.push_back(pPlane);
+
+	DrawableGameObject* pPlaneCopy = pPlane->createCopy();
+	pPlaneCopy->setPosition(XMFLOAT3(0.0f, 0.0f, -2.0f));
+	pPlaneCopy->setScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
+	pPlaneCopy->setRotation(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	pPlaneCopy->setOrginalTransformValues(pPlaneCopy->getPosition(), pPlaneCopy->getRotation(), pPlaneCopy->getScale());
+	pPlaneCopy->update(0.0f);
+	pPlaneCopy->setObjectName("Plane 2");
+	m_app->m_drawableObjects.push_back(pPlaneCopy);
 
 	DrawableGameObject* pOBJ = new DrawableGameObject();
 	pOBJ->initOBJMesh(m_device, R"(Objects\donut.obj)");
@@ -425,6 +435,7 @@ void DXRSetup::CreateAccelerationStructures()
 	m_app->m_instances.push_back(std::make_pair(bottomLevelBuffers.pResult, m_app->m_drawableObjects[CUBE1_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(bottomLevelBuffers.pResult, m_app->m_drawableObjects[CUBE2_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(planeBuffer.pResult, m_app->m_drawableObjects[PLANE_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(planeBuffer.pResult, m_app->m_drawableObjects[PLANE2_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(objDonutBuffer.pResult, m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(objBallBuffer.pResult, m_app->m_drawableObjects[OBJ_BALL_INDEX]->getTransform()));
 
@@ -822,6 +833,7 @@ void DXRSetup::CreateTopLevelAS(
 		if (i == PLANEHITGROUP_INDEX) // What
 		{
 			context->m_topLevelASGenerator.AddInstance(instances[PLANE_INDEX].first.Get(), instances[PLANE_INDEX].second, static_cast<UINT>(PLANE_INDEX), static_cast<UINT>(PLANEHITGROUP_INDEX));
+			context->m_topLevelASGenerator.AddInstance(instances[PLANE2_INDEX].first.Get(), instances[PLANE2_INDEX].second, static_cast<UINT>(PLANE2_INDEX), static_cast<UINT>(PLANEHITGROUP_INDEX));
 		}
 	}
 

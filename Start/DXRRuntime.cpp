@@ -180,7 +180,7 @@ void DXRRuntime::DrawObjectMovementWindow()
 {
 	if (m_selectedObject != nullptr)
 	{
-		ImGui::SetNextWindowPos(ImVec2(10, 220), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(10, 240), ImGuiCond_FirstUseEver);
 		ImGui::Begin("Object Movement", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 		ImGui::Text("Manipulate the selected object:");
@@ -266,7 +266,7 @@ void DXRRuntime::DrawCameraStatsWindow()
 
 void DXRRuntime::DrawHitColourWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(10, 530), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(10, 550), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Hit Colour", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("Change the colour of the object and plane hit shader!");
 	ImGui::Separator();
