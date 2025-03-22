@@ -107,8 +107,10 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message,
 		return 0;
 	case WM_RBUTTONDOWN:
 		mouseDown = true;
+		ShowCursor(false);
 		break;
 	case WM_RBUTTONUP:
+		ShowCursor(true);
 		mouseDown = false;
 		break;
 
