@@ -17,15 +17,88 @@ cbuffer ColourBuffer : register(b0)
 	float4 planeColour;
 }
 
+cbuffer LightParams : register(b1)
+{
+    float4 lightPosition;
+    float4 lightAmbientColor;
+    float4 lightDiffuseColor;
+    float4 lightSpecularColor;
+}
 
+
+float3 HitAttributeV3(float3 vertexAttributes[3], Attributes attr)
+{
+    return vertexAttributes[0] +
+		attr.bary.x * (vertexAttributes[1] - vertexAttributes[0]) +
+		attr.bary.y * (vertexAttributes[2] - vertexAttributes[0]);
+
+}
+
+float2 HitAttributeV2(float2 vertexAttribute[3], Attributes attr)
+{
+    return vertexAttribute[0] +
+		attr.bary.x * (vertexAttribute[1] - vertexAttribute[0]) +
+		attr.bary.y * (vertexAttribute[2] - vertexAttribute[0]);
+}
+
+float3 HitWorldPosition()
+{
+    return WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
+}
+
+float4 CalculateDiffuseLighting(float3 lightDirection, float3 worldNormal, float4 colour)
+{
+	
+  
+	
+   // float4 diffuseAmount = saturate(dot(-lightDirection, normalize(worldNormal)));
+   // float4 diffuseOut = diffuseAmount * (colour * lightDiffuseColor);
+    
+	
+    return float4(0, 0, 0, 0);
+
+}
+
+float4 CalculateAmbientLighting(float4 colour)
+{
+    float4 ambientOut = lightAmbientColor * colour;
+    return ambientOut;
+}
+
+float4 CalculateSpecularLighting()
+{
+    return float4(0,0,0,0);
+}
 
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
 {
 	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
 
+    uint vertid = 3 * PrimitiveIndex();
+	
+    float3 vertexNormals[3] =
+    {
+        BTriVertex[indices[vertid + 0]].normal.xyz,
+		BTriVertex[indices[vertid + 1]].normal.xyz,
+		BTriVertex[indices[vertid + 2]].normal.xyz
+    };
+	
 
-	float3 colorOut = objectColour;
+	
+    float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
+	
+    float3 worldNormal = normalize(mul(triangleNormal, (float3x3)ObjectToWorld4x3()));
+
+    float3 hitWorldPosition = HitWorldPosition();
+
+    float3 lightDirection = normalize((float3)lightPosition - hitWorldPosition);
+	
+    float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal, objectColour);
+	
+    float4 ambientColour = CalculateAmbientLighting(objectColour);
+	
+	float3 colorOut = diffuseColour + ambientColour;
 
 	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
 
@@ -36,7 +109,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 		colorOut = float3(0.0, 0.0, 0.0);
 	}
 
-	payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
+    payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
 }
 
 [shader("anyhit")]
@@ -56,6 +129,15 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
 
+    uint vertid = 3 * PrimitiveIndex();
+	
+    float3 vertexNormals[3] =
+    {
+        BTriVertex[indices[vertid + 0]].normal.xyz,
+		BTriVertex[indices[vertid + 1]].normal.xyz,
+		BTriVertex[indices[vertid + 2]].normal.xyz
+    };
+	
 	float3 colorOut = planeColour;
 
 	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));

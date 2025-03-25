@@ -27,3 +27,18 @@ struct CameraBuffer
 	float rY;
 	float padding[2];
 };
+
+struct ColourBuffer
+{
+	XMFLOAT4 objectColour;
+	XMFLOAT4 planeColour;
+};
+
+struct LightParams
+{
+	XMFLOAT4 lightPosition;
+	XMFLOAT4 lightAmbientColor;
+	XMFLOAT4 lightDiffuseColor;
+	XMFLOAT4 lightSpecularColor;
+
+};

@@ -61,6 +61,7 @@ void DXRRuntime::Update()
 		dgo->update(deltaTime);
 		m_app->m_instances[i].second = dgo->getTransform();
 	}
+
 }
 
 void DXRRuntime::OnKeyUp(UINT8 key)
