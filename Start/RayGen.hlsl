@@ -48,7 +48,7 @@ cbuffer CameraParams : register(b0)
 
       // Parameter name: RayFlags
       // Flags can be used to specify the behavior upon hitting a surface
-      RAY_FLAG_FORCE_NON_OPAQUE,
+      RAY_FLAG_NONE,
 
       // Parameter name: InstanceInclusionMask
       // Instance inclusion mask, which can be used to mask out some geometry to

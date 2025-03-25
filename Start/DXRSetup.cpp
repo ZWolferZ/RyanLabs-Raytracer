@@ -140,7 +140,7 @@ void DXRSetup::UpdateColourBuffer(XMFLOAT4 objectColour, XMFLOAT4 planeColour)
 	cb.planeColour = planeColour;
 
 	m_objectColour = cb.objectColour;
-		m_planeColour = cb.planeColour;
+	m_planeColour = cb.planeColour;
 
 	uint8_t* pData;
 	ThrowIfFailed(context->m_colourBuffer->Map(0, nullptr, (void**)&pData));
@@ -158,9 +158,9 @@ void DXRSetup::CreateLightingBuffer()
 
 	LightParams cb;
 	cb.lightPosition = { 0.0f,1.0f,3.0f,0.0f };
-	cb.lightAmbientColor = {0.4f,0.4f,0.4f,1.0f};
-	cb.lightDiffuseColor = {0.5f, 0.5f,0.5f,1.0f};
-	cb.lightSpecularColor = {0.1f,0.1f,0.1f,1.0f};
+	cb.lightAmbientColor = { 0.3f,0.3f,0.3f,1.0f };
+	cb.lightDiffuseColor = { 0.5f, 0.5f,0.5f,1.0f };
+	cb.lightSpecularColor = { 0.1f,0.1f,0.1f,1.0f };
 
 	uint8_t* pData;
 
@@ -351,7 +351,7 @@ void DXRSetup::LoadAssets()
 		nullptr, IID_PPV_ARGS(&context->m_commandList)));
 
 	DrawableGameObject* pDrawableObject = new DrawableGameObject();
-	pDrawableObject->initMesh(m_device);
+	pDrawableObject->initCubeMesh(m_device);
 	pDrawableObject->setPosition(XMFLOAT3(-0.5f, 0.0f, 0.0f));
 	pDrawableObject->setRotation(XMFLOAT3(45, 45, 0));
 	pDrawableObject->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
@@ -438,9 +438,9 @@ void DXRSetup::CreateAccelerationStructures()
 	DXRContext* context = m_app->GetContext();
 
 	// Build the bottom AS from the Triangle vertex buffer
-	AccelerationStructureBuffers bottomLevelBuffers =
-		CreateBottomLevelAS({ {m_app->m_drawableObjects[0]->getVertexBuffer().Get(), m_app->m_drawableObjects[0]->getVertexCount()} },
-			{ {m_app->m_drawableObjects[0]->getIndexBuffer().Get(), m_app->m_drawableObjects[0]->getIndexCount()} });
+	AccelerationStructureBuffers cubelBuffers =
+		CreateBottomLevelAS({ {m_app->m_drawableObjects[CUBE1_INDEX]->getVertexBuffer().Get(), m_app->m_drawableObjects[CUBE1_INDEX]->getVertexCount()} },
+			{ {m_app->m_drawableObjects[CUBE1_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[CUBE1_INDEX]->getIndexCount()} });
 
 	AccelerationStructureBuffers planeBuffer =
 		CreateBottomLevelAS({ {m_app->m_drawableObjects[PLANE_INDEX]->getVertexBuffer().Get(), m_app->m_drawableObjects[PLANE_INDEX]->getVertexCount()} },
@@ -455,8 +455,8 @@ void DXRSetup::CreateAccelerationStructures()
 			{ {m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexCount()} });
 
 	// Just one instance for now
-	m_app->m_instances.push_back(std::make_pair(bottomLevelBuffers.pResult, m_app->m_drawableObjects[CUBE1_INDEX]->getTransform()));
-	m_app->m_instances.push_back(std::make_pair(bottomLevelBuffers.pResult, m_app->m_drawableObjects[CUBE2_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(cubelBuffers.pResult, m_app->m_drawableObjects[CUBE1_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(cubelBuffers.pResult, m_app->m_drawableObjects[CUBE2_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(planeBuffer.pResult, m_app->m_drawableObjects[PLANE_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(planeBuffer.pResult, m_app->m_drawableObjects[PLANE2_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(objDonutBuffer.pResult, m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getTransform()));
@@ -481,7 +481,7 @@ void DXRSetup::CreateAccelerationStructures()
 
 	// Store the AS buffers. The rest of the buffers will be released once we exit
 	// the function
-	context->m_bottomLevelAS = bottomLevelBuffers.pResult;
+//	context->m_bottomLevelAS = objBallBuffer.pResult;
 }
 
 //-----------------------------------------------------------------------------
@@ -511,7 +511,7 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_SRV, 0 /*t0*/); // vertex data
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_SRV, 1 /*t1*/); // indices
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 0 /*b0*/); // Colour buffer
-	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 1 /*b1*/);
+	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 1 /*b1*/); // Lighting buffer
 	return rsc.Generate(m_device.Get(), true);
 }
 
@@ -750,8 +750,8 @@ void DXRSetup::CreateShaderBindingTable()
 		});
 
 	context->m_sbtHelper.AddHitGroup(L"PlaneHitGroup",
-		{ (void*)(m_app->m_drawableObjects[PLANE_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[PLANE_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
+		{ (void*)(m_app->m_drawableObjects[1]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[1]->getIndexBuffer()->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
 		});
@@ -786,7 +786,6 @@ AccelerationStructureBuffers DXRSetup::CreateBottomLevelAS(std::vector<std::pair
 	DXRContext* context = m_app->GetContext();
 	nv_helpers_dx12::BottomLevelASGenerator bottomLevelAS;
 
-	// Adding all vertex buffers and not transforming their position.
 	// Adding all vertex buffers and not transforming their position.
 	for (size_t i = 0; i < vVertexBuffers.size(); i++) {
 		if (i < vIndexBuffers.size() && vIndexBuffers[i].second > 0)
@@ -852,14 +851,17 @@ void DXRSetup::CreateTopLevelAS(
 
 	// Gather all the instances into the builder helper
 	for (size_t i = 0; i < instances.size(); i++) {
-		context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
-			instances[i].second, static_cast<UINT>(i),
-			static_cast<UINT>(OBJECTHITGROUP_INDEX));
-
-		if (i == PLANEHITGROUP_INDEX) // What
+		if (i == PLANE_INDEX || i == PLANE2_INDEX)
 		{
-			context->m_topLevelASGenerator.AddInstance(instances[PLANE_INDEX].first.Get(), instances[PLANE_INDEX].second, static_cast<UINT>(PLANE_INDEX), static_cast<UINT>(PLANEHITGROUP_INDEX));
-			context->m_topLevelASGenerator.AddInstance(instances[PLANE2_INDEX].first.Get(), instances[PLANE2_INDEX].second, static_cast<UINT>(PLANE2_INDEX), static_cast<UINT>(PLANEHITGROUP_INDEX));
+			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
+				instances[i].second, static_cast<UINT>(i),
+				static_cast<UINT>(PLANEHITGROUP_INDEX));
+		}
+		else if (i == CUBE1_INDEX || i == CUBE2_INDEX)
+		{
+			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
+				instances[i].second, static_cast<UINT>(i),
+				static_cast<UINT>(OBJECTHITGROUP_INDEX));
 		}
 	}
 

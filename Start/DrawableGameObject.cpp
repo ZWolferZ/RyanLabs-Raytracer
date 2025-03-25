@@ -52,7 +52,7 @@ void DrawableGameObject::cleanup()
 	//m_pMaterialConstantBuffer = nullptr;
 }
 
-HRESULT DrawableGameObject::initMesh(ComPtr<ID3D12Device5> device)
+HRESULT DrawableGameObject::initCubeMesh(ComPtr<ID3D12Device5> device)
 {
 	// Create the vertex buffer.
 	{
@@ -169,10 +169,10 @@ HRESULT DrawableGameObject::initPlaneMesh(ComPtr<ID3D12Device5> device)
 	{
 		float diameter = 0.5f;
 		Vertex planeVertices[] = {
-					{XMFLOAT3(-diameter, diameter, 0), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}, // 0
-					{XMFLOAT3(-diameter, -diameter, -0), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}, // 1
-					{ XMFLOAT3(diameter, diameter, 0), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}, // 2
-					{ XMFLOAT3(diameter, -diameter, -0), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}  // 3
+					{ XMFLOAT3(-diameter,  diameter, 0.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) }, // 0:
+	{ XMFLOAT3(-diameter, -diameter, 0.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) }, // 1:
+	{ XMFLOAT3(diameter,  diameter, 0.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) }, // 2:
+	{ XMFLOAT3(diameter, -diameter, 0.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) }  // 3:
 		};
 
 		m_meshData.VertexCount = 4;

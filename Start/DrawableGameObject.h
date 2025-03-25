@@ -23,7 +23,7 @@ public:
 
 	DrawableGameObject* createCopy(); // creates a copy
 
-	HRESULT								initMesh(ComPtr<ID3D12Device5> device);
+	HRESULT								initCubeMesh(ComPtr<ID3D12Device5> device);
 	HRESULT								initPlaneMesh(ComPtr<ID3D12Device5> device);
 	HRESULT 							initOBJMesh(ComPtr<ID3D12Device5> device, char* szOBJName);
 	void								update(float t);
