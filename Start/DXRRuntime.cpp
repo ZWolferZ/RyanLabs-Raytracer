@@ -282,7 +282,7 @@ void DXRRuntime::DrawHitColourWindow()
 	ImGui::Separator();
 	XMFLOAT4 objectColour = m_app->m_DXSetup->m_objectColour;
 	XMFLOAT4 planeColour = m_app->m_DXSetup->m_planeColour;
-	if (ImGui::DragFloat3("Cube Hit Group Colour", reinterpret_cast<float*>(&objectColour), 0.01f, 0.0f, 1.0f))
+	if (ImGui::DragFloat3("Object Hit Group Colour", reinterpret_cast<float*>(&objectColour), 0.01f, 0.0f, 1.0f))
 	{
 	}
 	if (ImGui::DragFloat3("Plane Hit Group Colour", reinterpret_cast<float*>(&planeColour), 0.01f, 0.0f, 1.0f))
