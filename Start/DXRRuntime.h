@@ -55,4 +55,6 @@ public:
 	void DrawCameraStatsWindow();
 	void DrawHitColourWindow();
 	void DrawCameraSplineWindow();
+	void DrawLightingWindow();
+	void DrawSecretWindow();
 };

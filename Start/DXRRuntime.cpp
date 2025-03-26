@@ -120,6 +120,8 @@ void DXRRuntime::DrawIMGUI()
 	DrawCameraStatsWindow();
 	DrawHitColourWindow();
 	DrawCameraSplineWindow();
+	DrawLightingWindow();
+	DrawSecretWindow();
 }
 
 void DXRRuntime::DrawPerformanceWindow()
@@ -280,10 +282,10 @@ void DXRRuntime::DrawHitColourWindow()
 	ImGui::Separator();
 	XMFLOAT4 objectColour = m_app->m_DXSetup->m_objectColour;
 	XMFLOAT4 planeColour = m_app->m_DXSetup->m_planeColour;
-	if (ImGui::DragFloat3("Object Colour", reinterpret_cast<float*>(&objectColour), 0.01f, 0.0f, 1.0f))
+	if (ImGui::DragFloat3("Cube Hit Group Colour", reinterpret_cast<float*>(&objectColour), 0.01f, 0.0f, 1.0f))
 	{
 	}
-	if (ImGui::DragFloat3("Plane Colour", reinterpret_cast<float*>(&planeColour), 0.01f, 0.0f, 1.0f))
+	if (ImGui::DragFloat3("Plane Hit Group Colour", reinterpret_cast<float*>(&planeColour), 0.01f, 0.0f, 1.0f))
 	{
 	}
 	ImGui::Text("(Drag the box or enter a number)");
@@ -340,6 +342,78 @@ void DXRRuntime::DrawCameraSplineWindow()
 	ImGui::End();
 }
 
+void DXRRuntime::DrawLightingWindow()
+{
+	ImGui::SetNextWindowPos(ImVec2(875, 475), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Point Light Editor:", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+	static XMFLOAT4 lightPosition = m_app->m_DXSetup->m_originalLightPosition;
+	static XMFLOAT4 ambientColor = m_app->m_DXSetup->m_originalLightAmbientColor;
+	static XMFLOAT4 diffuseColor = m_app->m_DXSetup->m_originalLightDiffuseColor;
+	static XMFLOAT4 specularColor = m_app->m_DXSetup->m_originalLightSpecularColor;
+	static float specularPower = m_app->m_DXSetup->m_originalLightSpecularPower;
+	static float pointLightRange = m_app->m_DXSetup->m_originalPointLightRange;
+	ImGui::Separator();
+
+	ImGui::DragFloat3("Light Position", reinterpret_cast<float*>(&lightPosition), 0.01f, -INFINITY, INFINITY);
+
+	ImGui::DragFloat("Point Light Range", &pointLightRange, 0.05f, 1.0f, 20.0f);
+	ImGui::Separator();
+
+	ImGui::ColorEdit4("Ambient Color", reinterpret_cast<float*>(&ambientColor));
+
+	ImGui::ColorEdit4("Diffuse Color", reinterpret_cast<float*>(&diffuseColor));
+
+	ImGui::ColorEdit4("Specular Color", reinterpret_cast<float*>(&specularColor));
+	ImGui::DragFloat("Specular Power", &specularPower, 1.0f, 1.0f, 256.0f);
+
+	m_app->m_DXSetup->UpdateLightingBuffer(lightPosition, ambientColor, diffuseColor, specularColor, specularPower, pointLightRange);
+	ImGui::Text("(Drag the box or enter a number)");
+	ImGui::Separator();
+
+	if (ImGui::Button("Reset Light"))
+	{
+		m_app->m_DXSetup->UpdateLightingBuffer(
+			m_app->m_DXSetup->m_originalLightPosition,
+			m_app->m_DXSetup->m_originalLightAmbientColor,
+			m_app->m_DXSetup->m_originalLightDiffuseColor,
+			m_app->m_DXSetup->m_originalLightSpecularColor,
+			m_app->m_DXSetup->m_originalLightSpecularPower,
+			m_app->m_DXSetup->m_originalPointLightRange
+		);
+
+		lightPosition = m_app->m_DXSetup->m_originalLightPosition;
+		ambientColor = m_app->m_DXSetup->m_originalLightAmbientColor;
+		diffuseColor = m_app->m_DXSetup->m_originalLightDiffuseColor;
+		specularColor = m_app->m_DXSetup->m_originalLightSpecularColor;
+		specularPower = m_app->m_DXSetup->m_originalLightSpecularPower;
+		pointLightRange = m_app->m_DXSetup->m_originalPointLightRange;
+	}
+
+	ImGui::End();
+}
+void DXRRuntime::DrawSecretWindow()
+{
+	ImGui::SetNextWindowPos(ImVec2(520, 800), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Secret Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+	if (ImGui::Checkbox("Activate Trans Mode?", &m_app->m_DXSetup->m_transBackgroundMode))
+	{
+		XMFLOAT4 transObjectColour = { 1.0f, 0.75f, 0.8f, 1.0f };
+		XMFLOAT4 transPlaneColour = { 0.68f, 0.85f, 0.90f, 1.0f };
+
+		if (m_app->m_DXSetup->m_transBackgroundMode)
+		{
+			m_app->m_DXSetup->UpdateColourBuffer(transObjectColour, transPlaneColour);
+		}
+		else
+		{
+			m_app->m_DXSetup->UpdateColourBuffer(m_app->m_DXSetup->m_originalObjectColour, m_app->m_DXSetup->m_originalPlaneColour);
+		}
+	}
+
+	ImGui::End();
+}
 void DXRRuntime::DrawVersionWindow()
 {
 	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);

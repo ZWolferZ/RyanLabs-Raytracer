@@ -4,9 +4,12 @@ cbuffer CameraParams : register(b0)
 {
     float4x4 viewI;
     float4x4 projectionI;
+    float rX;
+    float rY;
+    float2 padding;
+    float transMode;
+    float3 morePadding;
 
-    float4x4 pad1;
-    float4x4 pad2;
 }
 
 [shader("miss")]
@@ -27,8 +30,11 @@ void Miss(inout HitInfo payload : SV_RayPayload)
 
     float yScreenRange = (rayDir.g + 1.0f) * 0.5;
 
-    float3 colorOut = float3(1.0f, 0.0f, 0.0f);
+    float3 colorOut = float3(0.2f, 0.2f, 0.2f);
 
+
+    if (transMode == 1.0f)
+    {
 
         if (yScreenRange < 0.2f)
         {
@@ -50,6 +56,6 @@ void Miss(inout HitInfo payload : SV_RayPayload)
         {
             colorOut = lightBlue;
         }
-
+    }
     payload.colorAndDistance = float4(colorOut, 1.0f);
 }

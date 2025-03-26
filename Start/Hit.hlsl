@@ -23,6 +23,9 @@ cbuffer LightParams : register(b1)
 	float4 lightAmbientColor;
 	float4 lightDiffuseColor;
 	float4 lightSpecularColor;
+	float lightSpecularPower;
+	float lightRange;
+	float2 padding;
 }
 
 
@@ -48,15 +51,10 @@ float3 HitWorldPosition()
 
 float4 CalculateDiffuseLighting(float3 lightDirection, float3 worldNormal, float4 colour)
 {
-
 	float diffuseAmount = saturate(dot(lightDirection, normalize(worldNormal)));
 	float4 diffuseOut = diffuseAmount * (colour * lightDiffuseColor);
-	
-	
+
 	return diffuseOut;
-
-	return float4(0, 0, 0, 0);
-
 }
 
 float4 CalculateAmbientLighting(float4 colour)
@@ -65,50 +63,51 @@ float4 CalculateAmbientLighting(float4 colour)
 	return ambientOut;
 }
 
-float4 CalculateSpecularLighting()
+float4 CalculateSpecularLighting(float3 hitWorldPosition,float3 lightDirection, float3 worldNormal, float4 colour)
 {
-	return float4(0,0,0,0);
+	float3 viewDir = normalize(WorldRayDirection() - hitWorldPosition);
+
+	float3 reflectDir = reflect(lightDirection, normalize(worldNormal));
+
+	float specFactor = pow(saturate(dot(viewDir, reflectDir)), lightSpecularPower);
+
+	float4 specularOut = specFactor * (lightSpecularColor * colour);
+
+	return specularOut;
 }
 
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
 {
 	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
-
 	uint vertid = 3 * PrimitiveIndex();
-	
-	float3 vertexNormals[3];
 
+	float3 vertexNormals[3];
 	vertexNormals[0] = BTriVertex[indices[vertid + 0]].normal.xyz;
 	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
 	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
 
-	//////////////
-	// TEMP FIX
-	//vertexNormals[0] = float3(0, 0, 1);
-	//vertexNormals[1] = float3(0, 0, 1);
-	//vertexNormals[2] = float3(0, 0, 1);
-	//////////////
-
-
 	float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
-	
-	float3 worldNormal = normalize(mul(triangleNormal, (float3x3)ObjectToWorld4x3()));
+	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
 
 	float3 hitWorldPosition = HitWorldPosition();
 
-	float3 lightDirection = normalize((float3)lightPosition - hitWorldPosition);
-	
-	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal, objectColour);
-	
-	float4 ambientColour = CalculateAmbientLighting(objectColour);
-	
-	float3 colorOut = diffuseColour + ambientColour;
+
+	float3 lightDirection = normalize((float3) lightPosition - hitWorldPosition);
+
+	float distance = length((float3) lightPosition - hitWorldPosition);
+
+	float attenuation = saturate(1.0 - distance / lightRange);
+
+
+	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal, objectColour) * attenuation;
+	float4 ambientColour = CalculateAmbientLighting(objectColour) * attenuation;
+	float4 specularColour = CalculateSpecularLighting(hitWorldPosition,lightDirection, worldNormal, objectColour) * attenuation;
+
+	float3 colorOut = diffuseColour + ambientColour + specularColour;
 
 	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
-
 	float edgeThickness = 0.01f;
-
 	if (minB < edgeThickness)
 	{
 		colorOut = float3(0.0, 0.0, 0.0);
@@ -135,15 +134,31 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
 
 	uint vertid = 3 * PrimitiveIndex();
-	
-	float3 vertexNormals[3] =
-	{
-		BTriVertex[indices[vertid + 0]].normal.xyz,
-		BTriVertex[indices[vertid + 1]].normal.xyz,
-		BTriVertex[indices[vertid + 2]].normal.xyz
-	};
-	
-	float3 colorOut = planeColour;
+
+	float3 vertexNormals[3];
+
+	vertexNormals[0] = BTriVertex[indices[vertid + 0]].normal.xyz;
+	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
+	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
+
+
+	float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
+
+	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
+
+	float3 hitWorldPosition = HitWorldPosition();
+
+	float3 lightDirection = normalize((float3) lightPosition - hitWorldPosition);
+
+	float distance = length((float3) lightPosition - hitWorldPosition);
+
+	float attenuation = saturate(1.0 - distance / lightRange);
+
+	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal, planeColour) * attenuation;
+
+	float4 ambientColour = CalculateAmbientLighting(planeColour) * attenuation;
+
+	float3 colorOut = diffuseColour + ambientColour;
 
 	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
 

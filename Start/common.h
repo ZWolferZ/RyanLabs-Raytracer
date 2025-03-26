@@ -22,10 +22,11 @@ struct CameraBuffer
 {
 	XMMATRIX invView;
 	XMMATRIX invProj;
-
 	float rX;
 	float rY;
-	float padding[2];
+	XMFLOAT2 padding;
+	float transBackgroundMode;
+	XMFLOAT3 morePadding;
 };
 
 struct ColourBuffer
@@ -40,5 +41,7 @@ struct LightParams
 	XMFLOAT4 lightAmbientColor;
 	XMFLOAT4 lightDiffuseColor;
 	XMFLOAT4 lightSpecularColor;
-
+	float lightSpecularPower;
+	float pointLightRange;
+	XMFLOAT2 padding;
 };

@@ -21,7 +21,7 @@ constexpr auto PLANE2_INDEX = 3;
 constexpr auto OBJ_DONUT_INDEX = 4;
 constexpr auto OBJ_BALL_INDEX = 5;
 constexpr auto PLANEHITGROUP_INDEX = 1;
-constexpr auto OBJECTHITGROUP_INDEX = 0;
+constexpr auto CUBEHITGROUP_INDEX = 0;
 
 DXRSetup::DXRSetup(DXRApp* app)
 {
@@ -100,6 +100,12 @@ void DXRSetup::UpdateCamera(float rX, float rY)
 	cb.invProj = invProj;
 	cb.rX = rX;
 	cb.rY = rY;
+	cb.transBackgroundMode = 0;
+
+	if (m_transBackgroundMode)
+	{
+		cb.transBackgroundMode = 1;
+	}
 
 	// Map and update the constant buffer
 	uint8_t* pData = nullptr;
@@ -157,10 +163,31 @@ void DXRSetup::CreateLightingBuffer()
 		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
 
 	LightParams cb;
-	cb.lightPosition = { 0.0f,1.0f,3.0f,0.0f };
-	cb.lightAmbientColor = { 0.3f,0.3f,0.3f,1.0f };
-	cb.lightDiffuseColor = { 0.5f, 0.5f,0.5f,1.0f };
-	cb.lightSpecularColor = { 0.1f,0.1f,0.1f,1.0f };
+	cb.lightPosition = m_originalLightPosition;
+	cb.lightAmbientColor = m_originalLightAmbientColor;
+	cb.lightDiffuseColor = m_originalLightDiffuseColor;
+	cb.lightSpecularColor = m_originalLightSpecularColor;
+	cb.lightSpecularPower = m_originalLightSpecularPower;
+	cb.pointLightRange = m_originalPointLightRange;
+
+	uint8_t* pData;
+
+	ThrowIfFailed(context->m_lightingBuffer->Map(0, nullptr, (void**)&pData));
+	memcpy(pData, &cb, sizeof(LightParams));
+	context->m_colourBuffer->Unmap(0, nullptr);
+}
+
+void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor, XMFLOAT4 lightSpecularColor, float lightSpecularPower, float pointLightRange)
+{
+	DXRContext* context = m_app->GetContext();
+
+	LightParams cb;
+	cb.lightPosition = lightPosition;
+	cb.lightAmbientColor = lightAmbientColor;
+	cb.lightDiffuseColor = lightDiffuseColor;
+	cb.lightSpecularColor = lightSpecularColor;
+	cb.lightSpecularPower = lightSpecularPower;
+	cb.pointLightRange = pointLightRange;
 
 	uint8_t* pData;
 
@@ -353,16 +380,18 @@ void DXRSetup::LoadAssets()
 	DrawableGameObject* pDrawableObject = new DrawableGameObject();
 	pDrawableObject->initCubeMesh(m_device);
 	pDrawableObject->setPosition(XMFLOAT3(-0.5f, 0.0f, 0.0f));
-	pDrawableObject->setRotation(XMFLOAT3(45, 45, 0));
+	pDrawableObject->setRotation(XMFLOAT3(0, 0, 0));
 	pDrawableObject->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
 	pDrawableObject->setOrginalTransformValues(pDrawableObject->getPosition(), pDrawableObject->getRotation(), pDrawableObject->getScale());
+	pDrawableObject->m_autoRotateX = true;
+	pDrawableObject->m_autoRotateY = true;
 	pDrawableObject->update(0.0f);
 	pDrawableObject->setObjectName("Cube 1");
 	m_app->m_drawableObjects.push_back(pDrawableObject);
 
 	DrawableGameObject* pCopy = pDrawableObject->createCopy();
-	pCopy->setPosition(XMFLOAT3(0.5, 0.0f, 0.0f));
-	pCopy->setRotation(XMFLOAT3(45, 45, 0));
+	pCopy->setPosition(XMFLOAT3(0.5f, 0.0f, 0.0f));
+	pCopy->setRotation(XMFLOAT3(0, 0, 0));
 	pCopy->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
 	pCopy->setOrginalTransformValues(pCopy->getPosition(), pCopy->getRotation(), pCopy->getScale());
 	pCopy->update(0.0f);
@@ -372,8 +401,8 @@ void DXRSetup::LoadAssets()
 	DrawableGameObject* pPlane = new DrawableGameObject();
 	pPlane->initPlaneMesh(m_device);
 	pPlane->setPosition(XMFLOAT3(0.0f, -1.5f, 0.0f));
-	pPlane->setScale(XMFLOAT3(10.0f, 10.0f, 1.0f));
-	pPlane->setRotation(XMFLOAT3(90.0f, 0.0f, 0.0f));
+	pPlane->setScale(XMFLOAT3(20.0f, 20.0f, 1.0f));
+	pPlane->setRotation(XMFLOAT3(-90.0f, 0.0f, 0.0f));
 	pPlane->setOrginalTransformValues(pPlane->getPosition(), pPlane->getRotation(), pPlane->getScale());
 	pPlane->update(0.0f);
 	pPlane->setObjectName("Plane 1");
@@ -585,7 +614,7 @@ void DXRSetup::CreateRaytracingPipeline()
 
 	// Hit group for the triangles, with a shader simply interpolating vertex
 	// colors
-	pipeline.AddHitGroup(L"HitGroup", L"ClosestHit", L"AnyHit");
+	pipeline.AddHitGroup(L"CubeHitGroup", L"ClosestHit", L"AnyHit");
 	pipeline.AddHitGroup(L"PlaneHitGroup", L"PlaneClosestHit");
 
 	// The following section associates the root signature to each shader. Note
@@ -595,7 +624,7 @@ void DXRSetup::CreateRaytracingPipeline()
 	// closest-hit shaders share the same root signature.
 	pipeline.AddRootSignatureAssociation(context->m_rayGenSignature.Get(), { L"RayGen" });
 	pipeline.AddRootSignatureAssociation(context->m_missSignature.Get(), { L"Miss" });
-	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"HitGroup" , L"PlaneHitGroup" });
+	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"CubeHitGroup" , L"PlaneHitGroup" });
 
 	// The payload size defines the maximum size of the data carried by the rays,
 	// ie. the the data
@@ -742,16 +771,16 @@ void DXRSetup::CreateShaderBindingTable()
 	context->m_sbtHelper.AddMissProgram(L"Miss", { heapPointer });
 
 	// Adding the triangle hit shader
-	context->m_sbtHelper.AddHitGroup(L"HitGroup",
-		{ (void*)(m_app->m_drawableObjects[0]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[0]->getIndexBuffer()->GetGPUVirtualAddress()),
+	context->m_sbtHelper.AddHitGroup(L"CubeHitGroup",
+		{ (void*)(m_app->m_drawableObjects[CUBEHITGROUP_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[CUBE1_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
 		});
 
 	context->m_sbtHelper.AddHitGroup(L"PlaneHitGroup",
-		{ (void*)(m_app->m_drawableObjects[1]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[1]->getIndexBuffer()->GetGPUVirtualAddress()),
+		{ (void*)(m_app->m_drawableObjects[PLANEHITGROUP_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[PLANEHITGROUP_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
 		});
@@ -861,7 +890,7 @@ void DXRSetup::CreateTopLevelAS(
 		{
 			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
 				instances[i].second, static_cast<UINT>(i),
-				static_cast<UINT>(OBJECTHITGROUP_INDEX));
+				static_cast<UINT>(CUBEHITGROUP_INDEX));
 		}
 	}
 

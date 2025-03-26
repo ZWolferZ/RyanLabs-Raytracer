@@ -10,10 +10,11 @@ cbuffer CameraParams : register(b0)
 {
     float4x4 viewI;
     float4x4 projectionI;
-
     float rX;
     float rY;
-    float padding[2];
+    float2 padding;
+    float transMode;
+    float3 morePadding;
 
 }
 
