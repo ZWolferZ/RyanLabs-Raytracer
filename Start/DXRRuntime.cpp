@@ -53,7 +53,7 @@ void DXRRuntime::Update()
 		context->m_pCamera->CameraSplineAnimation(deltaTime, m_controlPoints, m_totalSplineAnimation);
 	}
 
-	m_app->m_DXSetup->UpdateCamera(rayXWidth, rayYWidth);
+	m_app->m_DXSetup->UpdateCamera(m_rayXWidth, m_rayYWidth);
 
 	for (size_t i = 0; i < m_app->m_drawableObjects.size(); ++i)
 	{
@@ -61,7 +61,6 @@ void DXRRuntime::Update()
 		dgo->update(deltaTime);
 		m_app->m_instances[i].second = dgo->getTransform();
 	}
-
 }
 
 void DXRRuntime::OnKeyUp(UINT8 key)
@@ -249,17 +248,25 @@ void DXRRuntime::DrawCameraStatsWindow()
 		context->m_pCamera->SetPosition(cameraPosition);
 	}
 
-	float rayWidth[2] = { rayXWidth, rayYWidth };
+	float rayWidth[2] = { m_rayXWidth, m_rayYWidth };
 	if (ImGui::DragFloat2("Ray Launch Index (X & Y)", reinterpret_cast<float*>(&rayWidth), 1.0f, 1, 10))
 	{
-		rayXWidth = rayWidth[0];
-		rayYWidth = rayWidth[1];
+		m_rayXWidth = rayWidth[0];
+		m_rayYWidth = rayWidth[1];
 	}
+
+	ImGui::DragFloat("Camera FOV", &m_app->m_DXSetup->m_fovAngleY, 0.01f, 0.1f, 2.0f);
+	ImGui::SliderFloat("Camera Move Speed", &m_cameraMoveSpeed, 0.5f, 4.0f);
+
 	ImGui::Text("(Drag the box or enter a number)");
 	ImGui::Separator();
 	if (ImGui::Button("Reset Camera"))
 	{
 		context->m_pCamera->Reset();
+		m_app->m_DXSetup->m_fovAngleY = 0.785f;
+		m_rayXWidth = 1;
+		m_rayYWidth = 1;
+		m_cameraMoveSpeed = 2.0f;
 	}
 
 	ImGui::End();
@@ -328,6 +335,7 @@ void DXRRuntime::DrawCameraSplineWindow()
 			m_controlPoints[i] = XMLoadFloat3(&point);
 		}
 	}
+	ImGui::Text("(Drag the box or enter a number)");
 
 	ImGui::End();
 }

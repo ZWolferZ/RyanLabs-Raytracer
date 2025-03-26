@@ -89,8 +89,8 @@ void DXRSetup::UpdateCamera(float rX, float rY)
 	DXRContext* context = m_app->GetContext();
 
 	XMMATRIX view = context->m_pCamera->GetViewMatrix();
-	float fovAngleY = 45.0f * XM_PI / 180.0f;
-	XMMATRIX perspective = XMMatrixPerspectiveFovLH(fovAngleY, m_app->GetAspectRatio(), 0.1f, 1000.0f);
+
+	XMMATRIX perspective = XMMatrixPerspectiveFovLH(m_fovAngleY, m_app->GetAspectRatio(), 0.1f, 1000.0f);
 
 	XMMATRIX invView = XMMatrixInverse(nullptr, view);
 	XMMATRIX invProj = XMMatrixInverse(nullptr, perspective);

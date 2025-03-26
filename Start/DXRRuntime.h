@@ -28,8 +28,8 @@ private:
 	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f)   // Final velocity
 	};
 
-	float rayXWidth = 1;
-	float rayYWidth = 1;
+	float m_rayXWidth = 1;
+	float m_rayYWidth = 1;
 
 	float m_cameraMoveSpeed = 2.0f;
 	float m_cameraRotateSpeed = 1.0f;

@@ -22,6 +22,8 @@ public:
 	void UpdateColourBuffer(XMFLOAT4 objectColour, XMFLOAT4 planeColour);
 	void CreateLightingBuffer();
 
+	float m_fovAngleY = 45.0f * XM_PI / 180.0f;
+
 	XMFLOAT4 m_objectColour;
 	XMFLOAT4 m_planeColour;
 
