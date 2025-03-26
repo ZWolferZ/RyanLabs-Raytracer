@@ -22,6 +22,8 @@ constexpr auto OBJ_DONUT_INDEX = 4;
 constexpr auto OBJ_BALL_INDEX = 5;
 constexpr auto PLANEHITGROUP_INDEX = 1;
 constexpr auto CUBEHITGROUP_INDEX = 0;
+constexpr auto DONUTHITGROUP_INDEX = 2;
+constexpr auto BALLHITGROUP_INDEX = 3;
 
 DXRSetup::DXRSetup(DXRApp* app)
 {
@@ -616,7 +618,8 @@ void DXRSetup::CreateRaytracingPipeline()
 	// colors
 	pipeline.AddHitGroup(L"CubeHitGroup", L"ClosestHit", L"AnyHit");
 	pipeline.AddHitGroup(L"PlaneHitGroup", L"PlaneClosestHit");
-
+	pipeline.AddHitGroup(L"DonutHitGroup", L"ClosestHit", L"AnyHit");
+	pipeline.AddHitGroup(L"BallHitGroup", L"ClosestHit", L"AnyHit");
 	// The following section associates the root signature to each shader. Note
 	// that we can explicitly show that some shaders share the same root signature
 	// (eg. Miss and ShadowMiss). Note that the hit shaders are now only referred
@@ -624,7 +627,7 @@ void DXRSetup::CreateRaytracingPipeline()
 	// closest-hit shaders share the same root signature.
 	pipeline.AddRootSignatureAssociation(context->m_rayGenSignature.Get(), { L"RayGen" });
 	pipeline.AddRootSignatureAssociation(context->m_missSignature.Get(), { L"Miss" });
-	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"CubeHitGroup" , L"PlaneHitGroup" });
+	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"CubeHitGroup" , L"PlaneHitGroup", L"DonutHitGroup" ,L"BallHitGroup" });
 
 	// The payload size defines the maximum size of the data carried by the rays,
 	// ie. the the data
@@ -785,6 +788,19 @@ void DXRSetup::CreateShaderBindingTable()
 			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
 		});
 
+	context->m_sbtHelper.AddHitGroup(L"DonutHitGroup",
+		{ (void*)(m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
+		});
+
+	context->m_sbtHelper.AddHitGroup(L"BallHitGroup",
+		{ (void*)(m_app->m_drawableObjects[OBJ_BALL_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
+		});
 	// Compute the size of the SBT given the number of shaders and their
 	// parameters
 	uint32_t sbtSize = context->m_sbtHelper.ComputeSBTSize();
@@ -891,6 +907,18 @@ void DXRSetup::CreateTopLevelAS(
 			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
 				instances[i].second, static_cast<UINT>(i),
 				static_cast<UINT>(CUBEHITGROUP_INDEX));
+		}
+		else if (i == OBJ_DONUT_INDEX)
+		{
+			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
+				instances[i].second, static_cast<UINT>(i),
+				static_cast<UINT>(DONUTHITGROUP_INDEX));
+		}
+		else if (i == OBJ_BALL_INDEX)
+		{
+			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
+				instances[i].second, static_cast<UINT>(i),
+				static_cast<UINT>(BALLHITGROUP_INDEX));
 		}
 	}
 
