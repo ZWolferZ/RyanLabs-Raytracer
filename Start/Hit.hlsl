@@ -49,10 +49,10 @@ float3 HitWorldPosition()
 	return WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
 }
 
-float4 CalculateDiffuseLighting(float3 lightDirection, float3 worldNormal, float4 colour)
+float4 CalculateDiffuseLighting(float3 lightDirection, float3 worldNormal)
 {
 	float diffuseAmount = saturate(dot(lightDirection, normalize(worldNormal)));
-	float4 diffuseOut = diffuseAmount * (colour * lightDiffuseColor);
+	float4 diffuseOut = diffuseAmount * lightDiffuseColor;
 
 	return diffuseOut;
 }
@@ -99,7 +99,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	float attenuation = saturate(1.0 - distance / lightRange);
 
 
-	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal, objectColour) * attenuation;
+	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal) * attenuation;
 	float4 ambientColour = CalculateAmbientLighting(objectColour) * attenuation;
 	float4 specularColour = CalculateSpecularLighting(hitWorldPosition,lightDirection, worldNormal) * attenuation;
 
@@ -153,7 +153,7 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 	float attenuation = saturate(1.0 - distance / lightRange);
 
-	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal, planeColour) * attenuation;
+	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal) * attenuation;
 
 	float4 ambientColour = CalculateAmbientLighting(planeColour) * attenuation;
 

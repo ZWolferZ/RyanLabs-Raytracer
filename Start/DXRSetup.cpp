@@ -14,16 +14,16 @@
 
 #include "DrawableGameObject.h"
 
-constexpr auto CUBE1_INDEX = 0;
-constexpr auto CUBE2_INDEX = 1;
-constexpr auto PLANE_INDEX = 2;
-constexpr auto PLANE2_INDEX = 3;
-constexpr auto OBJ_DONUT_INDEX = 4;
-constexpr auto OBJ_BALL_INDEX = 5;
-constexpr auto PLANEHITGROUP_INDEX = 1;
-constexpr auto CUBEHITGROUP_INDEX = 0;
-constexpr auto DONUTHITGROUP_INDEX = 2;
-constexpr auto BALLHITGROUP_INDEX = 3;
+constexpr size_t CUBE1_INDEX = 0;
+constexpr size_t CUBE2_INDEX = 1;
+constexpr size_t PLANE_INDEX = 2;
+constexpr size_t PLANE2_INDEX = 3;
+constexpr size_t OBJ_DONUT_INDEX = 4;
+constexpr size_t OBJ_BALL_INDEX = 5;
+constexpr size_t CUBEHITGROUP_INDEX = 0;
+constexpr size_t PLANEHITGROUP_INDEX = 1;
+constexpr size_t DONUTHITGROUP_INDEX = 2;
+constexpr size_t BALLHITGROUP_INDEX = 3;
 
 DXRSetup::DXRSetup(DXRApp* app)
 {
