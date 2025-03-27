@@ -66,6 +66,8 @@ float4 CalculateAmbientLighting(float4 colour)
 
 float4 CalculateSpecularLighting(float3 hitWorldPosition, float3 lightDirection, float3 worldNormal)
 {
+	// Blinn-Phong ALERT!
+
 	float3 viewDir = normalize(WorldRayOrigin() - hitWorldPosition);
 	float3 halfDir = normalize(lightDirection + viewDir);
 
@@ -88,21 +90,15 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 
 	float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
 	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
-
 	float3 hitWorldPosition = HitWorldPosition();
 
-
 	float3 lightDirection = normalize((float3) lightPosition - hitWorldPosition);
-
 	float distance = length((float3) lightPosition - hitWorldPosition);
-
 	float attenuation = saturate(1.0 - distance / lightRange);
-
 
 	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal) * attenuation;
 	float4 ambientColour = CalculateAmbientLighting(objectColour) * attenuation;
 	float4 specularColour = CalculateSpecularLighting(hitWorldPosition,lightDirection, worldNormal) * attenuation;
-
 	float3 colorOut = diffuseColour + ambientColour + specularColour;
 
 	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
@@ -118,7 +114,6 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 [shader("anyhit")]
 void AnyHit(inout HitInfo payload, Attributes attrib)
 {
-
 	float3 colorOut = { 0.0f, 0.0f, 0.0f };
 
 	payload.colorAndDistance += float4(colorOut, RayTCurrent());
@@ -142,27 +137,19 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 
 	float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
-
 	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
-
 	float3 hitWorldPosition = HitWorldPosition();
 
 	float3 lightDirection = normalize((float3) lightPosition - hitWorldPosition);
-
 	float distance = length((float3) lightPosition - hitWorldPosition);
-
 	float attenuation = saturate(1.0 - distance / lightRange);
 
 	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal) * attenuation;
-
 	float4 ambientColour = CalculateAmbientLighting(planeColour) * attenuation;
-
 	float3 colorOut = diffuseColour + ambientColour;
 
 	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
-
 	float edgeThickness = 0.005f;
-
 	if (minB < edgeThickness)
 	{
 		colorOut = float3(0.0, 0.0, 0.0);

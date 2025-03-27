@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "DXRSetup.h"
+
+#include <thread>
+
 #include "DXRContext.h"
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -57,11 +60,14 @@ void DXRSetup::initialise()
 	// as the target image
 	CreateRaytracingOutputBuffer(); // #DXR
 
-	CreateCamera();
+	//Multi-threading BABY
+	std::thread CreateCameraThread(&DXRSetup::CreateCamera, this);
+	std::thread CreateColourBufferThread(&DXRSetup::CreateColourBuffer, this);
+	std::thread CreateLightingBufferThread(&DXRSetup::CreateLightingBuffer, this);
 
-	CreateColourBuffer();
-
-	CreateLightingBuffer();
+	CreateCameraThread.join();
+	CreateColourBufferThread.join();
+	CreateLightingBufferThread.join();
 
 	// Create the buffer containing the raytracing result (always output in a
 	// UAV), and create the heap referencing the resources used by the raytracing,
@@ -176,7 +182,7 @@ void DXRSetup::CreateLightingBuffer()
 
 	ThrowIfFailed(context->m_lightingBuffer->Map(0, nullptr, (void**)&pData));
 	memcpy(pData, &cb, sizeof(LightParams));
-	context->m_colourBuffer->Unmap(0, nullptr);
+	context->m_lightingBuffer->Unmap(0, nullptr);
 }
 
 void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor, XMFLOAT4 lightSpecularColor, float lightSpecularPower, float pointLightRange)
@@ -195,7 +201,7 @@ void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbien
 
 	ThrowIfFailed(context->m_lightingBuffer->Map(0, nullptr, (void**)&pData));
 	memcpy(pData, &cb, sizeof(LightParams));
-	context->m_colourBuffer->Unmap(0, nullptr);
+	context->m_lightingBuffer->Unmap(0, nullptr);
 }
 
 void DXRSetup::SetupIMGUI()
