@@ -65,22 +65,11 @@ void DXRRuntime::Update()
 
 void DXRRuntime::OnKeyUp(UINT8 key)
 {
-	if (inputs.find(key) == inputs.end())
-	{
-		inputs.insert({ key, false });
-		return;
-	}
-
 	inputs[key] = false;
 }
 
 void DXRRuntime::OnKeyDown(UINT8 key)
 {
-	if (inputs.find(key) == inputs.end())
-	{
-		inputs.insert({ key, true });
-		return;
-	}
 	inputs[key] = true;
 }
 
