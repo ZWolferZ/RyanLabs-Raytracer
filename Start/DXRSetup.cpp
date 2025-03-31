@@ -24,9 +24,13 @@ constexpr size_t PLANE2_INDEX = 3;
 constexpr size_t OBJ_DONUT_INDEX = 4;
 constexpr size_t OBJ_BALL_INDEX = 5;
 constexpr size_t CUBEHITGROUP_INDEX = 0;
-constexpr size_t PLANEHITGROUP_INDEX = 1;
-constexpr size_t DONUTHITGROUP_INDEX = 2;
-constexpr size_t BALLHITGROUP_INDEX = 3;
+//1
+constexpr size_t PLANEHITGROUP_INDEX = 2;
+//3
+constexpr size_t DONUTHITGROUP_INDEX = 4;
+//5
+constexpr size_t BALLHITGROUP_INDEX = 6;
+//7
 
 DXRSetup::DXRSetup(DXRApp* app)
 {
@@ -60,7 +64,7 @@ void DXRSetup::initialise()
 	// as the target image
 	CreateRaytracingOutputBuffer(); // #DXR
 
-	//Multi-threading BABY
+	////Multi-threading BABY
 	std::thread CreateCameraThread(&DXRSetup::CreateCamera, this);
 	std::thread CreateColourBufferThread(&DXRSetup::CreateColourBuffer, this);
 	std::thread CreateLightingBufferThread(&DXRSetup::CreateLightingBuffer, this);
@@ -549,6 +553,8 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_SRV, 1 /*t1*/); // indices
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 0 /*b0*/); // Colour buffer
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 1 /*b1*/); // Lighting buffer
+	rsc.AddHeapRangesParameter({ { 2 /*t2*/, 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1 /*2nd slot of the heap (see CreateShaderResourceHeap() */ }, });/*Top-level acceleration structure*/
+
 	return rsc.Generate(m_device.Get(), true);
 }
 
@@ -596,8 +602,8 @@ void DXRSetup::CreateRaytracingPipeline()
 	// can contain an arbitrary number of symbols, whose semantic is given in HLSL
 	// using the [shader("xxx")] syntax
 	pipeline.AddLibrary(context->m_rayGenLibrary.Get(), { L"RayGen" });
-	pipeline.AddLibrary(context->m_missLibrary.Get(), { L"Miss" });
-	pipeline.AddLibrary(context->m_hitLibrary.Get(), { L"ClosestHit",L"AnyHit",L"PlaneClosestHit" });
+	pipeline.AddLibrary(context->m_missLibrary.Get(), { L"Miss" ,L"ShadowMiss" });
+	pipeline.AddLibrary(context->m_hitLibrary.Get(), { L"ClosestHit",L"AnyHit",L"PlaneClosestHit", L"ShadowHit" });
 
 	// To be used, each DX12 shader needs a root signature defining which
 	// parameters and buffers will be accessed.
@@ -626,14 +632,17 @@ void DXRSetup::CreateRaytracingPipeline()
 	pipeline.AddHitGroup(L"PlaneHitGroup", L"PlaneClosestHit");
 	pipeline.AddHitGroup(L"DonutHitGroup", L"ClosestHit", L"AnyHit");
 	pipeline.AddHitGroup(L"BallHitGroup", L"ClosestHit", L"AnyHit");
+
+	pipeline.AddHitGroup(L"ShadowHitGroup", L"ShadowHit");
+
 	// The following section associates the root signature to each shader. Note
 	// that we can explicitly show that some shaders share the same root signature
 	// (eg. Miss and ShadowMiss). Note that the hit shaders are now only referred
 	// to as hit groups, meaning that the underlying intersection, any-hit and
 	// closest-hit shaders share the same root signature.
 	pipeline.AddRootSignatureAssociation(context->m_rayGenSignature.Get(), { L"RayGen" });
-	pipeline.AddRootSignatureAssociation(context->m_missSignature.Get(), { L"Miss" });
-	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"CubeHitGroup" , L"PlaneHitGroup", L"DonutHitGroup" ,L"BallHitGroup" });
+	pipeline.AddRootSignatureAssociation(context->m_missSignature.Get(), { L"Miss", L"ShadowMiss" });
+	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"CubeHitGroup" , L"PlaneHitGroup", L"DonutHitGroup" ,L"BallHitGroup",L"ShadowHitGroup" });
 
 	// The payload size defines the maximum size of the data carried by the rays,
 	// ie. the the data
@@ -653,7 +662,7 @@ void DXRSetup::CreateRaytracingPipeline()
 	// then requires a trace depth of 1. Note that this recursion depth should be
 	// kept to a minimum for best performance. Path tracing algorithms can be
 	// easily flattened into a simple loop in the ray generation.
-	pipeline.SetMaxRecursionDepth(1);
+	pipeline.SetMaxRecursionDepth(31);
 
 	// Compile the pipeline for execution on the GPU
 	context->m_rtStateObject = pipeline.Generate();
@@ -778,35 +787,64 @@ void DXRSetup::CreateShaderBindingTable()
 	// The miss and hit shaders do not access any external resources: instead they
 	// communicate their results through the ray payload
 	context->m_sbtHelper.AddMissProgram(L"Miss", { heapPointer });
+	context->m_sbtHelper.AddMissProgram(L"ShadowMiss", { heapPointer });
 
 	// Adding the triangle hit shader
 	context->m_sbtHelper.AddHitGroup(L"CubeHitGroup",
-		{ (void*)(m_app->m_drawableObjects[CUBEHITGROUP_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+		{ (void*)(m_app->m_drawableObjects[CUBE1_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
 			(void*)(m_app->m_drawableObjects[CUBE1_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		});
+		,heapPointer });
 
-	context->m_sbtHelper.AddHitGroup(L"PlaneHitGroup",
-		{ (void*)(m_app->m_drawableObjects[PLANEHITGROUP_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[PLANEHITGROUP_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
+	context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
+		{ (void*)(m_app->m_drawableObjects[CUBE1_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[CUBE1_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		});
+		,heapPointer });
+
+	context->m_sbtHelper.AddHitGroup(L"PlaneHitGroup",
+		{ (void*)(m_app->m_drawableObjects[PLANE_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[PLANE_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
+		,heapPointer });
+
+	context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
+		{ (void*)(m_app->m_drawableObjects[PLANE_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[PLANE_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
+		,heapPointer });
 
 	context->m_sbtHelper.AddHitGroup(L"DonutHitGroup",
 		{ (void*)(m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
 			(void*)(m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		});
+		,heapPointer });
+	context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
+		{ (void*)(m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
+		,heapPointer });
 
 	context->m_sbtHelper.AddHitGroup(L"BallHitGroup",
 		{ (void*)(m_app->m_drawableObjects[OBJ_BALL_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
 			(void*)(m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
 			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		});
+		,heapPointer });
+
+	context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
+		{ (void*)(m_app->m_drawableObjects[OBJ_BALL_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
+			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
+		,heapPointer });
+
 	// Compute the size of the SBT given the number of shaders and their
 	// parameters
 	uint32_t sbtSize = context->m_sbtHelper.ComputeSBTSize();

@@ -9,7 +9,7 @@ struct STriVertex
 
 StructuredBuffer<STriVertex> BTriVertex : register(t0);
 StructuredBuffer<int> indices : register(t1);
-
+RaytracingAccelerationStructure SceneBVH : register(t2);
 
 cbuffer ColourBuffer : register(b0)
 {
@@ -77,6 +77,7 @@ float4 CalculateSpecularLighting(float3 hitWorldPosition, float3 lightDirection,
 	return specularOut;
 }
 
+
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
 {
@@ -99,7 +100,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal) * attenuation;
 	float4 ambientColour = CalculateAmbientLighting(objectColour) * attenuation;
 	float4 specularColour = CalculateSpecularLighting(hitWorldPosition,lightDirection, worldNormal) * attenuation;
-	float3 colorOut = diffuseColour + ambientColour + specularColour;
+	float3 colorOut = ambientColour;
 
 	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
 	float edgeThickness = 0.01f;
@@ -107,6 +108,29 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	{
 		colorOut = float3(0.0, 0.0, 0.0);
 	}
+
+	RayDesc ray;
+
+	ray.Origin = hitWorldPosition;
+	ray.Direction = lightDirection;
+
+	ray.TMin = 0.01f;
+	ray.TMax = 100000;
+
+	ShadowHitInfo shadowPayload;
+	shadowPayload.isHit = false;
+	TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+	float shadowFactor = shadowPayload.isHit ? 0.3f : 1.0f;
+
+	if (!shadowPayload.isHit)
+	{
+		colorOut += diffuseColour;
+		colorOut += specularColour;
+	}
+
+	colorOut *= shadowFactor;
+
 
 	payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
 }
@@ -146,7 +170,8 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal) * attenuation;
 	float4 ambientColour = CalculateAmbientLighting(planeColour) * attenuation;
-	float3 colorOut = diffuseColour + ambientColour;
+
+	float3 colorOut = ambientColour;
 
 	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
 	float edgeThickness = 0.005f;
@@ -155,6 +180,33 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 		colorOut = float3(0.0, 0.0, 0.0);
 	}
 
+
+   RayDesc ray;
+
+   ray.Origin = hitWorldPosition;
+	ray.Direction = lightDirection;
+
+   ray.TMin = 0.01f;
+   ray.TMax = 100000;
+
+   ShadowHitInfo shadowPayload;
+   shadowPayload.isHit = false;
+   TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+   float shadowFactor = shadowPayload.isHit ? 0.3f : 1.0f;
+
+	if (!shadowPayload.isHit)
+	{
+		colorOut += diffuseColour;
+	}
+
+   colorOut *= shadowFactor;
+
 	payload.colorAndDistance = float4(colorOut.xyz, RayTCurrent());
 }
 
+[shader("closesthit")]
+void ShadowHit(inout ShadowHitInfo payload, Attributes attrib)
+{
+	payload.isHit = true;
+}

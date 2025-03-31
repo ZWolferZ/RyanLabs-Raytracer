@@ -21,7 +21,7 @@ void Miss(inout HitInfo payload : SV_RayPayload)
 
     float4 target = mul(projectionI, float4(d.x, -d.y, 1, 1));
     float3 rayDir = mul(viewI, float4(target.xyz, 0));
- 
+
 
 
     float3 lightBlue = float3(0.68f,0.85f,0.90f);
@@ -58,4 +58,10 @@ void Miss(inout HitInfo payload : SV_RayPayload)
         }
     }
     payload.colorAndDistance = float4(colorOut, 1.0f);
+}
+
+[shader("miss")]
+void ShadowMiss(inout ShadowHitInfo payload : SV_RayPayload)
+{
+    payload.isHit = false;
 }

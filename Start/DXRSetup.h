@@ -33,9 +33,9 @@ public:
 	XMFLOAT4 m_originalObjectColour = { 1.0f, 0.0f, 0.0f, 1.0f };
 	XMFLOAT4 m_originalPlaneColour = { 0.0f, 0.0f, 1.0f, 1.0f };
 
-	XMFLOAT4 m_originalLightPosition = { 0.0f, 0.0f, 0.0f, 0.0f };
-	XMFLOAT4 m_originalLightAmbientColor = { 0.3f, 0.3f, 0.3f, 1.0f };
-	XMFLOAT4 m_originalLightDiffuseColor = { 0.5f, 0.5f, 0.5f, 1.0f };
+	XMFLOAT4 m_originalLightPosition = { 0.0f, 2.0f, -3.5f, 0.0f };
+	XMFLOAT4 m_originalLightAmbientColor = { 0.8f, 0.8f, 0.8f, 1.0f };
+	XMFLOAT4 m_originalLightDiffuseColor = { 0.8f, 0.8f, 0.8f, 1.0f };
 	XMFLOAT4 m_originalLightSpecularColor = { 0.6f, 0.6f, 0.6f, 1.0f };
 	float m_originalLightSpecularPower = 32.0f;
 	float m_originalPointLightRange = 10.0f;
