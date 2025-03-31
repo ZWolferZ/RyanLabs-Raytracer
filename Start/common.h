@@ -43,5 +43,6 @@ struct LightParams
 	XMFLOAT4 lightSpecularColor;
 	float lightSpecularPower;
 	float pointLightRange;
-	XMFLOAT2 padding;
+	UINT hardShadows;
+	float padding;
 };

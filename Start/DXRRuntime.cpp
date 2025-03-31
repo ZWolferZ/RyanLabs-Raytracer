@@ -347,6 +347,8 @@ void DXRRuntime::DrawLightingWindow()
 	ImGui::DragFloat3("Light Position", reinterpret_cast<float*>(&lightPosition), 0.01f, -INFINITY, INFINITY);
 
 	ImGui::DragFloat("Point Light Range", &pointLightRange, 0.05f, 1.0f, 20.0f);
+
+	ImGui::Checkbox("Hard Shadows", &m_app->m_DXSetup->m_hardShadows);
 	ImGui::Separator();
 
 	ImGui::ColorEdit4("Ambient Color", reinterpret_cast<float*>(&ambientColor));
@@ -377,6 +379,7 @@ void DXRRuntime::DrawLightingWindow()
 		specularColor = m_app->m_DXSetup->m_originalLightSpecularColor;
 		specularPower = m_app->m_DXSetup->m_originalLightSpecularPower;
 		pointLightRange = m_app->m_DXSetup->m_originalPointLightRange;
+		m_app->m_DXSetup->m_hardShadows = m_app->m_DXSetup->m_originalHardShadows;
 	}
 
 	ImGui::End();

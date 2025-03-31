@@ -25,7 +25,8 @@ cbuffer LightParams : register(b1)
 	float4 lightSpecularColor;
 	float lightSpecularPower;
 	float lightRange;
-	float2 padding;
+	uint hardShadows;
+	float padding;
 }
 
 
@@ -109,6 +110,15 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 		colorOut = float3(0.0, 0.0, 0.0);
 	}
 
+
+	if (hardShadows == 0)
+	{
+        colorOut += diffuseColour;
+        colorOut += specularColour;
+		payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
+		return;
+	}
+
 	RayDesc ray;
 
 	ray.Origin = hitWorldPosition;
@@ -180,6 +190,12 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 		colorOut = float3(0.0, 0.0, 0.0);
 	}
 
+	if (hardShadows == 0)
+	{
+        colorOut += diffuseColour;
+		payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
+		return;
+	}
 
    RayDesc ray;
 

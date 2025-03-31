@@ -182,6 +182,15 @@ void DXRSetup::CreateLightingBuffer()
 	cb.lightSpecularPower = m_originalLightSpecularPower;
 	cb.pointLightRange = m_originalPointLightRange;
 
+	if (m_hardShadows)
+	{
+		cb.hardShadows = 1;
+	}
+	else
+	{
+		cb.hardShadows = 0;
+	}
+
 	uint8_t* pData;
 
 	ThrowIfFailed(context->m_lightingBuffer->Map(0, nullptr, (void**)&pData));
@@ -200,6 +209,15 @@ void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbien
 	cb.lightSpecularColor = lightSpecularColor;
 	cb.lightSpecularPower = lightSpecularPower;
 	cb.pointLightRange = pointLightRange;
+
+	if (m_hardShadows)
+	{
+		cb.hardShadows = 1;
+	}
+	else
+	{
+		cb.hardShadows = 0;
+	}
 
 	uint8_t* pData;
 
