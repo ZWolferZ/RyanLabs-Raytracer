@@ -25,8 +25,9 @@ cbuffer LightParams : register(b1)
 	float4 lightSpecularColor;
 	float lightSpecularPower;
 	float lightRange;
-	uint hardShadows;
-	float padding;
+	uint shadows;
+	uint shawdowRayCount;
+
 }
 
 
@@ -78,6 +79,11 @@ float4 CalculateSpecularLighting(float3 hitWorldPosition, float3 lightDirection,
 	return specularOut;
 }
 
+// Yoinked Random Function from Louise
+float random(float2 uv)
+{
+	return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
+}
 
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
@@ -111,34 +117,57 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	}
 
 
-	if (hardShadows == 0)
+	if (shadows == 0)
 	{
-        colorOut += diffuseColour;
-        colorOut += specularColour;
+		colorOut += diffuseColour;
+		colorOut += specularColour;
 		payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
 		return;
 	}
 
-	RayDesc ray;
-
-	ray.Origin = hitWorldPosition;
-	ray.Direction = lightDirection;
-
-	ray.TMin = 0.01f;
-	ray.TMax = 100000;
-
-	ShadowHitInfo shadowPayload;
-	shadowPayload.isHit = false;
-	TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
-
-	float shadowFactor = shadowPayload.isHit ? 0.3f : 1.0f;
-
-	if (!shadowPayload.isHit)
 	{
-		colorOut += diffuseColour;
-		colorOut += specularColour;
+		RayDesc ray;
+
+		ray.Origin = hitWorldPosition;
+		ray.Direction = lightDirection;
+
+		ray.TMin = 0.01f;
+		ray.TMax = 100000;
+
+		ShadowHitInfo shadowPayload;
+		shadowPayload.isHit = false;
+		TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+		if (!shadowPayload.isHit)
+		{
+			colorOut += diffuseColour;
+			colorOut += specularColour;
+		}
 	}
 
+
+	float shadowTotal = 0.0f;
+	for (int i = 0; i < shawdowRayCount; i++)
+	{
+
+		float offset = random(float2(i, i++)) - 0.5f;
+
+		float3 offsetDir = normalize(lightDirection + 0.05f * offset);
+
+		RayDesc ray;
+		ray.Origin = hitWorldPosition;
+		ray.Direction = offsetDir;
+		ray.TMin = 0.01f;
+		ray.TMax = 100000;
+
+		ShadowHitInfo shadowPayload;
+		shadowPayload.isHit = false;
+		TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+		shadowTotal += shadowPayload.isHit ? 0.3f : 1.0f;
+	}
+
+    float shadowFactor = shadowTotal / shawdowRayCount;
 	colorOut *= shadowFactor;
 
 
@@ -190,33 +219,58 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 		colorOut = float3(0.0, 0.0, 0.0);
 	}
 
-	if (hardShadows == 0)
+	if (shadows == 0)
 	{
-        colorOut += diffuseColour;
+		colorOut += diffuseColour;
 		payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
 		return;
 	}
 
-   RayDesc ray;
 
-   ray.Origin = hitWorldPosition;
-	ray.Direction = lightDirection;
-
-   ray.TMin = 0.01f;
-   ray.TMax = 100000;
-
-   ShadowHitInfo shadowPayload;
-   shadowPayload.isHit = false;
-   TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
-
-   float shadowFactor = shadowPayload.isHit ? 0.3f : 1.0f;
-
-	if (!shadowPayload.isHit)
 	{
-		colorOut += diffuseColour;
+		RayDesc ray;
+
+		ray.Origin = hitWorldPosition;
+		ray.Direction = lightDirection;
+
+		ray.TMin = 0.01f;
+		ray.TMax = 100000;
+
+		ShadowHitInfo shadowPayload;
+		shadowPayload.isHit = false;
+		TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+
+		if (!shadowPayload.isHit)
+		{
+			colorOut += diffuseColour;
+		}
+
 	}
 
-   colorOut *= shadowFactor;
+
+	float shadowTotal = 0.0f;
+    for (int i = 0; i < shawdowRayCount; i++)
+	{
+		float offset = random(float2(i, i++)) - 0.5f;
+
+		float3 offsetDir = normalize(lightDirection + 0.05f * offset);
+
+		RayDesc ray;
+		ray.Origin = hitWorldPosition;
+		ray.Direction = offsetDir;
+		ray.TMin = 0.01f;
+		ray.TMax = 100000;
+
+		ShadowHitInfo shadowPayload;
+		shadowPayload.isHit = false;
+		TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+		shadowTotal += shadowPayload.isHit ? 0.3f : 1.0f;
+	}
+
+    float shadowFactor = shadowTotal / shawdowRayCount;
+	colorOut *= shadowFactor;
 
 	payload.colorAndDistance = float4(colorOut.xyz, RayTCurrent());
 }

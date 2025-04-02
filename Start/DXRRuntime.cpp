@@ -291,7 +291,7 @@ void DXRRuntime::DrawHitColourWindow()
 
 void DXRRuntime::DrawCameraSplineWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(875, 200), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(875, 187), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Camera Spline Animation", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImGui::Checkbox("Start / Stop Camera Animation", &m_playCameraSplineAnimation);
@@ -333,7 +333,7 @@ void DXRRuntime::DrawCameraSplineWindow()
 
 void DXRRuntime::DrawLightingWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(875, 475), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(875, 455), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Point Light Editor:", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 	static XMFLOAT4 lightPosition = m_app->m_DXSetup->m_originalLightPosition;
@@ -342,13 +342,27 @@ void DXRRuntime::DrawLightingWindow()
 	static XMFLOAT4 specularColor = m_app->m_DXSetup->m_originalLightSpecularColor;
 	static float specularPower = m_app->m_DXSetup->m_originalLightSpecularPower;
 	static float pointLightRange = m_app->m_DXSetup->m_originalPointLightRange;
+	static UINT shadowRayCount = m_app->m_DXSetup->m_originalShadowRayCount;
 	ImGui::Separator();
 
 	ImGui::DragFloat3("Light Position", reinterpret_cast<float*>(&lightPosition), 0.01f, -INFINITY, INFINITY);
 
 	ImGui::DragFloat("Point Light Range", &pointLightRange, 0.05f, 1.0f, 20.0f);
+	ImGui::Separator();
 
-	ImGui::Checkbox("Hard Shadows", &m_app->m_DXSetup->m_hardShadows);
+	if (ImGui::Checkbox("Toggle Shadows", &m_app->m_DXSetup->m_shadows))
+	{
+		if (!m_app->m_DXSetup->m_shadows)
+		{
+			ambientColor = { 0.6f,0.6f,0.6f,1.0f };
+		}
+		else
+		{
+			ambientColor = { 0.9f,0.9f,0.9f,1.0f };
+		}
+	}
+
+	ImGui::DragInt("Soft Shadow Ray Count", reinterpret_cast<int*>(&shadowRayCount), 1, 1, 100);
 	ImGui::Separator();
 
 	ImGui::ColorEdit4("Ambient Color", reinterpret_cast<float*>(&ambientColor));
@@ -358,7 +372,7 @@ void DXRRuntime::DrawLightingWindow()
 	ImGui::ColorEdit4("Specular Color", reinterpret_cast<float*>(&specularColor));
 	ImGui::DragFloat("Specular Power", &specularPower, 1.0f, 1.0f, 256.0f);
 
-	m_app->m_DXSetup->UpdateLightingBuffer(lightPosition, ambientColor, diffuseColor, specularColor, specularPower, pointLightRange);
+	m_app->m_DXSetup->UpdateLightingBuffer(lightPosition, ambientColor, diffuseColor, specularColor, specularPower, pointLightRange, shadowRayCount);
 	ImGui::Text("(Drag the box or enter a number)");
 	ImGui::Separator();
 
@@ -370,7 +384,8 @@ void DXRRuntime::DrawLightingWindow()
 			m_app->m_DXSetup->m_originalLightDiffuseColor,
 			m_app->m_DXSetup->m_originalLightSpecularColor,
 			m_app->m_DXSetup->m_originalLightSpecularPower,
-			m_app->m_DXSetup->m_originalPointLightRange
+			m_app->m_DXSetup->m_originalPointLightRange,
+			m_app->m_DXSetup->m_originalShadowRayCount
 		);
 
 		lightPosition = m_app->m_DXSetup->m_originalLightPosition;
@@ -379,7 +394,8 @@ void DXRRuntime::DrawLightingWindow()
 		specularColor = m_app->m_DXSetup->m_originalLightSpecularColor;
 		specularPower = m_app->m_DXSetup->m_originalLightSpecularPower;
 		pointLightRange = m_app->m_DXSetup->m_originalPointLightRange;
-		m_app->m_DXSetup->m_hardShadows = m_app->m_DXSetup->m_originalHardShadows;
+		m_app->m_DXSetup->m_shadows = m_app->m_DXSetup->m_originalShadows;
+		shadowRayCount = m_app->m_DXSetup->m_originalShadowRayCount;
 	}
 
 	ImGui::End();

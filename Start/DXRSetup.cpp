@@ -182,14 +182,16 @@ void DXRSetup::CreateLightingBuffer()
 	cb.lightSpecularPower = m_originalLightSpecularPower;
 	cb.pointLightRange = m_originalPointLightRange;
 
-	if (m_hardShadows)
+	if (m_shadows)
 	{
-		cb.hardShadows = 1;
+		cb.shadows = 1;
 	}
 	else
 	{
-		cb.hardShadows = 0;
+		cb.shadows = 0;
 	}
+
+	cb.shawdowRayCount = m_originalShadowRayCount;
 
 	uint8_t* pData;
 
@@ -198,7 +200,7 @@ void DXRSetup::CreateLightingBuffer()
 	context->m_lightingBuffer->Unmap(0, nullptr);
 }
 
-void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor, XMFLOAT4 lightSpecularColor, float lightSpecularPower, float pointLightRange)
+void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor, XMFLOAT4 lightSpecularColor, float lightSpecularPower, float pointLightRange, UINT shadowRayCount)
 {
 	DXRContext* context = m_app->GetContext();
 
@@ -210,14 +212,16 @@ void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbien
 	cb.lightSpecularPower = lightSpecularPower;
 	cb.pointLightRange = pointLightRange;
 
-	if (m_hardShadows)
+	if (m_shadows)
 	{
-		cb.hardShadows = 1;
+		cb.shadows = 1;
 	}
 	else
 	{
-		cb.hardShadows = 0;
+		cb.shadows = 0;
 	}
+
+	cb.shawdowRayCount = shadowRayCount;
 
 	uint8_t* pData;
 

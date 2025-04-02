@@ -21,7 +21,7 @@ public:
 	void CreateColourBuffer();
 	void UpdateColourBuffer(XMFLOAT4 objectColour, XMFLOAT4 planeColour);
 	void CreateLightingBuffer();
-	void UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor, XMFLOAT4 lightSpecularColor, float lightSpecularPower, float pointLightRange);
+	void UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor, XMFLOAT4 lightSpecularColor, float lightSpecularPower, float pointLightRange, UINT shadowRayCount);
 
 	float m_fovAngleY = 45.0f * XM_PI / 180.0f;
 
@@ -34,13 +34,14 @@ public:
 	XMFLOAT4 m_originalPlaneColour = { 0.0f, 0.0f, 1.0f, 1.0f };
 
 	XMFLOAT4 m_originalLightPosition = { 0.0f, 2.0f, -3.5f, 0.0f };
-	XMFLOAT4 m_originalLightAmbientColor = { 0.6f, 0.6f, 0.6f, 1.0f };
+	XMFLOAT4 m_originalLightAmbientColor = { 0.9f, 0.9f, 0.9f, 1.0f };
 	XMFLOAT4 m_originalLightDiffuseColor = { 0.6f, 0.6f, 0.6f, 1.0f };
 	XMFLOAT4 m_originalLightSpecularColor = { 0.6f, 0.6f, 0.6f, 1.0f };
 	float m_originalLightSpecularPower = 32.0f;
 	float m_originalPointLightRange = 10.0f;
-	bool m_originalHardShadows = true;
-	bool m_hardShadows = m_originalHardShadows;
+	bool m_originalShadows = true;
+	bool m_shadows = m_originalShadows;
+	UINT m_originalShadowRayCount = 100;
 
 private:
 
