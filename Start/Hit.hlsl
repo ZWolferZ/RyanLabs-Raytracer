@@ -128,10 +128,10 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	{
 		RayDesc ray;
 
-		ray.Origin = hitWorldPosition;
+        ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
 		ray.Direction = lightDirection;
 
-		ray.TMin = 0.01f;
+        ray.TMin = 0.00001f;
 		ray.TMax = 100000;
 
 		ShadowHitInfo shadowPayload;
@@ -155,9 +155,9 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 		float3 offsetDir = normalize(lightDirection + 0.05f * offset);
 
 		RayDesc ray;
-		ray.Origin = hitWorldPosition;
+        ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
 		ray.Direction = offsetDir;
-		ray.TMin = 0.01f;
+        ray.TMin = 0.00001f;
 		ray.TMax = 100000;
 
 		ShadowHitInfo shadowPayload;
@@ -230,10 +230,10 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 	{
 		RayDesc ray;
 
-		ray.Origin = hitWorldPosition;
+        ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
 		ray.Direction = lightDirection;
 
-		ray.TMin = 0.01f;
+        ray.TMin = 0.00001f;
 		ray.TMax = 100000;
 
 		ShadowHitInfo shadowPayload;
@@ -257,9 +257,9 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 		float3 offsetDir = normalize(lightDirection + 0.05f * offset);
 
 		RayDesc ray;
-		ray.Origin = hitWorldPosition;
+        ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
 		ray.Direction = offsetDir;
-		ray.TMin = 0.01f;
+		ray.TMin = 0.00001f;
 		ray.TMax = 100000;
 
 		ShadowHitInfo shadowPayload;

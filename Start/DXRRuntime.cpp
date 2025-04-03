@@ -362,7 +362,7 @@ void DXRRuntime::DrawLightingWindow()
 		}
 	}
 
-	ImGui::DragInt("Soft Shadow Ray Count", reinterpret_cast<int*>(&shadowRayCount), 1, 1, 100);
+	ImGui::DragInt("Soft Shadow Ray Count", reinterpret_cast<int*>(&shadowRayCount), 1, 1, 2000);
 	ImGui::Separator();
 
 	ImGui::ColorEdit4("Ambient Color", reinterpret_cast<float*>(&ambientColor));
