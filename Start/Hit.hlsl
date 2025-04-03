@@ -27,6 +27,10 @@ cbuffer LightParams : register(b1)
 	float lightRange;
 	uint shadows;
 	uint shawdowRayCount;
+	uint reflection;
+	float shininess;
+	uint maxRecursionDepth;
+	float padding;
 
 }
 
@@ -85,6 +89,24 @@ float random(float2 uv)
 	return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
 }
 
+float4 TraceRefelctionRay(RayDesc reflectionRay, uint recursionDepth)
+{
+	if (recursionDepth > maxRecursionDepth)
+	{
+		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+	}
+
+	HitInfo reflectionPayload;
+
+	reflectionPayload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	reflectionPayload.recursiveDepth = recursionDepth + 1;
+
+	TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 0, 0, 0, reflectionRay, reflectionPayload);
+
+	return reflectionPayload.colorAndDistance;
+}
+
+
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
 {
@@ -122,53 +144,75 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 		colorOut += diffuseColour;
 		colorOut += specularColour;
 		payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
-		return;
+
 	}
-
+	else
 	{
-		RayDesc ray;
-
-        ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
-		ray.Direction = lightDirection;
-
-        ray.TMin = 0.00001f;
-		ray.TMax = 100000;
-
-		ShadowHitInfo shadowPayload;
-		shadowPayload.isHit = false;
-		TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
-
-		if (!shadowPayload.isHit)
 		{
-			colorOut += diffuseColour;
-			colorOut += specularColour;
+			RayDesc ray;
+
+			ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
+			ray.Direction = lightDirection;
+
+			ray.TMin = 0.00001f;
+			ray.TMax = 100000;
+
+			ShadowHitInfo shadowPayload;
+			shadowPayload.isHit = false;
+			TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+			if (!shadowPayload.isHit)
+			{
+				colorOut += diffuseColour;
+				colorOut += specularColour;
+			}
 		}
+
+
+		float shadowTotal = 0.0f;
+		for (int i = 0; i < shawdowRayCount; i++)
+		{
+
+			float offset = random(float2(i, i++)) - 0.5f;
+
+			float3 offsetDir = normalize(lightDirection + 0.05f * offset);
+
+			RayDesc ray;
+			ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
+			ray.Direction = offsetDir;
+			ray.TMin = 0.00001f;
+			ray.TMax = 100000;
+
+			ShadowHitInfo shadowPayload;
+			shadowPayload.isHit = false;
+			TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+			shadowTotal += shadowPayload.isHit ? 0.0f : 1.0f;
+		}
+
+		float shadowFactor = shadowTotal / shawdowRayCount;
+		colorOut *= shadowFactor;
 	}
 
-
-	float shadowTotal = 0.0f;
-	for (int i = 0; i < shawdowRayCount; i++)
+	if (reflection == 1)
 	{
+	 
+	
+		RayDesc reflectionRay;
 
-		float offset = random(float2(i, i++)) - 0.5f;
+		reflectionRay.Origin = hitWorldPosition + (worldNormal * 0.01f);
+		reflectionRay.Direction = reflect(WorldRayDirection(), worldNormal);
+		reflectionRay.TMin = 0.00001f;
+		reflectionRay.TMax = 100000;
 
-		float3 offsetDir = normalize(lightDirection + 0.05f * offset);
+		float4 reflectionColor = TraceRefelctionRay(reflectionRay, payload.recursiveDepth);
 
-		RayDesc ray;
-        ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
-		ray.Direction = offsetDir;
-        ray.TMin = 0.00001f;
-		ray.TMax = 100000;
 
-		ShadowHitInfo shadowPayload;
-		shadowPayload.isHit = false;
-		TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+		float4 reflectionOut = shininess * reflectionColor;
 
-		shadowTotal += shadowPayload.isHit ? 0.3f : 1.0f;
+
+		colorOut += reflectionOut;
 	}
-
-    float shadowFactor = shadowTotal / shawdowRayCount;
-	colorOut *= shadowFactor;
 
 
 	payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
@@ -223,54 +267,58 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 	{
 		colorOut += diffuseColour;
 		payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
-		return;
 	}
-
-
+	else
 	{
-		RayDesc ray;
-
-        ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
-		ray.Direction = lightDirection;
-
-        ray.TMin = 0.00001f;
-		ray.TMax = 100000;
-
-		ShadowHitInfo shadowPayload;
-		shadowPayload.isHit = false;
-		TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
-
-
-		if (!shadowPayload.isHit)
 		{
-			colorOut += diffuseColour;
+			RayDesc ray;
+
+			ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
+			ray.Direction = lightDirection;
+
+			ray.TMin = 0.00001f;
+			ray.TMax = 100000;
+
+			ShadowHitInfo shadowPayload;
+			shadowPayload.isHit = false;
+			TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+
+			if (!shadowPayload.isHit)
+			{
+				colorOut += diffuseColour;
+			}
+
 		}
 
+
+		float shadowTotal = 0.0f;
+		for (int i = 0; i < shawdowRayCount; i++)
+		{
+			float offset = random(float2(i, i++)) - 0.5f;
+
+			float3 offsetDir = normalize(lightDirection + 0.05f * offset);
+
+			RayDesc ray;
+			ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
+			ray.Direction = offsetDir;
+			ray.TMin = 0.00001f;
+			ray.TMax = 100000;
+
+			ShadowHitInfo shadowPayload;
+			shadowPayload.isHit = false;
+			TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+			shadowTotal += shadowPayload.isHit ? 0.0f : 1.0f;
+		}
+
+		float shadowFactor = shadowTotal / shawdowRayCount;
+
+
+
+		colorOut *= shadowFactor;
 	}
 
-
-	float shadowTotal = 0.0f;
-    for (int i = 0; i < shawdowRayCount; i++)
-	{
-		float offset = random(float2(i, i++)) - 0.5f;
-
-		float3 offsetDir = normalize(lightDirection + 0.05f * offset);
-
-		RayDesc ray;
-        ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
-		ray.Direction = offsetDir;
-		ray.TMin = 0.00001f;
-		ray.TMax = 100000;
-
-		ShadowHitInfo shadowPayload;
-		shadowPayload.isHit = false;
-		TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
-
-		shadowTotal += shadowPayload.isHit ? 0.3f : 1.0f;
-	}
-
-    float shadowFactor = shadowTotal / shawdowRayCount;
-	colorOut *= shadowFactor;
 
 	payload.colorAndDistance = float4(colorOut.xyz, RayTCurrent());
 }

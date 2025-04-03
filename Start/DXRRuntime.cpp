@@ -111,6 +111,7 @@ void DXRRuntime::DrawIMGUI()
 	DrawCameraSplineWindow();
 	DrawLightingWindow();
 	DrawSecretWindow();
+	DrawReflectionWindow();
 }
 
 void DXRRuntime::DrawPerformanceWindow()
@@ -171,7 +172,7 @@ void DXRRuntime::DrawObjectMovementWindow()
 {
 	if (m_selectedObject != nullptr)
 	{
-		ImGui::SetNextWindowPos(ImVec2(10, 240), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(10, 280), ImGuiCond_FirstUseEver);
 		ImGui::Begin("Object Movement", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 		ImGui::Text("Manipulate the selected object:");
@@ -265,7 +266,7 @@ void DXRRuntime::DrawCameraStatsWindow()
 
 void DXRRuntime::DrawHitColourWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(10, 550), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(10, 580), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Hit Colour", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("Change the colour of the object and plane hit shader!");
 	ImGui::Separator();
@@ -419,6 +420,17 @@ void DXRRuntime::DrawSecretWindow()
 			m_app->m_DXSetup->UpdateColourBuffer(m_app->m_DXSetup->m_originalObjectColour, m_app->m_DXSetup->m_originalPlaneColour);
 		}
 	}
+
+	ImGui::End();
+}
+void DXRRuntime::DrawReflectionWindow()
+{
+	ImGui::SetNextWindowPos(ImVec2(440, 580), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Reflection Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Checkbox("Enable Reflection", &m_app->m_DXSetup->m_reflection);
+
+	ImGui::SliderFloat("Reflection Shininess", &m_app->m_DXSetup->m_shininess, 0.1f, 1.0f);
+	ImGui::SliderInt("Max Recursion Depth", &m_app->m_DXSetup->m_maxRecursionDepth, 1, 20);
 
 	ImGui::End();
 }

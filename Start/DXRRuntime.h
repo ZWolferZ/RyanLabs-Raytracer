@@ -57,4 +57,5 @@ public:
 	void DrawCameraSplineWindow();
 	void DrawLightingWindow();
 	void DrawSecretWindow();
+	void DrawReflectionWindow();
 };

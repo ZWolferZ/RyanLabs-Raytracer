@@ -23,6 +23,8 @@ constexpr size_t PLANE_INDEX = 2;
 constexpr size_t PLANE2_INDEX = 3;
 constexpr size_t OBJ_DONUT_INDEX = 4;
 constexpr size_t OBJ_BALL_INDEX = 5;
+constexpr size_t MIRROR1_INDEX = 6;
+constexpr size_t MIRROR2_INDEX = 7;
 constexpr size_t CUBEHITGROUP_INDEX = 0;
 //1
 constexpr size_t PLANEHITGROUP_INDEX = 2;
@@ -193,6 +195,17 @@ void DXRSetup::CreateLightingBuffer()
 
 	cb.shawdowRayCount = m_originalShadowRayCount;
 
+	if (m_reflection)
+	{
+		cb.reflection = 1;
+	}
+	else
+	{
+		cb.reflection = 0;
+	}
+	cb.shininess = m_shininess;
+	cb.maxRecursionDepth = m_maxRecursionDepth;
+
 	uint8_t* pData;
 
 	ThrowIfFailed(context->m_lightingBuffer->Map(0, nullptr, (void**)&pData));
@@ -222,6 +235,18 @@ void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbien
 	}
 
 	cb.shawdowRayCount = shadowRayCount;
+
+	if (m_reflection)
+	{
+		cb.reflection = 1;
+	}
+	else
+	{
+		cb.reflection = 0;
+	}
+
+	cb.shininess = m_shininess;
+	cb.maxRecursionDepth = m_maxRecursionDepth;
 
 	uint8_t* pData;
 
@@ -413,20 +438,20 @@ void DXRSetup::LoadAssets()
 
 	DrawableGameObject* pDrawableObject = new DrawableGameObject();
 	pDrawableObject->initCubeMesh(m_device);
-	pDrawableObject->setPosition(XMFLOAT3(-0.5f, 0.0f, 0.0f));
+	pDrawableObject->setPosition(XMFLOAT3(0.0f, -1.1f, 0.0f));
 	pDrawableObject->setRotation(XMFLOAT3(0, 0, 0));
-	pDrawableObject->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+	pDrawableObject->setScale(XMFLOAT3(5.0f, 0.1f, 5.0f));
 	pDrawableObject->setOrginalTransformValues(pDrawableObject->getPosition(), pDrawableObject->getRotation(), pDrawableObject->getScale());
-	pDrawableObject->m_autoRotateX = true;
-	pDrawableObject->m_autoRotateY = true;
 	pDrawableObject->update(0.0f);
 	pDrawableObject->setObjectName("Cube 1");
 	m_app->m_drawableObjects.push_back(pDrawableObject);
 
 	DrawableGameObject* pCopy = pDrawableObject->createCopy();
-	pCopy->setPosition(XMFLOAT3(0.5f, 0.0f, 0.0f));
+	pCopy->setPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 	pCopy->setRotation(XMFLOAT3(0, 0, 0));
 	pCopy->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+	pCopy->m_autoRotateX = true;
+	pCopy->m_autoRotateY = true;
 	pCopy->setOrginalTransformValues(pCopy->getPosition(), pCopy->getRotation(), pCopy->getScale());
 	pCopy->update(0.0f);
 	pCopy->setObjectName("Cube 2");
@@ -453,7 +478,7 @@ void DXRSetup::LoadAssets()
 
 	DrawableGameObject* pOBJ = new DrawableGameObject();
 	pOBJ->initOBJMesh(m_device, R"(Objects\donut.obj)");
-	pOBJ->setPosition(XMFLOAT3(0.8f, -0.8f, 0.0f));
+	pOBJ->setPosition(XMFLOAT3(0.8f, -0.775f, 0.0f));
 	pOBJ->setRotation(XMFLOAT3(90, 0, 0));
 	pOBJ->setScale(XMFLOAT3(0.15f, 0.15f, 0.15f));
 	pOBJ->setOrginalTransformValues(pOBJ->getPosition(), pOBJ->getRotation(), pOBJ->getScale());
@@ -470,6 +495,26 @@ void DXRSetup::LoadAssets()
 	pOBJ2->update(0.0f);
 	pOBJ2->setObjectName("Ball 1");
 	m_app->m_drawableObjects.push_back(pOBJ2);
+
+	DrawableGameObject* pMirror1 = new DrawableGameObject();
+	pMirror1->initCubeMesh(m_device);
+	pMirror1->setPosition(XMFLOAT3(5.0f, 1.8f, 0.0f));
+	pMirror1->setRotation(XMFLOAT3(0, 0, 0));
+	pMirror1->setScale(XMFLOAT3(0.05f, 3.0f, 5.0f));
+	pMirror1->setOrginalTransformValues(pMirror1->getPosition(), pMirror1->getRotation(), pMirror1->getScale());
+	pMirror1->update(0.0f);
+	pMirror1->setObjectName("Mirror 1");
+	m_app->m_drawableObjects.push_back(pMirror1);
+
+	DrawableGameObject* pMirror2 = new DrawableGameObject();
+	pMirror2->initCubeMesh(m_device);
+	pMirror2->setPosition(XMFLOAT3(-5.0f, 1.8f, 0.0f));
+	pMirror2->setRotation(XMFLOAT3(0, 0, 0));
+	pMirror2->setScale(XMFLOAT3(0.05f, 3.0f, 5.0f));
+	pMirror2->setOrginalTransformValues(pMirror2->getPosition(), pMirror2->getRotation(), pMirror2->getScale());
+	pMirror2->update(0.0f);
+	pMirror2->setObjectName("Mirror 2");
+	m_app->m_drawableObjects.push_back(pMirror2);
 
 	// Create synchronization objects and wait until assets have been uploaded to
 	// the GPU.
@@ -501,7 +546,7 @@ void DXRSetup::CreateAccelerationStructures()
 	DXRContext* context = m_app->GetContext();
 
 	// Build the bottom AS from the Triangle vertex buffer
-	AccelerationStructureBuffers cubelBuffers =
+	AccelerationStructureBuffers cubeBuffers =
 		CreateBottomLevelAS({ {m_app->m_drawableObjects[CUBE1_INDEX]->getVertexBuffer().Get(), m_app->m_drawableObjects[CUBE1_INDEX]->getVertexCount()} },
 			{ {m_app->m_drawableObjects[CUBE1_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[CUBE1_INDEX]->getIndexCount()} });
 
@@ -518,12 +563,14 @@ void DXRSetup::CreateAccelerationStructures()
 			{ {m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexCount()} });
 
 	// Just one instance for now
-	m_app->m_instances.push_back(std::make_pair(cubelBuffers.pResult, m_app->m_drawableObjects[CUBE1_INDEX]->getTransform()));
-	m_app->m_instances.push_back(std::make_pair(cubelBuffers.pResult, m_app->m_drawableObjects[CUBE2_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(cubeBuffers.pResult, m_app->m_drawableObjects[CUBE1_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(cubeBuffers.pResult, m_app->m_drawableObjects[CUBE2_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(planeBuffer.pResult, m_app->m_drawableObjects[PLANE_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(planeBuffer.pResult, m_app->m_drawableObjects[PLANE2_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(objDonutBuffer.pResult, m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getTransform()));
 	m_app->m_instances.push_back(std::make_pair(objBallBuffer.pResult, m_app->m_drawableObjects[OBJ_BALL_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(cubeBuffers.pResult, m_app->m_drawableObjects[MIRROR1_INDEX]->getTransform()));
+	m_app->m_instances.push_back(std::make_pair(cubeBuffers.pResult, m_app->m_drawableObjects[MIRROR2_INDEX]->getTransform()));
 
 	CreateTopLevelAS(m_app->m_instances, false);
 
@@ -968,7 +1015,7 @@ void DXRSetup::CreateTopLevelAS(
 				instances[i].second, static_cast<UINT>(i),
 				static_cast<UINT>(PLANEHITGROUP_INDEX));
 		}
-		else if (i == CUBE1_INDEX || i == CUBE2_INDEX)
+		else if (i == CUBE1_INDEX || i == CUBE2_INDEX || i == MIRROR1_INDEX || i == MIRROR2_INDEX)
 		{
 			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
 				instances[i].second, static_cast<UINT>(i),

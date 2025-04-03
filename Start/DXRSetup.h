@@ -30,18 +30,21 @@ public:
 	XMFLOAT4 m_objectColour;
 	XMFLOAT4 m_planeColour;
 
-	XMFLOAT4 m_originalObjectColour = { 1.0f, 0.0f, 0.0f, 1.0f };
+	XMFLOAT4 m_originalObjectColour = { 1.0f, 1.0f, 1.0f, 1.0f };
 	XMFLOAT4 m_originalPlaneColour = { 0.0f, 0.0f, 1.0f, 1.0f };
 
-	XMFLOAT4 m_originalLightPosition = { 0.0f, 2.0f, -3.5f, 0.0f };
+	XMFLOAT4 m_originalLightPosition = { 0.0f, 2.0f, 0.0f, 0.0f };
 	XMFLOAT4 m_originalLightAmbientColor = { 0.9f, 0.9f, 0.9f, 1.0f };
 	XMFLOAT4 m_originalLightDiffuseColor = { 0.6f, 0.6f, 0.6f, 1.0f };
 	XMFLOAT4 m_originalLightSpecularColor = { 0.6f, 0.6f, 0.6f, 1.0f };
 	float m_originalLightSpecularPower = 32.0f;
-	float m_originalPointLightRange = 10.0f;
+	float m_originalPointLightRange = 6.0f;
 	bool m_originalShadows = true;
 	bool m_shadows = m_originalShadows;
 	UINT m_originalShadowRayCount = 100;
+	bool m_reflection = true;
+	float m_shininess = 0.4f;
+	int m_maxRecursionDepth = 5;
 
 private:
 

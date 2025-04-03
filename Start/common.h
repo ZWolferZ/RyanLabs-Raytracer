@@ -45,4 +45,8 @@ struct LightParams
 	float pointLightRange;
 	UINT shadows;
 	UINT shawdowRayCount;
+	UINT reflection;
+	float shininess;
+	UINT maxRecursionDepth;
+	float padding;
 };
