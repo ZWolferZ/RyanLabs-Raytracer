@@ -731,7 +731,7 @@ void DXRSetup::CreateRaytracingPipeline()
 	// then requires a trace depth of 1. Note that this recursion depth should be
 	// kept to a minimum for best performance. Path tracing algorithms can be
 	// easily flattened into a simple loop in the ray generation.
-	pipeline.SetMaxRecursionDepth(31);
+	pipeline.SetMaxRecursionDepth(30);
 
 	// Compile the pipeline for execution on the GPU
 	context->m_rtStateObject = pipeline.Generate();

@@ -66,6 +66,11 @@ float4 CalculateDiffuseLighting(float3 lightDirection, float3 worldNormal)
 float4 CalculateAmbientLighting(float4 colour)
 {
 	float4 ambientOut = lightAmbientColor * colour;
+	
+    if (InstanceID() == 5)
+    {
+        ambientOut = lightAmbientColor * float4(0, 1, 0, 0);
+    }
 
 	return ambientOut;
 }
@@ -91,17 +96,18 @@ float random(float2 uv)
 
 float4 TraceRefelctionRay(RayDesc reflectionRay, uint recursionDepth)
 {
-	if (recursionDepth > maxRecursionDepth)
+	if (recursionDepth >= maxRecursionDepth)
 	{
-		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+		return float4(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 
 	HitInfo reflectionPayload;
 
-	reflectionPayload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	reflectionPayload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	reflectionPayload.recursiveDepth = recursionDepth + 1;
 
 	TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 0, 0, 0, reflectionRay, reflectionPayload);
+
 
 	return reflectionPayload.colorAndDistance;
 }
@@ -202,11 +208,12 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 
 		reflectionRay.Origin = hitWorldPosition + (worldNormal * 0.01f);
 		reflectionRay.Direction = reflect(WorldRayDirection(), worldNormal);
-		reflectionRay.TMin = 0.00001f;
+        reflectionRay.TMin = 0.00001f;
 		reflectionRay.TMax = 100000;
 
 		float4 reflectionColor = TraceRefelctionRay(reflectionRay, payload.recursiveDepth);
 
+		
 
 		float4 reflectionOut = shininess * reflectionColor;
 
