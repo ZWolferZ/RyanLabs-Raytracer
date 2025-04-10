@@ -66,11 +66,6 @@ float4 CalculateDiffuseLighting(float3 lightDirection, float3 worldNormal)
 float4 CalculateAmbientLighting(float4 colour)
 {
 	float4 ambientOut = lightAmbientColor * colour;
-	
-    if (InstanceID() == 5)
-    {
-        ambientOut = lightAmbientColor * float4(0, 1, 0, 0);
-    }
 
 	return ambientOut;
 }
@@ -94,7 +89,7 @@ float random(float2 uv)
 	return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
 }
 
-float4 TraceRefelctionRay(RayDesc reflectionRay, uint recursionDepth)
+float4 TraceReflectionRay(in RayDesc reflectionRay,in uint recursionDepth)
 {
 	if (recursionDepth >= maxRecursionDepth)
 	{
@@ -208,10 +203,10 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 
 		reflectionRay.Origin = hitWorldPosition + (worldNormal * 0.01f);
 		reflectionRay.Direction = reflect(WorldRayDirection(), worldNormal);
-        reflectionRay.TMin = 0.00001f;
+		reflectionRay.TMin = 0.00001f;
 		reflectionRay.TMax = 100000;
 
-		float4 reflectionColor = TraceRefelctionRay(reflectionRay, payload.recursiveDepth);
+		float4 reflectionColor = TraceReflectionRay(reflectionRay, payload.recursiveDepth);
 
 		
 
@@ -325,6 +320,8 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 		colorOut *= shadowFactor;
 	}
+
+ 
 
 
 	payload.colorAndDistance = float4(colorOut.xyz, RayTCurrent());
