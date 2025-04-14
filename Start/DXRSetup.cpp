@@ -447,7 +447,7 @@ void DXRSetup::LoadAssets()
 	m_app->m_drawableObjects.push_back(pDrawableObject);
 
 	DrawableGameObject* pCopy = pDrawableObject->createCopy();
-	pCopy->setPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	pCopy->setPosition(XMFLOAT3(0.0f, 0.0f, -1.2f));
 	pCopy->setRotation(XMFLOAT3(0, 0, 0));
 	pCopy->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
 	pCopy->m_autoRotateX = true;
@@ -468,7 +468,7 @@ void DXRSetup::LoadAssets()
 	m_app->m_drawableObjects.push_back(pPlane);
 
 	DrawableGameObject* pPlaneCopy = pPlane->createCopy();
-	pPlaneCopy->setPosition(XMFLOAT3(0.0f, 0.0f, -2.0f));
+	pPlaneCopy->setPosition(XMFLOAT3(0.0f, 0.0f, -2.3f));
 	pPlaneCopy->setScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
 	pPlaneCopy->setRotation(XMFLOAT3(0.0f, 0.0f, 0.0f));
 	pPlaneCopy->setOrginalTransformValues(pPlaneCopy->getPosition(), pPlaneCopy->getRotation(), pPlaneCopy->getScale());
