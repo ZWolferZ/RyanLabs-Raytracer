@@ -436,84 +436,78 @@ void DXRSetup::LoadAssets()
 		0, D3D12_COMMAND_LIST_TYPE_DIRECT, context->m_commandAllocator.Get(),
 		nullptr, IID_PPV_ARGS(&context->m_commandList)));
 
-	DrawableGameObject* pDrawableObject = new DrawableGameObject();
-	pDrawableObject->initCubeMesh(m_device);
-	pDrawableObject->setPosition(XMFLOAT3(0.0f, -1.1f, 0.0f));
-	pDrawableObject->setRotation(XMFLOAT3(0, 0, 0));
-	pDrawableObject->setScale(XMFLOAT3(5.0f, 0.1f, 5.0f));
-	pDrawableObject->setOrginalTransformValues(pDrawableObject->getPosition(), pDrawableObject->getRotation(), pDrawableObject->getScale());
-	pDrawableObject->update(0.0f);
-	pDrawableObject->setObjectName("Cube Floor");
-	m_app->m_drawableObjects.push_back(pDrawableObject);
+	DrawableGameObject* cubeFloor = new DrawableGameObject(
+		XMFLOAT3(0.0f, -1.1f, 0.0f),
+		XMFLOAT3(0, 0, 0),
+		XMFLOAT3(5.0f, 0.1f, 5.0f),
+		"Cube Floor");
 
-	DrawableGameObject* pCopy = pDrawableObject->createCopy();
-	pCopy->setPosition(XMFLOAT3(0.0f, 0.0f, -1.2f));
-	pCopy->setRotation(XMFLOAT3(0, 0, 0));
-	pCopy->setScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
-	pCopy->m_autoRotateX = true;
-	pCopy->m_autoRotateY = true;
-	pCopy->setOrginalTransformValues(pCopy->getPosition(), pCopy->getRotation(), pCopy->getScale());
-	pCopy->update(0.0f);
-	pCopy->setObjectName("Cube 1");
-	m_app->m_drawableObjects.push_back(pCopy);
+	cubeFloor->initCubeMesh(m_device);
+	m_app->m_drawableObjects.push_back(cubeFloor);
 
-	DrawableGameObject* pPlane = new DrawableGameObject();
+	DrawableGameObject* cube1 = new DrawableGameObject(
+		XMFLOAT3(0.0f, 0.0f, -1.2f),
+		XMFLOAT3(0, 0, 0),
+		XMFLOAT3(0.25f, 0.25f, 0.25f),
+		"Cube 1");
+
+	cube1->initCubeMesh(m_device);
+	cube1->m_autoRotateX = true;
+	cube1->m_autoRotateY = true;
+	m_app->m_drawableObjects.push_back(cube1);
+
+	DrawableGameObject* pPlane = new DrawableGameObject(
+		XMFLOAT3(0.0f, -1.5f, 0.0f),
+		XMFLOAT3(-90.0f, 0.0f, 0.0f),
+		XMFLOAT3(20.0f, 20.0f, 1.0f),
+		"Plane Floor");
+
 	pPlane->initPlaneMesh(m_device);
-	pPlane->setPosition(XMFLOAT3(0.0f, -1.5f, 0.0f));
-	pPlane->setScale(XMFLOAT3(20.0f, 20.0f, 1.0f));
-	pPlane->setRotation(XMFLOAT3(-90.0f, 0.0f, 0.0f));
-	pPlane->setOrginalTransformValues(pPlane->getPosition(), pPlane->getRotation(), pPlane->getScale());
-	pPlane->update(0.0f);
-	pPlane->setObjectName("Plane Floor");
 	m_app->m_drawableObjects.push_back(pPlane);
 
-	DrawableGameObject* pPlaneCopy = pPlane->createCopy();
-	pPlaneCopy->setPosition(XMFLOAT3(0.0f, 0.0f, -2.3f));
-	pPlaneCopy->setScale(XMFLOAT3(1.0f, 1.0f, 1.0f));
-	pPlaneCopy->setRotation(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	pPlaneCopy->setOrginalTransformValues(pPlaneCopy->getPosition(), pPlaneCopy->getRotation(), pPlaneCopy->getScale());
-	pPlaneCopy->update(0.0f);
-	pPlaneCopy->setObjectName("Plane 1");
+	DrawableGameObject* pPlaneCopy = new DrawableGameObject(
+		XMFLOAT3(0.0f, 0.0f, -2.3f),
+		XMFLOAT3(0.0f, 0.0f, 0.0f),
+		XMFLOAT3(1.0f, 1.0f, 1.0f),
+		"Plane 1");
+
+	pPlaneCopy->initPlaneMesh(m_device);
 	m_app->m_drawableObjects.push_back(pPlaneCopy);
 
-	DrawableGameObject* pOBJ = new DrawableGameObject();
-	pOBJ->initOBJMesh(m_device, R"(Objects\donut.obj)");
-	pOBJ->setPosition(XMFLOAT3(0.8f, -0.775f, 0.0f));
-	pOBJ->setRotation(XMFLOAT3(90, 0, 0));
-	pOBJ->setScale(XMFLOAT3(0.15f, 0.15f, 0.15f));
-	pOBJ->setOrginalTransformValues(pOBJ->getPosition(), pOBJ->getRotation(), pOBJ->getScale());
-	pOBJ->update(0.0f);
-	pOBJ->setObjectName("Donut 1");
-	m_app->m_drawableObjects.push_back(pOBJ);
+	DrawableGameObject* pDonut = new DrawableGameObject(
+		XMFLOAT3(0.8f, -0.775f, 0.0f),
+		XMFLOAT3(90, 0, 0),
+		XMFLOAT3(0.15f, 0.15f, 0.15f),
+		"Donut 1");
 
-	DrawableGameObject* pOBJ2 = new DrawableGameObject();
-	pOBJ2->initOBJMesh(m_device, R"(Objects\ball.obj)");
-	pOBJ2->setPosition(XMFLOAT3(-0.8f, -0.8f, 0.0f));
-	pOBJ2->setRotation(XMFLOAT3(0, 0, 0));
-	pOBJ2->setScale(XMFLOAT3(0.15f, 0.15f, 0.15f));
-	pOBJ2->setOrginalTransformValues(pOBJ2->getPosition(), pOBJ2->getRotation(), pOBJ2->getScale());
-	pOBJ2->update(0.0f);
-	pOBJ2->setObjectName("Ball 1");
-	m_app->m_drawableObjects.push_back(pOBJ2);
+	pDonut->initOBJMesh(m_device, R"(Objects\donut.obj)");
+	m_app->m_drawableObjects.push_back(pDonut);
 
-	DrawableGameObject* pMirror1 = new DrawableGameObject();
+	DrawableGameObject* pBall = new DrawableGameObject(
+		XMFLOAT3(-0.8f, -0.8f, 0.0f),
+		XMFLOAT3(0, 0, 0),
+		XMFLOAT3(0.15f, 0.15f, 0.15f),
+		"Ball 1");
+
+	pBall->initOBJMesh(m_device, R"(Objects\ball.obj)");
+	m_app->m_drawableObjects.push_back(pBall);
+
+	DrawableGameObject* pMirror1 = new DrawableGameObject(
+		XMFLOAT3(5.0f, 1.8f, 0.0f),
+		XMFLOAT3(0, 0, 0),
+		XMFLOAT3(0.05f, 3.0f, 5.0f),
+		"Mirror 1");
+
 	pMirror1->initCubeMesh(m_device);
-	pMirror1->setPosition(XMFLOAT3(5.0f, 1.8f, 0.0f));
-	pMirror1->setRotation(XMFLOAT3(0, 0, 0));
-	pMirror1->setScale(XMFLOAT3(0.05f, 3.0f, 5.0f));
-	pMirror1->setOrginalTransformValues(pMirror1->getPosition(), pMirror1->getRotation(), pMirror1->getScale());
-	pMirror1->update(0.0f);
-	pMirror1->setObjectName("Mirror 1");
 	m_app->m_drawableObjects.push_back(pMirror1);
 
-	DrawableGameObject* pMirror2 = new DrawableGameObject();
+	DrawableGameObject* pMirror2 = new DrawableGameObject(
+		XMFLOAT3(-5.0f, 1.8f, 0.0f),
+		XMFLOAT3(0, 0, 0),
+		XMFLOAT3(0.05f, 3.0f, 5.0f),
+		"Mirror 2");
+
 	pMirror2->initCubeMesh(m_device);
-	pMirror2->setPosition(XMFLOAT3(-5.0f, 1.8f, 0.0f));
-	pMirror2->setRotation(XMFLOAT3(0, 0, 0));
-	pMirror2->setScale(XMFLOAT3(0.05f, 3.0f, 5.0f));
-	pMirror2->setOrginalTransformValues(pMirror2->getPosition(), pMirror2->getRotation(), pMirror2->getScale());
-	pMirror2->update(0.0f);
-	pMirror2->setObjectName("Mirror 2");
 	m_app->m_drawableObjects.push_back(pMirror2);
 
 	// Create synchronization objects and wait until assets have been uploaded to
@@ -701,7 +695,6 @@ void DXRSetup::CreateRaytracingPipeline()
 	pipeline.AddHitGroup(L"PlaneHitGroup", L"PlaneClosestHit");
 	pipeline.AddHitGroup(L"DonutHitGroup", L"ClosestHit", L"AnyHit");
 	pipeline.AddHitGroup(L"BallHitGroup", L"ClosestHit", L"AnyHit");
-
 	pipeline.AddHitGroup(L"ShadowHitGroup", L"ShadowHit");
 
 	// The following section associates the root signature to each shader. Note
@@ -711,14 +704,14 @@ void DXRSetup::CreateRaytracingPipeline()
 	// closest-hit shaders share the same root signature.
 	pipeline.AddRootSignatureAssociation(context->m_rayGenSignature.Get(), { L"RayGen" });
 	pipeline.AddRootSignatureAssociation(context->m_missSignature.Get(), { L"Miss", L"ShadowMiss" });
-	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"CubeHitGroup" , L"PlaneHitGroup", L"DonutHitGroup" ,L"BallHitGroup",L"ShadowHitGroup" });
+	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"CubeHitGroup", L"PlaneHitGroup", L"DonutHitGroup" ,L"BallHitGroup",L"ShadowHitGroup" });
 
 	// The payload size defines the maximum size of the data carried by the rays,
 	// ie. the the data
 	// exchanged between shaders, such as the HitInfo structure in the HLSL code.
 	// It is important to keep this value as low as possible as a too high value
 	// would result in unnecessary memory consumption and cache trashing.
-	pipeline.SetMaxPayloadSize(5 * sizeof(float)); // RGB + distance
+	pipeline.SetMaxPayloadSize(5 * sizeof(float)); // RGB + distance + Recursion depth
 
 	// Upon hitting a surface, DXR can provide several attributes to the hit. In
 	// our sample we just use the barycentric coordinates defined by the weights

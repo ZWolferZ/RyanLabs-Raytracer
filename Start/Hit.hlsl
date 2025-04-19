@@ -34,7 +34,6 @@ cbuffer LightParams : register(b1)
 
 }
 
-
 float3 HitAttributeV3(float3 vertexAttributes[3], Attributes attr)
 {
 	return vertexAttributes[0] +
@@ -89,6 +88,8 @@ float random(float2 uv)
 	return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
 }
 
+
+
 float4 TraceReflectionRay(in RayDesc reflectionRay,in uint recursionDepth)
 {
 	if (recursionDepth >= maxRecursionDepth)
@@ -107,45 +108,40 @@ float4 TraceReflectionRay(in RayDesc reflectionRay,in uint recursionDepth)
 	return reflectionPayload.colorAndDistance;
 }
 
-
-[shader("closesthit")]
-void ClosestHit(inout HitInfo payload, Attributes attrib)
+float3 TestReflectionRays(float3 colorOut, float3 hitWorldPosition, float3 worldNormal, HitInfo payload)
 {
-	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
-	uint vertid = 3 * PrimitiveIndex();
 
-	float3 vertexNormals[3];
-	vertexNormals[0] = BTriVertex[indices[vertid + 0]].normal.xyz;
-	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
-	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
-
-	float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
-	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
-	float3 hitWorldPosition = HitWorldPosition();
-
-	float3 lightDirection = normalize((float3) lightPosition - hitWorldPosition);
-	float distance = length((float3) lightPosition - hitWorldPosition);
-	float attenuation = saturate(1.0 - distance / lightRange);
-
-	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal) * attenuation;
-	float4 ambientColour = CalculateAmbientLighting(objectColour) * attenuation;
-	float4 specularColour = CalculateSpecularLighting(hitWorldPosition,lightDirection, worldNormal) * attenuation;
-	float3 colorOut = ambientColour;
-
-	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
-	float edgeThickness = 0.01f;
-	if (minB < edgeThickness)
+	if (reflection == 1)
 	{
-		colorOut = float3(0.0, 0.0, 0.0);
+
+
+		RayDesc reflectionRay;
+
+		reflectionRay.Origin = hitWorldPosition + (worldNormal * 0.01f);
+		reflectionRay.Direction = reflect(WorldRayDirection(), worldNormal);
+		reflectionRay.TMin = 0.00001f;
+		reflectionRay.TMax = 100000;
+
+		float4 reflectionColor = TraceReflectionRay(reflectionRay, payload.recursiveDepth);
+
+
+
+		float4 reflectionOut = shininess * reflectionColor;
+
+
+		colorOut += reflectionOut;
 	}
 
 
+	return colorOut;
+}
+
+float3 TraceShadowRays(float3 colorOut, float4 diffuseColour, float4 specularColour, float3 hitWorldPosition, float3 worldNormal, float3 lightDirection)
+{
 	if (shadows == 0)
 	{
 		colorOut += diffuseColour;
 		colorOut += specularColour;
-		payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
-
 	}
 	else
 	{
@@ -195,27 +191,50 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 		colorOut *= shadowFactor;
 	}
 
-	if (reflection == 1)
+	return colorOut;
+}
+
+float3 DrawTriOutlines(float3 colorOut, float3 barycentrics)
+{
+	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
+	float edgeThickness = 0.01f;
+	if (minB < edgeThickness)
 	{
-	 
-	
-		RayDesc reflectionRay;
-
-		reflectionRay.Origin = hitWorldPosition + (worldNormal * 0.01f);
-		reflectionRay.Direction = reflect(WorldRayDirection(), worldNormal);
-		reflectionRay.TMin = 0.00001f;
-		reflectionRay.TMax = 100000;
-
-		float4 reflectionColor = TraceReflectionRay(reflectionRay, payload.recursiveDepth);
-
-		
-
-		float4 reflectionOut = shininess * reflectionColor;
-
-
-		colorOut += reflectionOut;
+		colorOut = float3(0.0, 0.0, 0.0);
 	}
+	return colorOut;
+}
 
+[shader("closesthit")]
+void ClosestHit(inout HitInfo payload, Attributes attrib)
+{
+	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
+	uint vertid = 3 * PrimitiveIndex();
+
+	float3 vertexNormals[3];
+	vertexNormals[0] = BTriVertex[indices[vertid + 0]].normal.xyz;
+	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
+	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
+
+	float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
+	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
+	float3 hitWorldPosition = HitWorldPosition();
+
+	float3 lightDirection = normalize((float3) lightPosition - hitWorldPosition);
+	float distance = length((float3) lightPosition - hitWorldPosition);
+	float attenuation = saturate(1.0 - distance / lightRange);
+
+	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal) * attenuation;
+	float4 ambientColour = CalculateAmbientLighting(objectColour) * attenuation;
+	float4 specularColour = CalculateSpecularLighting(hitWorldPosition,lightDirection, worldNormal) * attenuation;
+
+	float3 colorOut = ambientColour;
+
+	colorOut = DrawTriOutlines(colorOut, barycentrics);
+
+	colorOut = TraceShadowRays(colorOut, diffuseColour, specularColour, hitWorldPosition, worldNormal, lightDirection);
+
+	colorOut = TestReflectionRays(colorOut, hitWorldPosition, worldNormal, payload);
 
 	payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
 }
@@ -258,71 +277,8 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 	float3 colorOut = ambientColour;
 
-	float minB = min(barycentrics.x, min(barycentrics.y, barycentrics.z));
-	float edgeThickness = 0.005f;
-	if (minB < edgeThickness)
-	{
-		colorOut = float3(0.0, 0.0, 0.0);
-	}
-
-	if (shadows == 0)
-	{
-		colorOut += diffuseColour;
-		payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
-	}
-	else
-	{
-		{
-			RayDesc ray;
-
-			ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
-			ray.Direction = lightDirection;
-
-			ray.TMin = 0.00001f;
-			ray.TMax = 100000;
-
-			ShadowHitInfo shadowPayload;
-			shadowPayload.isHit = false;
-			TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
-
-
-			if (!shadowPayload.isHit)
-			{
-				colorOut += diffuseColour;
-			}
-
-		}
-
-
-		float shadowTotal = 0.0f;
-		for (int i = 0; i < shawdowRayCount; i++)
-		{
-			float offset = random(float2(i, i++)) - 0.5f;
-
-			float3 offsetDir = normalize(lightDirection + 0.05f * offset);
-
-			RayDesc ray;
-			ray.Origin = hitWorldPosition + (worldNormal * 0.01f);
-			ray.Direction = offsetDir;
-			ray.TMin = 0.00001f;
-			ray.TMax = 100000;
-
-			ShadowHitInfo shadowPayload;
-			shadowPayload.isHit = false;
-			TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF, 1, 0, 1, ray, shadowPayload);
-
-			shadowTotal += shadowPayload.isHit ? 0.0f : 1.0f;
-		}
-
-		float shadowFactor = shadowTotal / shawdowRayCount;
-
-
-
-		colorOut *= shadowFactor;
-	}
-
- 
-
+	colorOut = DrawTriOutlines(colorOut, barycentrics);
+	colorOut = TraceShadowRays(colorOut, diffuseColour, float4(0,0,0,0), hitWorldPosition, worldNormal, lightDirection);
 
 	payload.colorAndDistance = float4(colorOut.xyz, RayTCurrent());
 }

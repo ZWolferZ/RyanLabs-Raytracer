@@ -8,7 +8,7 @@ using Microsoft::WRL::ComPtr;
 class DrawableGameObject
 {
 public:
-	DrawableGameObject();
+	DrawableGameObject(XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale, string objectName);
 	~DrawableGameObject();
 
 	void cleanup();

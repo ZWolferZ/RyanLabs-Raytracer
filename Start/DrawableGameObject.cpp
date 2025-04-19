@@ -5,22 +5,28 @@ using namespace std;
 
 //#define NUM_VERTICES 36
 
-DrawableGameObject::DrawableGameObject()
+DrawableGameObject::DrawableGameObject(XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale, string objectName)
 {
 	//m_pVertexBuffer = nullptr;
 	//m_pIndexBuffer = nullptr;
 	//m_pTextureResourceView = nullptr;
 	//m_pSamplerLinear = nullptr;
-	m_position = { 0, 0, 0 };
-	m_rotation = { 0, 0, 0 };
-	m_scale = { 1.0f, 1.0f,1.0f };
+	m_position = position;
+	m_rotation = rotation;
+	m_scale = scale;
 
-	XMMATRIX rotation = XMMatrixRotationX(XMConvertToRadians(m_rotation.x)) * XMMatrixRotationY(XMConvertToRadians(m_rotation.y)) * XMMatrixRotationZ(m_rotation.z);
-	XMMATRIX translation = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
-	XMMATRIX scale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
+	this->setObjectName(objectName);
+
+	XMMATRIX newRotation = XMMatrixRotationX(XMConvertToRadians(m_rotation.x)) * XMMatrixRotationY(XMConvertToRadians(m_rotation.y)) * XMMatrixRotationZ(m_rotation.z);
+	XMMATRIX newTranslation = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
+	XMMATRIX newScale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 
 	// Initialize the world matrix
-	XMStoreFloat4x4(&m_World, translation * rotation * scale);
+	XMStoreFloat4x4(&m_World, newTranslation * newRotation * newScale);
+
+	this->setOrginalTransformValues(this->getPosition(), this->getRotation(), this->getScale());
+
+	this->update(0.0f);
 }
 
 DrawableGameObject::~DrawableGameObject()
@@ -238,7 +244,7 @@ HRESULT DrawableGameObject::initOBJMesh(ComPtr<ID3D12Device5> device, char* szOB
 
 DrawableGameObject* DrawableGameObject::createCopy()
 {
-	DrawableGameObject* pobj = new DrawableGameObject();
+	DrawableGameObject* pobj = new DrawableGameObject(this->getPosition(), this->getRotation(), this->getScale(), this->getObjectName());
 	*pobj = *this;
 	return pobj;
 }

@@ -18,3 +18,4 @@ struct ShadowHitInfo
 {
     bool isHit;
 };
+
