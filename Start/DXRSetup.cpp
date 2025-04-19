@@ -17,23 +17,6 @@
 
 #include "DrawableGameObject.h"
 
-constexpr size_t CUBE1_INDEX = 0;
-constexpr size_t CUBE2_INDEX = 1;
-constexpr size_t PLANE_INDEX = 2;
-constexpr size_t PLANE2_INDEX = 3;
-constexpr size_t OBJ_DONUT_INDEX = 4;
-constexpr size_t OBJ_BALL_INDEX = 5;
-constexpr size_t MIRROR1_INDEX = 6;
-constexpr size_t MIRROR2_INDEX = 7;
-constexpr size_t CUBEHITGROUP_INDEX = 0;
-//1
-constexpr size_t PLANEHITGROUP_INDEX = 2;
-//3
-constexpr size_t DONUTHITGROUP_INDEX = 4;
-//5
-constexpr size_t BALLHITGROUP_INDEX = 6;
-//7
-
 DXRSetup::DXRSetup(DXRApp* app)
 {
 	m_app = app;
@@ -66,14 +49,9 @@ void DXRSetup::initialise()
 	// as the target image
 	CreateRaytracingOutputBuffer(); // #DXR
 
-	////Multi-threading BABY
-	std::thread CreateCameraThread(&DXRSetup::CreateCamera, this);
-	std::thread CreateColourBufferThread(&DXRSetup::CreateColourBuffer, this);
-	std::thread CreateLightingBufferThread(&DXRSetup::CreateLightingBuffer, this);
-
-	CreateCameraThread.join();
-	CreateColourBufferThread.join();
-	CreateLightingBufferThread.join();
+	CreateCamera();
+	CreateColourBuffer();
+	CreateLightingBuffer();
 
 	// Create the buffer containing the raytracing result (always output in a
 	// UAV), and create the heap referencing the resources used by the raytracing,
@@ -539,32 +517,14 @@ void DXRSetup::CreateAccelerationStructures()
 {
 	DXRContext* context = m_app->GetContext();
 
-	// Build the bottom AS from the Triangle vertex buffer
-	AccelerationStructureBuffers cubeBuffers =
-		CreateBottomLevelAS({ {m_app->m_drawableObjects[CUBE1_INDEX]->getVertexBuffer().Get(), m_app->m_drawableObjects[CUBE1_INDEX]->getVertexCount()} },
-			{ {m_app->m_drawableObjects[CUBE1_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[CUBE1_INDEX]->getIndexCount()} });
+	for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
+	{
+		AccelerationStructureBuffers Buffers =
+			CreateBottomLevelAS({ {m_app->m_drawableObjects[i]->getVertexBuffer().Get(), m_app->m_drawableObjects[i]->getVertexCount()} },
+				{ {m_app->m_drawableObjects[i]->getIndexBuffer().Get(), m_app->m_drawableObjects[i]->getIndexCount()} });
 
-	AccelerationStructureBuffers planeBuffer =
-		CreateBottomLevelAS({ {m_app->m_drawableObjects[PLANE_INDEX]->getVertexBuffer().Get(), m_app->m_drawableObjects[PLANE_INDEX]->getVertexCount()} },
-			{ {m_app->m_drawableObjects[PLANE_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[PLANE_INDEX]->getIndexCount()} });
-
-	AccelerationStructureBuffers objDonutBuffer =
-		CreateBottomLevelAS({ {m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getVertexBuffer().Get(), m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getVertexCount()} },
-			{ {m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getIndexCount()} });
-
-	AccelerationStructureBuffers objBallBuffer =
-		CreateBottomLevelAS({ {m_app->m_drawableObjects[OBJ_BALL_INDEX]->getVertexBuffer().Get(), m_app->m_drawableObjects[OBJ_BALL_INDEX]->getVertexCount()} },
-			{ {m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexBuffer().Get(), m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexCount()} });
-
-	// Just one instance for now
-	m_app->m_instances.push_back(std::make_pair(cubeBuffers.pResult, m_app->m_drawableObjects[CUBE1_INDEX]->getTransform()));
-	m_app->m_instances.push_back(std::make_pair(cubeBuffers.pResult, m_app->m_drawableObjects[CUBE2_INDEX]->getTransform()));
-	m_app->m_instances.push_back(std::make_pair(planeBuffer.pResult, m_app->m_drawableObjects[PLANE_INDEX]->getTransform()));
-	m_app->m_instances.push_back(std::make_pair(planeBuffer.pResult, m_app->m_drawableObjects[PLANE2_INDEX]->getTransform()));
-	m_app->m_instances.push_back(std::make_pair(objDonutBuffer.pResult, m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getTransform()));
-	m_app->m_instances.push_back(std::make_pair(objBallBuffer.pResult, m_app->m_drawableObjects[OBJ_BALL_INDEX]->getTransform()));
-	m_app->m_instances.push_back(std::make_pair(cubeBuffers.pResult, m_app->m_drawableObjects[MIRROR1_INDEX]->getTransform()));
-	m_app->m_instances.push_back(std::make_pair(cubeBuffers.pResult, m_app->m_drawableObjects[MIRROR2_INDEX]->getTransform()));
+		m_app->m_instances.push_back(std::make_pair(Buffers.pResult, m_app->m_drawableObjects[i]->getTransform()));
+	}
 
 	CreateTopLevelAS(m_app->m_instances, false);
 
@@ -691,10 +651,19 @@ void DXRSetup::CreateRaytracingPipeline()
 
 	// Hit group for the triangles, with a shader simply interpolating vertex
 	// colors
-	pipeline.AddHitGroup(L"CubeHitGroup", L"ClosestHit", L"AnyHit");
-	pipeline.AddHitGroup(L"PlaneHitGroup", L"PlaneClosestHit");
-	pipeline.AddHitGroup(L"DonutHitGroup", L"ClosestHit", L"AnyHit");
-	pipeline.AddHitGroup(L"BallHitGroup", L"ClosestHit", L"AnyHit");
+
+	for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
+	{
+		if (m_app->m_drawableObjects[i]->m_planeMesh)
+		{
+			pipeline.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName, L"PlaneClosestHit");
+		}
+		else
+		{
+			pipeline.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName, L"ClosestHit", L"AnyHit");
+		}
+	}
+
 	pipeline.AddHitGroup(L"ShadowHitGroup", L"ShadowHit");
 
 	// The following section associates the root signature to each shader. Note
@@ -704,7 +673,12 @@ void DXRSetup::CreateRaytracingPipeline()
 	// closest-hit shaders share the same root signature.
 	pipeline.AddRootSignatureAssociation(context->m_rayGenSignature.Get(), { L"RayGen" });
 	pipeline.AddRootSignatureAssociation(context->m_missSignature.Get(), { L"Miss", L"ShadowMiss" });
-	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"CubeHitGroup", L"PlaneHitGroup", L"DonutHitGroup" ,L"BallHitGroup",L"ShadowHitGroup" });
+
+	for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
+	{
+		pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { m_app->m_drawableObjects[i]->m_objectHitGroupName });
+	}
+	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"ShadowHitGroup" });
 
 	// The payload size defines the maximum size of the data carried by the rays,
 	// ie. the the data
@@ -851,61 +825,22 @@ void DXRSetup::CreateShaderBindingTable()
 	context->m_sbtHelper.AddMissProgram(L"Miss", { heapPointer });
 	context->m_sbtHelper.AddMissProgram(L"ShadowMiss", { heapPointer });
 
-	// Adding the triangle hit shader
-	context->m_sbtHelper.AddHitGroup(L"CubeHitGroup",
-		{ (void*)(m_app->m_drawableObjects[CUBE1_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[CUBE1_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		,heapPointer });
+	for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
+	{
+		context->m_sbtHelper.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName,
+			{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
+				(void*)(m_app->m_drawableObjects[i]->getIndexBuffer()->GetGPUVirtualAddress()),
+				(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
+				(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
+			,heapPointer });
 
-	context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
-		{ (void*)(m_app->m_drawableObjects[CUBE1_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[CUBE1_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		,heapPointer });
-
-	context->m_sbtHelper.AddHitGroup(L"PlaneHitGroup",
-		{ (void*)(m_app->m_drawableObjects[PLANE_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[PLANE_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		,heapPointer });
-
-	context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
-		{ (void*)(m_app->m_drawableObjects[PLANE_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[PLANE_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		,heapPointer });
-
-	context->m_sbtHelper.AddHitGroup(L"DonutHitGroup",
-		{ (void*)(m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		,heapPointer });
-	context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
-		{ (void*)(m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[OBJ_DONUT_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		,heapPointer });
-
-	context->m_sbtHelper.AddHitGroup(L"BallHitGroup",
-		{ (void*)(m_app->m_drawableObjects[OBJ_BALL_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		,heapPointer });
-
-	context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
-		{ (void*)(m_app->m_drawableObjects[OBJ_BALL_INDEX]->getVertexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_drawableObjects[OBJ_BALL_INDEX]->getIndexBuffer()->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
-			(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-		,heapPointer });
+		context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
+			{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
+				(void*)(m_app->m_drawableObjects[i]->getIndexBuffer()->GetGPUVirtualAddress()),
+				(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
+				(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
+			,heapPointer });
+	}
 
 	// Compute the size of the SBT given the number of shaders and their
 	// parameters
@@ -1001,31 +936,14 @@ void DXRSetup::CreateTopLevelAS(
 	context->m_topLevelASGenerator.RemoveAllInstances();
 
 	// Gather all the instances into the builder helper
-	for (size_t i = 0; i < instances.size(); i++) {
-		if (i == PLANE_INDEX || i == PLANE2_INDEX)
-		{
-			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
-				instances[i].second, static_cast<UINT>(i),
-				static_cast<UINT>(PLANEHITGROUP_INDEX));
-		}
-		else if (i == CUBE1_INDEX || i == CUBE2_INDEX || i == MIRROR1_INDEX || i == MIRROR2_INDEX)
-		{
-			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
-				instances[i].second, static_cast<UINT>(i),
-				static_cast<UINT>(CUBEHITGROUP_INDEX));
-		}
-		else if (i == OBJ_DONUT_INDEX)
-		{
-			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
-				instances[i].second, static_cast<UINT>(i),
-				static_cast<UINT>(DONUTHITGROUP_INDEX));
-		}
-		else if (i == OBJ_BALL_INDEX)
-		{
-			context->m_topLevelASGenerator.AddInstance(instances[i].first.Get(),
-				instances[i].second, static_cast<UINT>(i),
-				static_cast<UINT>(BALLHITGROUP_INDEX));
-		}
+	for (int i = 0; i < instances.size(); i++)
+	{
+		context->m_topLevelASGenerator.AddInstance(
+			instances[i].first.Get(),
+			instances[i].second,
+			static_cast<UINT>(i),
+			static_cast<UINT>(i * 2)
+		);
 	}
 
 	if (!update)

@@ -17,6 +17,10 @@ DrawableGameObject::DrawableGameObject(XMFLOAT3 position, XMFLOAT3 rotation, XMF
 
 	this->setObjectName(objectName);
 
+	objectName += " Hit Group";
+
+	m_objectHitGroupName.assign(objectName.begin(), objectName.end());
+
 	XMMATRIX newRotation = XMMatrixRotationX(XMConvertToRadians(m_rotation.x)) * XMMatrixRotationY(XMConvertToRadians(m_rotation.y)) * XMMatrixRotationZ(m_rotation.z);
 	XMMATRIX newTranslation = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
 	XMMATRIX newScale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
@@ -166,6 +170,7 @@ HRESULT DrawableGameObject::initCubeMesh(ComPtr<ID3D12Device5> device)
 		m_meshData.IndexBuffer->Unmap(0, nullptr);
 	}
 
+	m_cubeMesh = true;
 	return S_OK;
 }
 
@@ -232,6 +237,7 @@ HRESULT DrawableGameObject::initPlaneMesh(ComPtr<ID3D12Device5> device)
 		m_meshData.IndexBuffer->Unmap(0, nullptr);
 	}
 
+	m_planeMesh = true;
 	return S_OK;
 }
 
@@ -239,6 +245,7 @@ HRESULT DrawableGameObject::initOBJMesh(ComPtr<ID3D12Device5> device, char* szOB
 {
 	m_meshData = OBJLoader::Load(szOBJName, device.Get());
 	assert(m_meshData.VertexBuffer);
+	m_objMesh = true;
 	return S_OK;
 }
 
@@ -280,6 +287,10 @@ void DrawableGameObject::resetTransform()
 	m_autoRotateX = false;
 	m_autoRotateY = false;
 	m_autoRotateZ = false;
+}
+
+void DrawableGameObject::createMaterialBuffers()
+{
 }
 
 void DrawableGameObject::update(float t)

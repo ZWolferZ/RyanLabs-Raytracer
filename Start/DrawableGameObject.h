@@ -18,7 +18,11 @@ public:
 	bool m_autoRotateX = false;
 	bool m_autoRotateY = false;
 	bool m_autoRotateZ = false;
+	bool m_planeMesh = false;
+	bool m_objMesh = false;
+	bool m_cubeMesh = false;
 
+	wstring m_objectHitGroupName;
 	float m_autoRotationSpeed = 50.0f;
 
 	DrawableGameObject* createCopy(); // creates a copy
@@ -47,7 +51,7 @@ public:
 	void								setObjectName(string name) { m_objectName = name; }
 	void								setOrginalTransformValues(XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale);
 	void								resetTransform();
-
+	void 								createMaterialBuffers();
 private:
 
 	XMFLOAT4X4							m_World;
