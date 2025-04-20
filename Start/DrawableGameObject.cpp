@@ -303,6 +303,15 @@ void DrawableGameObject::update(float t)
 		m_materialBufferData.reflection = 0;
 	}
 
+	if (m_triOutline)
+	{
+		m_materialBufferData.triOutline = 1;
+	}
+	else
+	{
+		m_materialBufferData.triOutline = 0;
+	}
+
 	// Don't overflow the rotation
 	if (m_rotation.x > 360.0f) m_rotation.x = 0.0f;
 

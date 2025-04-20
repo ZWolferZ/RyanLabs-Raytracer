@@ -271,14 +271,14 @@ void DXRRuntime::DrawObjectMaterialWindow()
 	{
 		ImGui::SetNextWindowPos(ImVec2(10, 580), ImGuiCond_FirstUseEver);
 		ImGui::Begin("Object Material Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-		ImGui::Text("Change the colour of the object!");
-		ImGui::Separator();
+		ImGui::Checkbox("Draw Tri-Outlines", &m_selectedObject->m_triOutline);
+		ImGui::SliderFloat("Tri-Outline Thickness", &m_selectedObject->m_materialBufferData.triThickness, 0.01f, 0.1f);
 
-		XMFLOAT3 objectColour = { m_selectedObject->m_materialBufferData.objectColour.x,m_selectedObject->m_materialBufferData.objectColour.y,m_selectedObject->m_materialBufferData.objectColour.z };
-		if (ImGui::DragFloat3("Object Colour", reinterpret_cast<float*>(&objectColour), 0.01f, 0.0f, 1.0f))
-		{
-			m_selectedObject->m_materialBufferData.objectColour = XMFLOAT4(objectColour.x, objectColour.y, objectColour.z, 1.0f);
-		}
+		ImGui::Separator();
+		ImGui::Text("Change the colour of the object!");
+
+		ImGui::ColorEdit4("Object Colour", reinterpret_cast<float*>(&m_selectedObject->m_materialBufferData.objectColour));
+
 		ImGui::Text("(Drag the box or enter a number)");
 		ImGui::Separator();
 
@@ -399,7 +399,7 @@ void DXRRuntime::DrawLightingWindow()
 }
 void DXRRuntime::DrawSecretWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(0, 800), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(550, 800), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Secret Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 	if (ImGui::Checkbox("Activate Trans Mode?", &m_app->m_DXSetup->m_transBackgroundMode))
@@ -413,7 +413,7 @@ void DXRRuntime::DrawSecretWindow()
 }
 void DXRRuntime::DrawReflectionWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(440, 580), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(440, 560), ImGuiCond_FirstUseEver);
 
 	if (m_selectedObject != nullptr)
 	{

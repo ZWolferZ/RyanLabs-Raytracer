@@ -47,6 +47,8 @@ struct MaterialBuffer
 	UINT reflection = 0;
 	float shininess = 0.2f;
 	int maxRecursionDepth = 5;
-	float padding;
+	UINT triOutline = 0;
+	float triThickness = 0.01f;
+	XMFLOAT3 padding;
 	XMFLOAT4 objectColour = { 1,1,1,1 };
 };

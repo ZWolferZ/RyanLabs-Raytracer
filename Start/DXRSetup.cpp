@@ -639,7 +639,7 @@ void DXRSetup::CreateRaytracingPipeline()
 	{
 		if (m_app->m_drawableObjects[i]->m_planeMesh)
 		{
-			pipeline.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName, L"PlaneClosestHit");
+			pipeline.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName, L"PlaneClosestHit", L"AnyHit");
 		}
 		else
 		{

@@ -27,6 +27,8 @@ public:
 
 	bool m_reflection = false;
 
+	bool m_triOutline = true;
+
 	ComPtr< ID3D12Resource >		 m_materialBuffer;
 	uint32_t 						m_materialBufferSize = 256;
 	MaterialBuffer 					m_materialBufferData;
