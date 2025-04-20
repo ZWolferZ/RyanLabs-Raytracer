@@ -49,6 +49,6 @@ struct MaterialBuffer
 	int maxRecursionDepth = 5;
 	UINT triOutline = 0;
 	float triThickness = 0.01f;
-	XMFLOAT3 padding;
+	XMFLOAT3 triColour = { 0,0,0 };
 	XMFLOAT4 objectColour = { 1,1,1,1 };
 };

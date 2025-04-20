@@ -273,6 +273,7 @@ void DXRRuntime::DrawObjectMaterialWindow()
 		ImGui::Begin("Object Material Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Checkbox("Draw Tri-Outlines", &m_selectedObject->m_triOutline);
 		ImGui::SliderFloat("Tri-Outline Thickness", &m_selectedObject->m_materialBufferData.triThickness, 0.01f, 0.1f);
+		ImGui::ColorEdit3("Tri-Outline Colour", reinterpret_cast<float*>(&m_selectedObject->m_materialBufferData.triColour));
 
 		ImGui::Separator();
 		ImGui::Text("Change the colour of the object!");

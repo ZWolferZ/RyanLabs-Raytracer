@@ -427,9 +427,11 @@ void DXRSetup::LoadAssets()
 
 	DrawableGameObject* pDonut = new DrawableGameObject(
 		XMFLOAT3(0.8f, -0.775f, 0.0f),
-		XMFLOAT3(90, 0, 0),
+		XMFLOAT3(45, 0, 0),
 		XMFLOAT3(0.15f, 0.15f, 0.15f),
 		"Donut 1");
+
+	pDonut->m_autoRotateY = true;
 
 	pDonut->m_materialBufferData.objectColour = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 

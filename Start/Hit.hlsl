@@ -34,7 +34,7 @@ cbuffer MaterialBuffer : register(b1)
 	int maxRecursionDepth;
 	uint triOutline;
 	float triThickness;
-	float3 padding2;
+	float3 triColour;
 	float4 objectColour;
 }
 
@@ -219,7 +219,7 @@ float3 DrawTriOutlines(float3 colorOut, float3 barycentrics)
 
 	if (minB < triThickness)
 	{
-		colorOut = float3(0.0, 0.0, 0.0);
+		colorOut = triColour;
 	}
 	return colorOut;
 }
