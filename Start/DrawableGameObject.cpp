@@ -289,14 +289,19 @@ void DrawableGameObject::resetTransform()
 	m_autoRotateZ = false;
 }
 
-void DrawableGameObject::createMaterialBuffers()
-{
-}
-
 void DrawableGameObject::update(float t)
 {
 	static float cummulativeTime = 0;
 	cummulativeTime += t;
+
+	if (m_reflection)
+	{
+		m_materialBufferData.reflection = 1;
+	}
+	else
+	{
+		m_materialBufferData.reflection = 0;
+	}
 
 	// Don't overflow the rotation
 	if (m_rotation.x > 360.0f) m_rotation.x = 0.0f;

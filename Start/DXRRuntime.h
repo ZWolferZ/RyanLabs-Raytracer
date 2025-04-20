@@ -53,7 +53,7 @@ public:
 	void DrawObjectSelectionWindow();
 	void DrawObjectMovementWindow();
 	void DrawCameraStatsWindow();
-	void DrawHitColourWindow();
+	void DrawObjectMaterialWindow();
 	void DrawCameraSplineWindow();
 	void DrawLightingWindow();
 	void DrawSecretWindow();

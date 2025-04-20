@@ -29,12 +29,6 @@ struct CameraBuffer
 	XMFLOAT3 morePadding;
 };
 
-struct ColourBuffer
-{
-	XMFLOAT4 objectColour;
-	XMFLOAT4 planeColour;
-};
-
 struct LightParams
 {
 	XMFLOAT4 lightPosition;
@@ -45,8 +39,14 @@ struct LightParams
 	float pointLightRange;
 	UINT shadows;
 	UINT shawdowRayCount;
-	UINT reflection;
-	float shininess;
-	UINT maxRecursionDepth;
+	XMFLOAT4 padding;
+};
+
+struct MaterialBuffer
+{
+	UINT reflection = 0;
+	float shininess = 0.2f;
+	int maxRecursionDepth = 5;
 	float padding;
+	XMFLOAT4 objectColour = { 1,1,1,1 };
 };

@@ -50,8 +50,8 @@ void DXRSetup::initialise()
 	CreateRaytracingOutputBuffer(); // #DXR
 
 	CreateCamera();
-	CreateColourBuffer();
 	CreateLightingBuffer();
+	CreateMaterialBuffers();
 
 	// Create the buffer containing the raytracing result (always output in a
 	// UAV), and create the heap referencing the resources used by the raytracing,
@@ -106,46 +106,6 @@ void DXRSetup::UpdateCamera(float rX, float rY)
 	context->m_cameraBuffer->Unmap(0, nullptr);
 }
 
-void DXRSetup::CreateColourBuffer()
-{
-	DXRContext* context = m_app->GetContext();
-
-	context->m_colourBuffer = nv_helpers_dx12::CreateBuffer(
-		m_device.Get(), context->m_colourBufferSize, D3D12_RESOURCE_FLAG_NONE,
-		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
-
-	ColourBuffer cb;
-
-	cb.objectColour = m_originalObjectColour;
-	cb.planeColour = m_originalPlaneColour;
-
-	m_objectColour = cb.objectColour;
-	m_planeColour = cb.planeColour;
-
-	uint8_t* pData;
-	ThrowIfFailed(context->m_colourBuffer->Map(0, nullptr, (void**)&pData));
-	memcpy(pData, &cb, sizeof(ColourBuffer));
-	context->m_colourBuffer->Unmap(0, nullptr);
-}
-
-void DXRSetup::UpdateColourBuffer(XMFLOAT4 objectColour, XMFLOAT4 planeColour)
-{
-	DXRContext* context = m_app->GetContext();
-
-	ColourBuffer cb;
-
-	cb.objectColour = objectColour;
-	cb.planeColour = planeColour;
-
-	m_objectColour = cb.objectColour;
-	m_planeColour = cb.planeColour;
-
-	uint8_t* pData;
-	ThrowIfFailed(context->m_colourBuffer->Map(0, nullptr, (void**)&pData));
-	memcpy(pData, &cb, sizeof(ColourBuffer));
-	context->m_colourBuffer->Unmap(0, nullptr);
-}
-
 void DXRSetup::CreateLightingBuffer()
 {
 	DXRContext* context = m_app->GetContext();
@@ -172,17 +132,6 @@ void DXRSetup::CreateLightingBuffer()
 	}
 
 	cb.shawdowRayCount = m_originalShadowRayCount;
-
-	if (m_reflection)
-	{
-		cb.reflection = 1;
-	}
-	else
-	{
-		cb.reflection = 0;
-	}
-	cb.shininess = m_shininess;
-	cb.maxRecursionDepth = m_maxRecursionDepth;
 
 	uint8_t* pData;
 
@@ -214,23 +163,39 @@ void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbien
 
 	cb.shawdowRayCount = shadowRayCount;
 
-	if (m_reflection)
-	{
-		cb.reflection = 1;
-	}
-	else
-	{
-		cb.reflection = 0;
-	}
-
-	cb.shininess = m_shininess;
-	cb.maxRecursionDepth = m_maxRecursionDepth;
-
 	uint8_t* pData;
 
 	ThrowIfFailed(context->m_lightingBuffer->Map(0, nullptr, (void**)&pData));
 	memcpy(pData, &cb, sizeof(LightParams));
 	context->m_lightingBuffer->Unmap(0, nullptr);
+}
+
+void DXRSetup::CreateMaterialBuffers()
+{
+	for (auto& object : m_app->m_drawableObjects)
+	{
+		object->m_materialBuffer = nv_helpers_dx12::CreateBuffer(
+			m_device.Get(), object->m_materialBufferSize, D3D12_RESOURCE_FLAG_NONE,
+			D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
+
+		uint8_t* pData;
+
+		ThrowIfFailed(object->m_materialBuffer->Map(0, nullptr, (void**)&pData));
+		memcpy(pData, &object->m_materialBufferData, sizeof(MaterialBuffer));
+		object->m_materialBuffer->Unmap(0, nullptr);
+	}
+}
+
+void DXRSetup::UpdateMaterialBuffers()
+{
+	for (auto& object : m_app->m_drawableObjects)
+	{
+		uint8_t* pData;
+
+		ThrowIfFailed(object->m_materialBuffer->Map(0, nullptr, (void**)&pData));
+		memcpy(pData, &object->m_materialBufferData, sizeof(MaterialBuffer));
+		object->m_materialBuffer->Unmap(0, nullptr);
+	}
 }
 
 void DXRSetup::SetupIMGUI()
@@ -420,6 +385,9 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(5.0f, 0.1f, 5.0f),
 		"Cube Floor");
 
+	cubeFloor->m_reflection = true;
+	cubeFloor->m_materialBufferData.shininess = 0.8f;
+
 	cubeFloor->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(cubeFloor);
 
@@ -428,6 +396,9 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(0, 0, 0),
 		XMFLOAT3(0.25f, 0.25f, 0.25f),
 		"Cube 1");
+
+	cube1->m_reflection = true;
+	cube1->m_materialBufferData.shininess = 0.8f;
 
 	cube1->initCubeMesh(m_device);
 	cube1->m_autoRotateX = true;
@@ -449,6 +420,8 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(1.0f, 1.0f, 1.0f),
 		"Plane 1");
 
+	pPlaneCopy->m_materialBufferData.objectColour = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+
 	pPlaneCopy->initPlaneMesh(m_device);
 	m_app->m_drawableObjects.push_back(pPlaneCopy);
 
@@ -457,6 +430,8 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(90, 0, 0),
 		XMFLOAT3(0.15f, 0.15f, 0.15f),
 		"Donut 1");
+
+	pDonut->m_materialBufferData.objectColour = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 
 	pDonut->initOBJMesh(m_device, R"(Objects\donut.obj)");
 	m_app->m_drawableObjects.push_back(pDonut);
@@ -467,6 +442,8 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(0.15f, 0.15f, 0.15f),
 		"Ball 1");
 
+	pBall->m_materialBufferData.objectColour = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+
 	pBall->initOBJMesh(m_device, R"(Objects\ball.obj)");
 	m_app->m_drawableObjects.push_back(pBall);
 
@@ -476,6 +453,9 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(0.05f, 3.0f, 5.0f),
 		"Mirror 1");
 
+	pMirror1->m_reflection = true;
+	pMirror1->m_materialBufferData.shininess = 0.8f;
+
 	pMirror1->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(pMirror1);
 
@@ -484,6 +464,9 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(0, 0, 0),
 		XMFLOAT3(0.05f, 3.0f, 5.0f),
 		"Mirror 2");
+
+	pMirror2->m_reflection = true;
+	pMirror2->m_materialBufferData.shininess = 0.8f;
 
 	pMirror2->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(pMirror2);
@@ -574,8 +557,8 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 	nv_helpers_dx12::RootSignatureGenerator rsc;
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_SRV, 0 /*t0*/); // vertex data
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_SRV, 1 /*t1*/); // indices
-	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 0 /*b0*/); // Colour buffer
-	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 1 /*b1*/); // Lighting buffer
+	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 0 /*b0*/); // Lighting buffer
+	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 1 /*b1*/); // Material buffer
 	rsc.AddHeapRangesParameter({ { 2 /*t2*/, 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1 /*2nd slot of the heap (see CreateShaderResourceHeap() */ }, });/*Top-level acceleration structure*/
 
 	return rsc.Generate(m_device.Get(), true);
@@ -830,15 +813,15 @@ void DXRSetup::CreateShaderBindingTable()
 		context->m_sbtHelper.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName,
 			{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
 				(void*)(m_app->m_drawableObjects[i]->getIndexBuffer()->GetGPUVirtualAddress()),
-				(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
-				(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
-			,heapPointer });
+				(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress()),
+			(void*)(m_app->m_drawableObjects[i]->m_materialBuffer->GetGPUVirtualAddress())
+			, heapPointer });
 
 		context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
 			{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
 				(void*)(m_app->m_drawableObjects[i]->getIndexBuffer()->GetGPUVirtualAddress()),
-				(void*)(m_app->m_DXRContext->m_colourBuffer->GetGPUVirtualAddress()),
-				(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress())
+				(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress()),
+				(void*)(m_app->m_drawableObjects[i]->m_materialBuffer->GetGPUVirtualAddress())
 			,heapPointer });
 	}
 

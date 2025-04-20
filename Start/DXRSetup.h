@@ -18,20 +18,14 @@ public:
 
 	void CreateCamera();
 	void UpdateCamera(float rX, float rY);
-	void CreateColourBuffer();
-	void UpdateColourBuffer(XMFLOAT4 objectColour, XMFLOAT4 planeColour);
 	void CreateLightingBuffer();
 	void UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor, XMFLOAT4 lightSpecularColor, float lightSpecularPower, float pointLightRange, UINT shadowRayCount);
+	void CreateMaterialBuffers();
+	void UpdateMaterialBuffers();
 
 	float m_fovAngleY = 45.0f * XM_PI / 180.0f;
 
 	bool m_transBackgroundMode = false;
-
-	XMFLOAT4 m_objectColour;
-	XMFLOAT4 m_planeColour;
-
-	XMFLOAT4 m_originalObjectColour = { 1.0f, 1.0f, 1.0f, 1.0f };
-	XMFLOAT4 m_originalPlaneColour = { 0.0f, 0.0f, 1.0f, 1.0f };
 
 	XMFLOAT4 m_originalLightPosition = { 0.0f, 2.0f, 0.0f, 0.0f };
 	XMFLOAT4 m_originalLightAmbientColor = { 0.9f, 0.9f, 0.9f, 1.0f };
@@ -42,9 +36,6 @@ public:
 	bool m_originalShadows = true;
 	bool m_shadows = m_originalShadows;
 	UINT m_originalShadowRayCount = 100;
-	bool m_reflection = true;
-	float m_shininess = 0.4f;
-	int m_maxRecursionDepth = 5;
 
 private:
 

@@ -17,10 +17,6 @@ public:
 	ComPtr< ID3D12Resource > m_cameraBuffer;
 	uint32_t m_cameraBufferSize = 256;
 
-	// Colour buffer
-	ComPtr< ID3D12Resource > m_colourBuffer;
-	uint32_t m_colourBufferSize = 256;
-
 	// Lighting buffer
 	ComPtr< ID3D12Resource > m_lightingBuffer;
 	uint32_t m_lightingBufferSize = 256;

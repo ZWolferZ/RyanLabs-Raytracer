@@ -25,6 +25,12 @@ public:
 	wstring m_objectHitGroupName;
 	float m_autoRotationSpeed = 50.0f;
 
+	bool m_reflection = false;
+
+	ComPtr< ID3D12Resource >		 m_materialBuffer;
+	uint32_t 						m_materialBufferSize = 256;
+	MaterialBuffer 					m_materialBufferData;
+
 	DrawableGameObject* createCopy(); // creates a copy
 
 	HRESULT								initCubeMesh(ComPtr<ID3D12Device5> device);
@@ -51,7 +57,6 @@ public:
 	void								setObjectName(string name) { m_objectName = name; }
 	void								setOrginalTransformValues(XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale);
 	void								resetTransform();
-	void 								createMaterialBuffers();
 private:
 
 	XMFLOAT4X4							m_World;

@@ -11,13 +11,9 @@ StructuredBuffer<STriVertex> BTriVertex : register(t0);
 StructuredBuffer<int> indices : register(t1);
 RaytracingAccelerationStructure SceneBVH : register(t2);
 
-cbuffer ColourBuffer : register(b0)
-{
-	float4 objectColour;
-	float4 planeColour;
-}
 
-cbuffer LightParams : register(b1)
+
+cbuffer LightParams : register(b0)
 {
 	float4 lightPosition;
 	float4 lightAmbientColor;
@@ -27,11 +23,17 @@ cbuffer LightParams : register(b1)
 	float lightRange;
 	uint shadows;
 	uint shawdowRayCount;
+	float4 padding;
+
+}
+
+cbuffer MaterialBuffer : register(b1)
+{
 	uint reflection;
 	float shininess;
-	uint maxRecursionDepth;
-	float padding;
-
+	int maxRecursionDepth;
+	float padding2;
+	float4 objectColour;
 }
 
 float3 HitAttributeV3(float3 vertexAttributes[3], Attributes attr)
@@ -273,7 +275,7 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 	float attenuation = saturate(1.0 - distance / lightRange);
 
 	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, worldNormal) * attenuation;
-	float4 ambientColour = CalculateAmbientLighting(planeColour) * attenuation;
+	float4 ambientColour = CalculateAmbientLighting(objectColour) * attenuation;
 
 	float3 colorOut = ambientColour;
 

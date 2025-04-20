@@ -59,6 +59,7 @@ void DXRRuntime::Update()
 	{
 		DrawableGameObject* dgo = m_app->m_drawableObjects[i];
 		dgo->update(deltaTime);
+		m_app->m_DXSetup->UpdateMaterialBuffers();
 		m_app->m_instances[i].second = dgo->getTransform();
 	}
 }
@@ -107,7 +108,7 @@ void DXRRuntime::DrawIMGUI()
 	DrawObjectSelectionWindow();
 	DrawObjectMovementWindow();
 	DrawCameraStatsWindow();
-	DrawHitColourWindow();
+	DrawObjectMaterialWindow();
 	DrawCameraSplineWindow();
 	DrawLightingWindow();
 	DrawSecretWindow();
@@ -264,30 +265,25 @@ void DXRRuntime::DrawCameraStatsWindow()
 	ImGui::End();
 }
 
-void DXRRuntime::DrawHitColourWindow()
+void DXRRuntime::DrawObjectMaterialWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(10, 580), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Hit Colour", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-	ImGui::Text("Change the colour of the object and plane hit shader!");
-	ImGui::Separator();
-	XMFLOAT4 objectColour = m_app->m_DXSetup->m_objectColour;
-	XMFLOAT4 planeColour = m_app->m_DXSetup->m_planeColour;
-	if (ImGui::DragFloat3("Object Hit Group Colour", reinterpret_cast<float*>(&objectColour), 0.01f, 0.0f, 1.0f))
+	if (m_selectedObject != nullptr)
 	{
-	}
-	if (ImGui::DragFloat3("Plane Hit Group Colour", reinterpret_cast<float*>(&planeColour), 0.01f, 0.0f, 1.0f))
-	{
-	}
-	ImGui::Text("(Drag the box or enter a number)");
-	ImGui::Separator();
-	m_app->m_DXSetup->UpdateColourBuffer(objectColour, planeColour);
+		ImGui::SetNextWindowPos(ImVec2(10, 580), ImGuiCond_FirstUseEver);
+		ImGui::Begin("Object Material Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Text("Change the colour of the object!");
+		ImGui::Separator();
 
-	if (ImGui::Button("Reset Colours"))
-	{
-		m_app->m_DXSetup->UpdateColourBuffer(m_app->m_DXSetup->m_originalObjectColour, m_app->m_DXSetup->m_originalPlaneColour);
-	}
+		XMFLOAT3 objectColour = { m_selectedObject->m_materialBufferData.objectColour.x,m_selectedObject->m_materialBufferData.objectColour.y,m_selectedObject->m_materialBufferData.objectColour.z };
+		if (ImGui::DragFloat3("Object Colour", reinterpret_cast<float*>(&objectColour), 0.01f, 0.0f, 1.0f))
+		{
+			m_selectedObject->m_materialBufferData.objectColour = XMFLOAT4(objectColour.x, objectColour.y, objectColour.z, 1.0f);
+		}
+		ImGui::Text("(Drag the box or enter a number)");
+		ImGui::Separator();
 
-	ImGui::End();
+		ImGui::End();
+	}
 }
 
 void DXRRuntime::DrawCameraSplineWindow()
@@ -403,36 +399,34 @@ void DXRRuntime::DrawLightingWindow()
 }
 void DXRRuntime::DrawSecretWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(520, 800), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(0, 800), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Secret Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 	if (ImGui::Checkbox("Activate Trans Mode?", &m_app->m_DXSetup->m_transBackgroundMode))
 	{
-		XMFLOAT4 transObjectColour = { 1.0f, 0.75f, 0.8f, 1.0f };
-		XMFLOAT4 transPlaneColour = { 0.68f, 0.85f, 0.90f, 1.0f };
-
-		if (m_app->m_DXSetup->m_transBackgroundMode)
+		for (auto& object : m_app->m_drawableObjects)
 		{
-			m_app->m_DXSetup->UpdateColourBuffer(transObjectColour, transPlaneColour);
-		}
-		else
-		{
-			m_app->m_DXSetup->UpdateColourBuffer(m_app->m_DXSetup->m_originalObjectColour, m_app->m_DXSetup->m_originalPlaneColour);
+			object->m_reflection = false;
 		}
 	}
-
 	ImGui::End();
 }
 void DXRRuntime::DrawReflectionWindow()
 {
 	ImGui::SetNextWindowPos(ImVec2(440, 580), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Reflection Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-	ImGui::Checkbox("Enable Reflection", &m_app->m_DXSetup->m_reflection);
 
-	ImGui::SliderFloat("Reflection Shininess", &m_app->m_DXSetup->m_shininess, 0.1f, 1.0f);
-	ImGui::SliderInt("Max Recursion Depth", &m_app->m_DXSetup->m_maxRecursionDepth, 1, 20);
+	if (m_selectedObject != nullptr)
+	{
+		ImGui::Begin("Object Reflection Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::End();
+		ImGui::Text("Change reflective-ness the selected object:");
+		ImGui::Text("Selected Object: %s", m_selectedObject->getObjectName().c_str());
+		ImGui::Separator();
+		ImGui::Checkbox("Enable Reflection", &m_selectedObject->m_reflection);
+		ImGui::SliderFloat("Reflection Shininess", &m_selectedObject->m_materialBufferData.shininess, 0.1f, 1.0f);
+		ImGui::SliderInt("Max Recursion Depth", &m_selectedObject->m_materialBufferData.maxRecursionDepth, 1, 20);
+		ImGui::End();
+	}
 }
 void DXRRuntime::DrawVersionWindow()
 {
