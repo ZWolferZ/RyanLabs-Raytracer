@@ -281,6 +281,7 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 	colorOut = DrawTriOutlines(colorOut, barycentrics);
 	colorOut = TraceShadowRays(colorOut, diffuseColour, float4(0,0,0,0), hitWorldPosition, worldNormal, lightDirection);
+	colorOut = TestReflectionRays(colorOut, hitWorldPosition, worldNormal, payload);
 
 	payload.colorAndDistance = float4(colorOut.xyz, RayTCurrent());
 }
