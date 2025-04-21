@@ -386,7 +386,8 @@ void DXRSetup::LoadAssets()
 		"Cube Floor");
 
 	cubeFloor->m_reflection = true;
-	cubeFloor->m_materialBufferData.shininess = 0.8f;
+	cubeFloor->m_materialBufferData.shininess = 0.3f;
+	cubeFloor->m_materialBufferData.roughness = 0.01f;
 
 	cubeFloor->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(cubeFloor);
@@ -411,16 +412,22 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(20.0f, 20.0f, 1.0f),
 		"Plane Floor");
 
+	pPlane->m_materialBufferData.objectColour = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+
 	pPlane->initPlaneMesh(m_device);
 	m_app->m_drawableObjects.push_back(pPlane);
 
 	DrawableGameObject* pPlaneCopy = new DrawableGameObject(
-		XMFLOAT3(0.0f, 0.0f, -2.3f),
+		XMFLOAT3(0.0f, 0.0f, -0.3f),
 		XMFLOAT3(0.0f, 0.0f, 0.0f),
 		XMFLOAT3(1.0f, 1.0f, 1.0f),
-		"Plane 1");
+		"Glass 1");
 
-	pPlaneCopy->m_materialBufferData.objectColour = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+	pPlaneCopy->m_materialBufferData.objectColour = XMFLOAT4(0.495f, 0.644f, 1.0f, 1.0f);
+	pPlaneCopy->m_materialBufferData.shininess = 0.4f;
+	pPlaneCopy->m_reflection = true;
+
+	pPlaneCopy->m_autoRotateY = true;
 
 	pPlaneCopy->initPlaneMesh(m_device);
 	m_app->m_drawableObjects.push_back(pPlaneCopy);
@@ -431,7 +438,9 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(0.15f, 0.15f, 0.15f),
 		"Donut 1");
 
+	pDonut->m_materialBufferData.triThickness = 0.05f;
 	pDonut->m_autoRotateY = true;
+	pDonut->m_autoRotateZ = true;
 
 	pDonut->m_materialBufferData.objectColour = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 
@@ -444,6 +453,7 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(0.15f, 0.15f, 0.15f),
 		"Ball 1");
 
+	pBall->m_materialBufferData.triThickness = 0.05f;
 	pBall->m_materialBufferData.objectColour = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
 
 	pBall->initOBJMesh(m_device, R"(Objects\ball.obj)");
@@ -457,6 +467,7 @@ void DXRSetup::LoadAssets()
 
 	pMirror1->m_reflection = true;
 	pMirror1->m_materialBufferData.shininess = 0.8f;
+	pMirror1->m_triOutline = false;
 
 	pMirror1->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(pMirror1);
@@ -469,9 +480,25 @@ void DXRSetup::LoadAssets()
 
 	pMirror2->m_reflection = true;
 	pMirror2->m_materialBufferData.shininess = 0.8f;
+	pMirror2->m_triOutline = false;
 
 	pMirror2->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(pMirror2);
+
+	DrawableGameObject* pMirror3 = new DrawableGameObject(
+		XMFLOAT3(0.04f, 1.8f, -5.0f),
+		XMFLOAT3(0, 90, 0),
+		XMFLOAT3(0.05f, 3.0f, 5.0f),
+		"Mirror 3");
+
+	pMirror3->m_reflection = true;
+	pMirror3->m_materialBufferData.shininess = 0.23f;
+	pMirror3->m_materialBufferData.roughness = 0.019f;
+	pMirror3->m_materialBufferData.maxRecursionDepth = 15;
+	pMirror3->m_triOutline = false;
+
+	pMirror3->initCubeMesh(m_device);
+	m_app->m_drawableObjects.push_back(pMirror3);
 
 	// Create synchronization objects and wait until assets have been uploaded to
 	// the GPU.

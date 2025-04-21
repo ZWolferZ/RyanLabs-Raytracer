@@ -33,6 +33,7 @@ private:
 
 	float m_cameraMoveSpeed = 2.0f;
 	float m_cameraRotateSpeed = 1.0f;
+	bool m_hideWindows;
 
 private:
 	void PopulateCommandList();
@@ -58,4 +59,5 @@ public:
 	void DrawLightingWindow();
 	void DrawSecretWindow();
 	void DrawReflectionWindow();
+	void DrawHideAllWindows();
 };

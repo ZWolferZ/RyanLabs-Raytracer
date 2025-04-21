@@ -51,4 +51,6 @@ struct MaterialBuffer
 	float triThickness = 0.01f;
 	XMFLOAT3 triColour = { 0,0,0 };
 	XMFLOAT4 objectColour = { 1,1,1,1 };
+	float roughness = 0.0f;
+	XMFLOAT3 padding = { 0,0,0 };
 };

@@ -103,16 +103,21 @@ void DXRRuntime::DrawIMGUI()
 	ImGui::NewFrame();
 
 	// Draw the UI Windows
-	DrawVersionWindow();
-	DrawPerformanceWindow();
-	DrawObjectSelectionWindow();
-	DrawObjectMovementWindow();
-	DrawCameraStatsWindow();
-	DrawObjectMaterialWindow();
-	DrawCameraSplineWindow();
-	DrawLightingWindow();
-	DrawSecretWindow();
-	DrawReflectionWindow();
+	if (!m_hideWindows)
+	{
+		DrawVersionWindow();
+		DrawPerformanceWindow();
+		DrawObjectSelectionWindow();
+		DrawObjectMovementWindow();
+		DrawCameraStatsWindow();
+		DrawObjectMaterialWindow();
+		DrawCameraSplineWindow();
+		DrawLightingWindow();
+		DrawSecretWindow();
+		DrawReflectionWindow();
+	}
+
+	DrawHideAllWindows();
 }
 
 void DXRRuntime::DrawPerformanceWindow()
@@ -270,7 +275,7 @@ void DXRRuntime::DrawObjectMaterialWindow()
 	if (m_selectedObject != nullptr)
 	{
 		ImGui::SetNextWindowPos(ImVec2(10, 580), ImGuiCond_FirstUseEver);
-		ImGui::Begin("Object Material Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin("Object Basic Material Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Checkbox("Draw Tri-Outlines", &m_selectedObject->m_triOutline);
 		ImGui::SliderFloat("Tri-Outline Thickness", &m_selectedObject->m_materialBufferData.triThickness, 0.01f, 0.1f);
 		ImGui::ColorEdit3("Tri-Outline Colour", reinterpret_cast<float*>(&m_selectedObject->m_materialBufferData.triColour));
@@ -414,20 +419,30 @@ void DXRRuntime::DrawSecretWindow()
 }
 void DXRRuntime::DrawReflectionWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(440, 560), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(440, 520), ImGuiCond_FirstUseEver);
 
 	if (m_selectedObject != nullptr)
 	{
-		ImGui::Begin("Object Reflection Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin("Object Material Reflection Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 		ImGui::Text("Change reflective-ness the selected object:");
 		ImGui::Text("Selected Object: %s", m_selectedObject->getObjectName().c_str());
 		ImGui::Separator();
-		ImGui::Checkbox("Enable Reflection", &m_selectedObject->m_reflection);
+		ImGui::Checkbox("Enable Reflection / Roughness", &m_selectedObject->m_reflection);
 		ImGui::SliderFloat("Reflection Shininess", &m_selectedObject->m_materialBufferData.shininess, 0.1f, 1.0f);
 		ImGui::SliderInt("Max Recursion Depth", &m_selectedObject->m_materialBufferData.maxRecursionDepth, 1, 20);
+		ImGui::Text("Change roughness the selected object:");
+		ImGui::SliderFloat("Roughness", &m_selectedObject->m_materialBufferData.roughness, 0.0f, 0.2f);
+
 		ImGui::End();
 	}
+}
+void DXRRuntime::DrawHideAllWindows()
+{
+	ImGui::SetNextWindowPos(ImVec2(680, 10), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Show/Hide UI", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Checkbox("Hide All Windows", &m_hideWindows);
+	ImGui::End();
 }
 void DXRRuntime::DrawVersionWindow()
 {

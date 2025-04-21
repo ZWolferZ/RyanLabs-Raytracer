@@ -32,7 +32,7 @@ public:
 	XMFLOAT4 m_originalLightDiffuseColor = { 0.6f, 0.6f, 0.6f, 1.0f };
 	XMFLOAT4 m_originalLightSpecularColor = { 0.6f, 0.6f, 0.6f, 1.0f };
 	float m_originalLightSpecularPower = 32.0f;
-	float m_originalPointLightRange = 6.0f;
+	float m_originalPointLightRange = 15.0f;
 	bool m_originalShadows = true;
 	bool m_shadows = m_originalShadows;
 	UINT m_originalShadowRayCount = 100;
