@@ -46,7 +46,7 @@ struct MaterialBuffer
 {
 	UINT reflection = 0;
 	float shininess = 0.2f;
-	int maxRecursionDepth = 5;
+	int maxRecursionDepth = 20;
 	UINT triOutline = 0;
 	float triThickness = 0.01f;
 	XMFLOAT3 triColour = { 0,0,0 };

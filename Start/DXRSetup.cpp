@@ -494,7 +494,6 @@ void DXRSetup::LoadAssets()
 	pMirror3->m_reflection = true;
 	pMirror3->m_materialBufferData.shininess = 0.23f;
 	pMirror3->m_materialBufferData.roughness = 0.019f;
-	pMirror3->m_materialBufferData.maxRecursionDepth = 15;
 	pMirror3->m_triOutline = false;
 
 	pMirror3->initCubeMesh(m_device);
