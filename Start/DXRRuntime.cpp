@@ -179,7 +179,7 @@ void DXRRuntime::DrawObjectMovementWindow()
 	if (m_selectedObject != nullptr)
 	{
 		ImGui::SetNextWindowPos(ImVec2(10, 280), ImGuiCond_FirstUseEver);
-		ImGui::Begin("Object Movement", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin("Object Movement Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 		ImGui::Text("Manipulate the selected object:");
 		ImGui::Text("Selected Object: %s", m_selectedObject->getObjectName().c_str());
@@ -274,8 +274,8 @@ void DXRRuntime::DrawObjectMaterialWindow()
 {
 	if (m_selectedObject != nullptr)
 	{
-		ImGui::SetNextWindowPos(ImVec2(10, 580), ImGuiCond_FirstUseEver);
-		ImGui::Begin("Object Basic Material Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::SetNextWindowPos(ImVec2(440, 510), ImGuiCond_FirstUseEver);
+		ImGui::Begin("Object Material Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Checkbox("Draw Tri-Outlines", &m_selectedObject->m_triOutline);
 		ImGui::SliderFloat("Tri-Outline Thickness", &m_selectedObject->m_materialBufferData.triThickness, 0.01f, 0.1f);
 		ImGui::ColorEdit3("Tri-Outline Colour", reinterpret_cast<float*>(&m_selectedObject->m_materialBufferData.triColour));
@@ -285,7 +285,8 @@ void DXRRuntime::DrawObjectMaterialWindow()
 
 		ImGui::ColorEdit4("Object Colour", reinterpret_cast<float*>(&m_selectedObject->m_materialBufferData.objectColour));
 
-		ImGui::Text("(Drag the box or enter a number)");
+		ImGui::Text("Change roughness the selected object:");
+		ImGui::SliderFloat("Roughness", &m_selectedObject->m_materialBufferData.roughness, 0.0f, 0.2f);
 		ImGui::Separator();
 
 		ImGui::End();
@@ -408,31 +409,51 @@ void DXRRuntime::DrawSecretWindow()
 	ImGui::SetNextWindowPos(ImVec2(550, 800), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Secret Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
+	static vector<XMFLOAT4> originalObjectColour;
+
 	if (ImGui::Checkbox("Activate Trans Mode?", &m_app->m_DXSetup->m_transBackgroundMode))
 	{
-		for (auto& object : m_app->m_drawableObjects)
+		if (m_app->m_DXSetup->m_transBackgroundMode)
 		{
-			object->m_reflection = false;
+			originalObjectColour.clear();
+
+			for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
+			{
+				originalObjectColour.push_back(m_app->m_drawableObjects[i]->m_materialBufferData.objectColour);
+				if (i % 3 == 0)
+					m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = { 1.0f, 0.58f, 0.9f, 1.0f };
+				else if (i % 3 == 1)
+					m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = { 0.5f, 0.8f, 1.0f, 1.0f };
+				else if (i % 3 == 2)
+					m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = { 1.0f, 1.0f, 1.0f, 1.0f };
+			}
+		}
+		else
+		{
+			for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
+			{
+				m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = originalObjectColour[i];
+			}
+
+			originalObjectColour.clear();
 		}
 	}
 	ImGui::End();
 }
 void DXRRuntime::DrawReflectionWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(440, 520), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(10, 580), ImGuiCond_FirstUseEver);
 
 	if (m_selectedObject != nullptr)
 	{
-		ImGui::Begin("Object Material Reflection Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin("Object Reflection Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 		ImGui::Text("Change reflective-ness the selected object:");
 		ImGui::Text("Selected Object: %s", m_selectedObject->getObjectName().c_str());
 		ImGui::Separator();
-		ImGui::Checkbox("Enable Reflection / Roughness", &m_selectedObject->m_reflection);
+		ImGui::Checkbox("Enable Reflection", &m_selectedObject->m_reflection);
 		ImGui::SliderFloat("Reflection Shininess", &m_selectedObject->m_materialBufferData.shininess, 0.1f, 1.0f);
 		ImGui::SliderInt("Max Recursion Depth", &m_selectedObject->m_materialBufferData.maxRecursionDepth, 1, 20);
-		ImGui::Text("Change roughness the selected object:");
-		ImGui::SliderFloat("Roughness", &m_selectedObject->m_materialBufferData.roughness, 0.0f, 0.2f);
 
 		ImGui::End();
 	}
