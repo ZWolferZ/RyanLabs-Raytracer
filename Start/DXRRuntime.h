@@ -13,6 +13,7 @@ private:
 
 	ComPtr<ID3D12Device5> m_device;
 	DXRApp* m_app;
+	string m_windowName;
 	float m_currentDeltaTime;
 	float m_totalTime = 0.0f;
 	DrawableGameObject* m_selectedObject = nullptr;

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "DXRRuntime.h"
+#include <chrono>
 #include "DXRContext.h"
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -11,6 +12,8 @@ DXRRuntime::DXRRuntime(DXRApp* app)
 {
 	m_app = app;
 	m_device = m_app->GetContext()->m_device;
+	wstring windowName = m_app->GetTitle();
+	m_windowName.assign(windowName.begin(), windowName.end());
 }
 
 void DXRRuntime::Render()
@@ -18,6 +21,29 @@ void DXRRuntime::Render()
 	DXRContext* context = m_app->GetContext();
 
 	DrawIMGUI();
+
+	int raysPerSecond = (m_app->GetWidth() * m_app->GetHeight() * ImGui::GetIO().Framerate);
+
+	static std::time_t date;
+
+	date = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+	char buffer[26];
+
+	ctime_s(buffer, sizeof(buffer), &date);
+
+	string dateAndTime(buffer);
+
+	dateAndTime = dateAndTime.substr(0, 20);
+
+	std::string dynamicWindowName = m_windowName +
+		"       Time Running: " + std::to_string(m_totalTime) + "s" +
+		"       " + "FPS: " + std::to_string(ImGui::GetIO().Framerate) +
+		"       " + "Frame Time: " + std::to_string(1000.0f / ImGui::GetIO().Framerate) + "ms" +
+		"       " + "Rays Per Second: " + std::to_string(raysPerSecond) +
+		"       " + "Date and Time: " + dateAndTime;
+
+	SetWindowTextA(Win32Application::GetHwnd(), dynamicWindowName.c_str());
 
 	// Record all the commands we need to render the scene into the command list.
 	PopulateCommandList();
@@ -354,19 +380,10 @@ void DXRRuntime::DrawLightingWindow()
 	ImGui::DragFloat("Point Light Range", &pointLightRange, 0.05f, 1.0f, 20.0f);
 	ImGui::Separator();
 
-	if (ImGui::Checkbox("Toggle Shadows", &m_app->m_DXSetup->m_shadows))
-	{
-		if (!m_app->m_DXSetup->m_shadows)
-		{
-			ambientColor = { 0.6f,0.6f,0.6f,1.0f };
-		}
-		else
-		{
-			ambientColor = { 0.9f,0.9f,0.9f,1.0f };
-		}
-	}
+	ImGui::Checkbox("Toggle Shadows", &m_app->m_DXSetup->m_shadows);
 
 	ImGui::DragInt("Soft Shadow Ray Count", reinterpret_cast<int*>(&shadowRayCount), 1, 1, 2000);
+
 	ImGui::Separator();
 
 	ImGui::ColorEdit4("Ambient Color", reinterpret_cast<float*>(&ambientColor));

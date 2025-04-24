@@ -14,7 +14,7 @@
     <ProjectGuid>{F60E508F-4E66-4C9B-98A2-35AC7652B711}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>D3D12RTX</RootNamespace>
-    <ProjectName>D3D12DXR</ProjectName>
+    <ProjectName>RyanLabs RayTracer</ProjectName>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

@@ -117,7 +117,7 @@ float4 TraceReflectionRay(in RayDesc reflectionRay,in uint recursionDepth)
 	reflectionPayload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	reflectionPayload.recursiveDepth = recursionDepth + 1;
 
-    TraceRay(SceneBVH, RAY_FLAG_FORCE_NON_OPAQUE, 0xFF, 0, 0, 0, reflectionRay, reflectionPayload);
+	TraceRay(SceneBVH, RAY_FLAG_FORCE_NON_OPAQUE, 0xFF, 0, 0, 0, reflectionRay, reflectionPayload);
 
 
 	return reflectionPayload.colorAndDistance;
@@ -177,7 +177,7 @@ float3 TraceShadowRays(float3 colorOut, float4 diffuseColour, float4 specularCol
 
 			ShadowHitInfo shadowPayload;
 			shadowPayload.isHit = false;
-            TraceRay(SceneBVH, RAY_FLAG_FORCE_NON_OPAQUE, 0xFF, 1, 0, 1, ray, shadowPayload);
+			TraceRay(SceneBVH, RAY_FLAG_FORCE_NON_OPAQUE, 0xFF, 1, 0, 1, ray, shadowPayload);
 
 			if (!shadowPayload.isHit)
 			{
@@ -232,10 +232,10 @@ float3 DrawTriOutlines(float3 colorOut, float3 barycentrics)
 float3 CalculateRoughnessNormal(float3 hitWorldPosition,float3 worldNormal)
 {
 
-    if (roughness == 0.0f)
-    {
-        return worldNormal;
-    }
+	if (roughness == 0.0f)
+	{
+		return worldNormal;
+	}
 
 	float noise = random(hitWorldPosition.xy);
 	float scaledNoise = noise * 2.0 - 1.0;
@@ -269,8 +269,6 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	float3 lightDirection = normalize((float3) lightPosition - hitWorldPosition);
 	float distance = length((float3) lightPosition - hitWorldPosition);
 	float attenuation = saturate(1.0 - distance / lightRange);
-
-
 
 	float3 roughnessNormal = CalculateRoughnessNormal(hitWorldPosition, worldNormal);
 
