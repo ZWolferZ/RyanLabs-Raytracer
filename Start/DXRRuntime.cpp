@@ -22,7 +22,7 @@ void DXRRuntime::Render()
 
 	DrawIMGUI();
 
-	int raysPerSecond = (m_app->GetWidth() * m_app->GetHeight() * ImGui::GetIO().Framerate);
+	int raysPerSecond = ((m_app->GetWidth() / m_rayXWidth) * (m_app->GetHeight() / m_rayYWidth) * ImGui::GetIO().Framerate);
 
 	static std::time_t date;
 
