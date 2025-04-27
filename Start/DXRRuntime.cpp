@@ -436,20 +436,26 @@ void DXRRuntime::DrawSecretWindow()
 
 			for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
 			{
-				originalObjectColour.push_back(m_app->m_drawableObjects[i]->m_materialBufferData.objectColour);
-				if (i % 3 == 0)
-					m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = { 1.0f, 0.58f, 0.9f, 1.0f };
-				else if (i % 3 == 1)
-					m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = { 0.5f, 0.8f, 1.0f, 1.0f };
-				else if (i % 3 == 2)
-					m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = { 1.0f, 1.0f, 1.0f, 1.0f };
+				if (!m_app->m_drawableObjects[i]->m_textMesh)
+				{
+					originalObjectColour.push_back(m_app->m_drawableObjects[i]->m_materialBufferData.objectColour);
+					if (i % 3 == 0)
+						m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = { 1.0f, 0.58f, 0.9f, 1.0f };
+					else if (i % 3 == 1)
+						m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = { 0.5f, 0.8f, 1.0f, 1.0f };
+					else if (i % 3 == 2)
+						m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = { 1.0f, 1.0f, 1.0f, 1.0f };
+				}
 			}
 		}
 		else
 		{
 			for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
 			{
-				m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = originalObjectColour[i];
+				if (!m_app->m_drawableObjects[i]->m_textMesh)
+				{
+					m_app->m_drawableObjects[i]->m_materialBufferData.objectColour = originalObjectColour[i];
+				}
 			}
 
 			originalObjectColour.clear();

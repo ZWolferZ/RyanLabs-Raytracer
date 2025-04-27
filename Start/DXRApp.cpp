@@ -23,6 +23,7 @@ DXRApp::DXRApp(UINT width, UINT height,
 	: DXSample(width, height, name)
 
 {
+	srand(static_cast<unsigned int>(time(0)));
 	m_DXRContext = new DXRContext(width, height);
 	m_DXSetup = new DXRSetup(this);
 	m_DXRuntime = new DXRRuntime(this);

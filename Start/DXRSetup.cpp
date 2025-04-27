@@ -499,6 +499,64 @@ void DXRSetup::LoadAssets()
 	pMirror3->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(pMirror3);
 
+	DrawableGameObject* pText = new DrawableGameObject(
+		XMFLOAT3(2.745f, 1.575f, -3.0f),
+		XMFLOAT3(-90, 20.0f, 180.0f),
+		XMFLOAT3(0.2, -0.2f, 0.2f),
+		"Text 1");
+
+	pText->m_reflection = true;
+	pText->m_materialBufferData.shininess = 1.0f;
+	pText->m_triOutline = false;
+	pText->m_textMesh = true;
+
+	pText->m_materialBufferData.objectColour = XMFLOAT4(0.338f, 0.881f, 1.0f, 1.0f);
+
+	pText->initOBJMesh(m_device, R"(Objects\Text.obj)");
+	m_app->m_drawableObjects.push_back(pText);
+
+	DrawableGameObject* pText2 = new DrawableGameObject(
+		XMFLOAT3(2.745f, 1.32f, -3.0f),
+		XMFLOAT3(-90, 20.0f, 180.0f),
+		XMFLOAT3(0.2, -0.2f, 0.2f),
+		"Text 2");
+
+	pText2->m_reflection = true;
+	pText2->m_materialBufferData.shininess = 1.0f;
+	pText2->m_triOutline = false;
+	pText2->m_textMesh = true;
+
+	pText2->m_materialBufferData.objectColour = XMFLOAT4(0.98f, 0.543f, 0.89f, 1.0f);
+
+	pText2->initOBJMesh(m_device, R"(Objects\Text2.obj)");
+	m_app->m_drawableObjects.push_back(pText2);
+
+	DrawableGameObject* pBetterThanText = new DrawableGameObject(
+		XMFLOAT3(2.745f, 1.0f, -3.0f),
+		XMFLOAT3(-90, 14.5f, 180.0f),
+		XMFLOAT3(0.28, -0.1f, 0.31f),
+		"Text 3");
+
+	pBetterThanText->m_reflection = true;
+	pBetterThanText->m_materialBufferData.shininess = 1.0f;
+	pBetterThanText->m_triOutline = false;
+	pBetterThanText->m_textMesh = true;
+
+	pBetterThanText->m_materialBufferData.objectColour = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	string randomisedText = R"(Objects\BetterThan)";
+
+	string nameArray[] = { "Jacob.obj", "Aidan.obj", "James.obj", "Louise.obj", "Scott.obj", "Jack.obj" };
+
+	int randomIndex = rand() % std::size(nameArray);
+
+	randomisedText += nameArray[randomIndex];
+
+	std::vector<char> stupidStringConversion(randomisedText.c_str(), randomisedText.c_str() + randomisedText.size() + 1);
+
+	pBetterThanText->initOBJMesh(m_device, stupidStringConversion.data());
+	m_app->m_drawableObjects.push_back(pBetterThanText);
+
 	// Create synchronization objects and wait until assets have been uploaded to
 	// the GPU.
 	{

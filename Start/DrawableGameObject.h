@@ -21,6 +21,7 @@ public:
 	bool m_planeMesh = false;
 	bool m_objMesh = false;
 	bool m_cubeMesh = false;
+	bool m_textMesh = false;
 
 	wstring m_objectHitGroupName;
 	float m_autoRotationSpeed = 50.0f;

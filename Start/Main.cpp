@@ -10,6 +10,7 @@
 //*********************************************************
 
 #include "stdafx.h"
+
 #include "DXRApp.h"
 
 _Use_decl_annotations_

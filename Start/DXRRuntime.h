@@ -34,7 +34,7 @@ private:
 
 	float m_cameraMoveSpeed = 2.0f;
 	float m_cameraRotateSpeed = 1.0f;
-	bool m_hideWindows;
+	bool m_hideWindows = true;
 
 private:
 	void PopulateCommandList();
