@@ -535,7 +535,7 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(2.745f, 1.0f, -3.0f),
 		XMFLOAT3(-90, 14.5f, 180.0f),
 		XMFLOAT3(0.28, -0.1f, 0.31f),
-		"Text 3");
+		"Randomised Text 3");
 
 	pBetterThanText->m_reflection = true;
 	pBetterThanText->m_materialBufferData.shininess = 1.0f;
