@@ -38,7 +38,8 @@ cbuffer MaterialBuffer : register(b1)
 	float3 triColour;
 	float4 objectColour;
 	float roughness;
-	float3 padding2;
+    uint texture;
+	float2 padding2;
 }
 
 float3 HitAttributeV3(float3 vertexAttributes[3], Attributes attr)
@@ -263,17 +264,23 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
 	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
 
-    float2 texCoords[3];
-    texCoords[0] = BTriVertex[indices[vertid + 0]].tex;
-    texCoords[1] = BTriVertex[indices[vertid + 1]].tex;
-    texCoords[2] = BTriVertex[indices[vertid + 2]].tex;
+    float4 textureColour = { 0, 0, 0, 0 };
 
-    float2 texCoord = HitAttributeV2(texCoords, attrib);
+    if (texture == 1)
+    {
+        float2 texCoords[3];
+        texCoords[0] = BTriVertex[indices[vertid + 0]].tex;
+        texCoords[1] = BTriVertex[indices[vertid + 1]].tex;
+        texCoords[2] = BTriVertex[indices[vertid + 2]].tex;
 
-    float4 textureColor = g_texture.SampleLevel(g_sampler, texCoord,0);
+        float2 texCoord = HitAttributeV2(texCoords, attrib);
+
+        textureColour = g_texture.SampleLevel(g_sampler, texCoord, 0);
+    }
+
 
 	float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
-  
+
 	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
 	float3 hitWorldPosition = HitWorldPosition();
 
@@ -288,7 +295,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	float4 specularColour = CalculateSpecularLighting(hitWorldPosition, lightDirection, roughnessNormal) * attenuation;
 
 
-	float3 colorOut = textureColor + ambientColour;
+    float3 colorOut = textureColour + ambientColour;
 
 
 	colorOut = DrawTriOutlines(colorOut, barycentrics);
@@ -297,7 +304,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 
 	colorOut = TestReflectionRays(colorOut, hitWorldPosition, roughnessNormal, payload);
 
-   
+
 
 	payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
 }

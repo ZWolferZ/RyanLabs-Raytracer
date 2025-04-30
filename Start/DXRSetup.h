@@ -37,6 +37,8 @@ public:
 	bool m_shadows = m_originalShadows;
 	UINT m_originalShadowRayCount = 100;
 
+	UINT16 m_textureNumber = 0;
+
 private:
 
 	void SetupIMGUI();

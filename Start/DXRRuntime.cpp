@@ -315,6 +315,21 @@ void DXRRuntime::DrawObjectMaterialWindow()
 		ImGui::SliderFloat("Roughness", &m_selectedObject->m_materialBufferData.roughness, 0.0f, 0.2f);
 		ImGui::Separator();
 
+		if (m_selectedObject->m_heapTextureNumber != -1)
+		{
+			if (ImGui::Checkbox("Enable Texture", &m_selectedObject->m_texture))
+			{
+				if (m_selectedObject->m_materialBufferData.texture == 1)
+				{
+					m_selectedObject->m_materialBufferData.texture = 0;
+				}
+				else
+				{
+					m_selectedObject->m_materialBufferData.texture = 1;
+				}
+			}
+		}
+
 		ImGui::End();
 	}
 }

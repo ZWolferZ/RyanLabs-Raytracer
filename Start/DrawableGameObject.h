@@ -30,11 +30,13 @@ public:
 
 	bool m_triOutline = true;
 
-	wstring m_textureFile = L"test.png";
+	bool m_texture = false;
 
-	ComPtr<ID3D12Resource> m_texture;
+	ComPtr<ID3D12Resource> m_textureResource;
 	D3D12_RESOURCE_DESC m_textureDesc;
 	ComPtr<ID3D12Resource> m_textureUploadHeap;
+	wstring m_textureFile = L"NULL";
+	int m_heapTextureNumber = -1;
 
 	ComPtr< ID3D12Resource >		 m_materialBuffer;
 	uint32_t 						m_materialBufferSize = 256;
