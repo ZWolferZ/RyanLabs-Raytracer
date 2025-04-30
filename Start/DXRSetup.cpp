@@ -491,7 +491,6 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(0.05f, 3.0f, 5.0f),
 		"Mirror 3");
 
-	pMirror3->m_textureFile = L"Textures/test.png";
 	pMirror3->m_reflection = true;
 	pMirror3->m_materialBufferData.shininess = 0.23f;
 	pMirror3->m_materialBufferData.roughness = 0.019f;
@@ -499,6 +498,30 @@ void DXRSetup::LoadAssets()
 
 	pMirror3->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(pMirror3);
+
+	DrawableGameObject* pImageBillboard = new DrawableGameObject(
+		XMFLOAT3(2.0f, 0.0f, -0.3f),
+		XMFLOAT3(0.0f, 180.0f, 0.0f),
+		XMFLOAT3(1.0f, 1.0f, 1.0f),
+		"Image Billboard 1");
+
+	pImageBillboard->m_materialBufferData.objectColour = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	pImageBillboard->m_textureFile = L"Textures/RyanLabs Logo.png";
+	pImageBillboard->m_triOutline = false;
+	pImageBillboard->initPlaneMesh(m_device);
+	m_app->m_drawableObjects.push_back(pImageBillboard);
+
+	DrawableGameObject* pImageBillboard2 = new DrawableGameObject(
+		XMFLOAT3(-2.0f, 0.0f, -0.3f),
+		XMFLOAT3(0.0f, 180.0f, 0.0f),
+		XMFLOAT3(1.0f, 1.0f, 1.0f),
+		"Image Billboard 2");
+
+	pImageBillboard2->m_materialBufferData.objectColour = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	pImageBillboard2->m_textureFile = L"Textures/TransFlag.png";
+	pImageBillboard2->m_triOutline = false;
+	pImageBillboard2->initPlaneMesh(m_device);
+	m_app->m_drawableObjects.push_back(pImageBillboard2);
 
 	DrawableGameObject* pText = new DrawableGameObject(
 		XMFLOAT3(2.745f, 1.575f, -3.0f),
@@ -588,6 +611,68 @@ void DXRSetup::LoadTextures()
 	// from the upload heap to the Texture2D.
 
 	TextureLoader tl;
+
+	for (auto staticTexture : m_staticTextures)
+	{
+		m_textureNumber++;
+
+		Texture texture;
+
+		texture.textureFile = staticTexture;
+
+		int imageBytesPerRow = 0;
+		BYTE* imageData = nullptr;
+
+		int imageSize = tl.LoadImageDataFromFile(&imageData, texture.textureDesc, staticTexture.c_str(), imageBytesPerRow);
+
+		// make sure we have data
+		if (imageSize <= 0)
+		{
+			assert(0 && "Failed to load texture!");
+		}
+
+		ThrowIfFailed(m_device->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+			D3D12_HEAP_FLAG_NONE,
+			&texture.textureDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,
+			IID_PPV_ARGS(&texture.textureResource)
+		));
+
+		// CREATE AN UPLOAD HEAP
+		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(texture.textureResource.Get(), 0, 1);
+
+		// Create the upload heap buffer.
+		ThrowIfFailed(m_device->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&texture.textureUploadHeap)
+		));
+
+		// SCHEDULE A COPY FROM THE UPLOAD HEAP TO THE DEFAULT HEAP TEXTURE
+		D3D12_SUBRESOURCE_DATA textureData = {};
+		textureData.pData = imageData;
+		textureData.RowPitch = imageBytesPerRow;
+		textureData.SlicePitch = textureData.RowPitch * texture.textureDesc.Height;
+
+		UpdateSubresources(context->m_commandList.Get(),
+			texture.textureResource.Get(),
+			texture.textureUploadHeap.Get(),
+			0, 0, 1,
+			&textureData);
+
+		context->m_commandList->ResourceBarrier(1,
+			&CD3DX12_RESOURCE_BARRIER::Transition(
+				texture.textureResource.Get(),
+				D3D12_RESOURCE_STATE_COPY_DEST,
+				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+		m_staticTexturesVector.push_back(texture);
+	}
 
 	for (auto object : m_app->m_drawableObjects)
 	{
@@ -722,7 +807,7 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 	rsc.AddHeapRangesParameter({ { 2 /*t2*/, 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1 /*2nd slot of the heap (see CreateShaderResourceHeap() */ }, });/*Top-level acceleration structure*/
 
 	rsc.AddHeapRangesParameter({
-	   { 3 /* shader register t3 */, m_textureNumber + 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3 }
+	   { 3 /* shader register t3 */, m_textureNumber + m_staticTextures->size() + 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3 }
 		});
 
 	D3D12_STATIC_SAMPLER_DESC sampler = {};
@@ -955,6 +1040,24 @@ void DXRSetup::CreateShaderResourceHeap()
 
 	int heapPointer = 0;
 
+	for (auto staticTexture : m_staticTexturesVector)
+	{
+		staticTexture.heapTextureNumber = heapPointer;
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDescTex = {};
+		srvDescTex.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDescTex.Format = staticTexture.textureDesc.Format;
+		srvDescTex.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDescTex.Texture2D.MipLevels = 1;
+		m_device->CreateShaderResourceView(staticTexture.textureResource.Get(), &srvDescTex, srvHandle);
+		std::pair<wstring, int> validTexture;
+		validTexture.first = staticTexture.textureFile;
+		validTexture.second = heapPointer;
+		m_textures.push_back(validTexture);
+		// Increment the descriptor handle for the next texture.
+		srvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		heapPointer++;
+	}
+
 	for (auto obj : m_app->m_drawableObjects)
 	{
 		if (obj->m_textureFile == L"NULL")
@@ -969,6 +1072,13 @@ void DXRSetup::CreateShaderResourceHeap()
 		srvDescTex.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDescTex.Texture2D.MipLevels = 1;
 		m_device->CreateShaderResourceView(obj->m_textureResource.Get(), &srvDescTex, srvHandle);
+
+		std::pair<wstring, int> validTexture;
+
+		validTexture.first = obj->m_textureFile;
+		validTexture.second = heapPointer;
+
+		m_textures.push_back(validTexture);
 
 		// Increment the descriptor handle for the next texture.
 		srvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -992,6 +1102,94 @@ void DXRSetup::CreateShaderBindingTable()
 	// The SBT helper class collects calls to Add*Program.  If called several
 	// times, the helper must be emptied before re-adding shaders.
 	context->m_sbtHelper.Reset();
+
+	// The pointer to the beginning of the heap is the only parameter required by
+	// shaders without root parameters
+	D3D12_GPU_DESCRIPTOR_HANDLE srvUavHeapHandle =
+		context->m_srvUavHeap->GetGPUDescriptorHandleForHeapStart();
+
+	// The helper treats both root parameter pointers and heap pointers as void*,
+	// while DX12 uses the
+	// D3D12_GPU_DESCRIPTOR_HANDLE to define heap pointers. The pointer in this
+	// struct is a UINT64, which then has to be reinterpreted as a pointer.
+	auto heapPointer = reinterpret_cast<UINT64*>(srvUavHeapHandle.ptr);
+
+	// The ray generation only uses heap data
+	context->m_sbtHelper.AddRayGenerationProgram(L"RayGen", { heapPointer });
+
+	// The miss and hit shaders do not access any external resources: instead they
+	// communicate their results through the ray payload
+	context->m_sbtHelper.AddMissProgram(L"Miss", { heapPointer });
+	context->m_sbtHelper.AddMissProgram(L"ShadowMiss", { heapPointer });
+
+	for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
+	{
+		if (m_app->m_drawableObjects[i]->m_textureFile != L"NULL")
+		{
+			srvUavHeapHandle = context->m_srvUavHeap->GetGPUDescriptorHandleForHeapStart();
+
+			srvUavHeapHandle.ptr += m_device->GetDescriptorHandleIncrementSize(
+				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * m_app->m_drawableObjects[i]->m_heapTextureNumber;
+
+			auto textureHeapPointer = reinterpret_cast<UINT64*>(srvUavHeapHandle.ptr);
+
+			context->m_sbtHelper.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName,
+				{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
+					(void*)(m_app->m_drawableObjects[i]->getIndexBuffer()->GetGPUVirtualAddress()),
+					(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress()),
+				(void*)(m_app->m_drawableObjects[i]->m_materialBuffer->GetGPUVirtualAddress())
+				, heapPointer,textureHeapPointer });
+
+			context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
+				{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
+					(void*)(m_app->m_drawableObjects[i]->getIndexBuffer()->GetGPUVirtualAddress()),
+					(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress()),
+					(void*)(m_app->m_drawableObjects[i]->m_materialBuffer->GetGPUVirtualAddress())
+				,heapPointer,textureHeapPointer });
+		}
+		else
+		{
+			context->m_sbtHelper.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName,
+				{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
+					(void*)(m_app->m_drawableObjects[i]->getIndexBuffer()->GetGPUVirtualAddress()),
+					(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress()),
+				(void*)(m_app->m_drawableObjects[i]->m_materialBuffer->GetGPUVirtualAddress())
+				, heapPointer,nullptr });
+
+			context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
+				{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
+					(void*)(m_app->m_drawableObjects[i]->getIndexBuffer()->GetGPUVirtualAddress()),
+					(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress()),
+					(void*)(m_app->m_drawableObjects[i]->m_materialBuffer->GetGPUVirtualAddress())
+				,heapPointer,nullptr });
+		}
+	}
+
+	// Compute the size of the SBT given the number of shaders and their
+	// parameters
+	uint32_t sbtSize = context->m_sbtHelper.ComputeSBTSize();
+
+	// Create the SBT on the upload heap. This is required as the helper will use
+	// mapping to write the SBT contents. After the SBT compilation it could be
+	// copied to the default heap for performance.
+	context->m_sbtStorage = nv_helpers_dx12::CreateBuffer(
+		m_device.Get(), sbtSize, D3D12_RESOURCE_FLAG_NONE,
+		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
+	if (!context->m_sbtStorage) {
+		throw std::logic_error("Could not allocate the shader binding table");
+	}
+	// Compile the SBT from the shader and parameters info
+	context->m_sbtHelper.Generate(context->m_sbtStorage.Get(), context->m_rtStateObjectProps.Get());
+}
+
+void DXRSetup::UpdateShaderBindingTable()
+{
+	DXRContext* context = m_app->GetContext();
+
+	// The SBT helper class collects calls to Add*Program.  If called several
+	// times, the helper must be emptied before re-adding shaders.
+	context->m_sbtHelper.Reset();
+	context->m_sbtStorage.Reset();
 
 	// The pointer to the beginning of the heap is the only parameter required by
 	// shaders without root parameters

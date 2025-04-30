@@ -18,6 +18,15 @@ struct AccelerationStructureBuffers {
 	ComPtr<ID3D12Resource> pInstanceDesc; // Hold the matrices of the instances
 };
 
+struct Texture
+{
+	ComPtr<ID3D12Resource> textureResource;
+	D3D12_RESOURCE_DESC textureDesc;
+	ComPtr<ID3D12Resource> textureUploadHeap;
+	wstring textureFile;
+	int heapTextureNumber = -1;
+};
+
 struct CameraBuffer
 {
 	XMMATRIX invView;

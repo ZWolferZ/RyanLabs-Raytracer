@@ -37,8 +37,11 @@ public:
 	bool m_shadows = m_originalShadows;
 	UINT m_originalShadowRayCount = 100;
 
-	UINT16 m_textureNumber = 0;
+	wstring m_staticTextures[3] = { L"Textures/staticTexture1.png",L"Textures/staticTexture2.png",L"Textures/staticTexture3.png" };
+	vector<Texture> m_staticTexturesVector;
 
+	UINT16 m_textureNumber = 0;
+	vector<std::pair<wstring, int>> m_textures;
 private:
 
 	void SetupIMGUI();
@@ -74,4 +77,5 @@ private:
 	void CreateShaderResourceHeap();
 
 	void CreateShaderBindingTable();
+	void UpdateShaderBindingTable();
 };

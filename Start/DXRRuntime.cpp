@@ -141,6 +141,7 @@ void DXRRuntime::DrawIMGUI()
 		DrawLightingWindow();
 		DrawSecretWindow();
 		DrawReflectionWindow();
+		DrawTextureWindow();
 	}
 
 	DrawHideAllWindows();
@@ -315,21 +316,6 @@ void DXRRuntime::DrawObjectMaterialWindow()
 		ImGui::SliderFloat("Roughness", &m_selectedObject->m_materialBufferData.roughness, 0.0f, 0.2f);
 		ImGui::Separator();
 
-		if (m_selectedObject->m_heapTextureNumber != -1)
-		{
-			if (ImGui::Checkbox("Enable Texture", &m_selectedObject->m_texture))
-			{
-				if (m_selectedObject->m_materialBufferData.texture == 1)
-				{
-					m_selectedObject->m_materialBufferData.texture = 0;
-				}
-				else
-				{
-					m_selectedObject->m_materialBufferData.texture = 1;
-				}
-			}
-		}
-
 		ImGui::End();
 	}
 }
@@ -492,6 +478,82 @@ void DXRRuntime::DrawReflectionWindow()
 		ImGui::Checkbox("Enable Reflection", &m_selectedObject->m_reflection);
 		ImGui::SliderFloat("Reflection Shininess", &m_selectedObject->m_materialBufferData.shininess, 0.1f, 1.0f);
 		ImGui::SliderInt("Max Recursion Depth", &m_selectedObject->m_materialBufferData.maxRecursionDepth, 1, 20);
+
+		ImGui::End();
+	}
+}
+void DXRRuntime::DrawTextureWindow()
+{
+	ImGui::SetNextWindowPos(ImVec2(350, 280), ImGuiCond_FirstUseEver);
+
+	if (m_selectedObject != nullptr)
+	{
+		ImGui::Begin("Object Texture Selection Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+		for (DrawableGameObject* dgo : m_app->m_drawableObjects)
+		{
+			string textureName;
+
+			textureName.assign(dgo->m_textureFile.begin(), dgo->m_textureFile.end());
+
+			if (dgo == m_selectedObject)
+			{
+				ImGui::Text("Texture Number: %i", dgo->m_heapTextureNumber);
+				ImGui::Text("Texture File: %s", textureName.c_str());
+				ImGui::Separator();
+				if (ImGui::BeginListBox("Available Textures"))
+				{
+					for (int i = 0; i < m_app->m_DXSetup->m_textures.size(); i++)
+					{
+						string textureLabel;
+
+						textureLabel.assign(m_app->m_DXSetup->m_textures[i].first.begin(), m_app->m_DXSetup->m_textures[i].first.end());
+
+						bool isSelected = false;
+						if (m_selectedObject)
+						{
+							isSelected = (m_selectedObject->m_textureFile == m_app->m_DXSetup->m_textures[i].first &&
+								m_selectedObject->m_heapTextureNumber == m_app->m_DXSetup->m_textures[i].second);
+						}
+
+						if (ImGui::Selectable(textureLabel.c_str(), isSelected))
+						{
+							if (m_selectedObject)
+							{
+								m_selectedObject->m_textureFile = m_app->m_DXSetup->m_textures[i].first;
+								m_selectedObject->m_heapTextureNumber = m_app->m_DXSetup->m_textures[i].second;
+								m_selectedObject->m_texture = true;
+								m_app->m_DXSetup->UpdateShaderBindingTable();
+							}
+						}
+					}
+					ImGui::EndListBox();
+				}
+
+				if (ImGui::Button("Remove Texture"))
+				{
+					m_selectedObject->m_textureFile = L"NULL";
+					m_selectedObject->m_heapTextureNumber = -1;
+					m_selectedObject->m_texture = false;
+					m_app->m_DXSetup->UpdateShaderBindingTable();
+				}
+			}
+		}
+
+		if (m_selectedObject->m_heapTextureNumber != -1)
+		{
+			if (ImGui::Checkbox("Enable Texture", &m_selectedObject->m_texture))
+			{
+				if (m_selectedObject->m_materialBufferData.texture == 1)
+				{
+					m_selectedObject->m_materialBufferData.texture = 0;
+				}
+				else
+				{
+					m_selectedObject->m_materialBufferData.texture = 1;
+				}
+			}
+		}
 
 		ImGui::End();
 	}
