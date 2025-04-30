@@ -423,9 +423,11 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(1.0f, 1.0f, 1.0f),
 		"Glass 1");
 
+	pPlaneCopy->m_textureFile = L"Textures/Glass.png";
 	pPlaneCopy->m_materialBufferData.objectColour = XMFLOAT4(0.495f, 0.644f, 1.0f, 1.0f);
 	pPlaneCopy->m_materialBufferData.shininess = 0.4f;
 	pPlaneCopy->m_reflection = true;
+	pPlaneCopy->m_triOutline = false;
 
 	pPlaneCopy->m_autoRotateY = true;
 
