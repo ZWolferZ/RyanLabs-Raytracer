@@ -16,6 +16,7 @@
 #include "DXRHelper.h"
 
 #include "DrawableGameObject.h"
+#include "TextureLoader.h"
 
 DXRSetup::DXRSetup(DXRApp* app)
 {
@@ -388,7 +389,6 @@ void DXRSetup::LoadAssets()
 	cubeFloor->m_reflection = true;
 	cubeFloor->m_materialBufferData.shininess = 0.3f;
 	cubeFloor->m_materialBufferData.roughness = 0.01f;
-
 	cubeFloor->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(cubeFloor);
 
@@ -400,7 +400,7 @@ void DXRSetup::LoadAssets()
 
 	cube1->m_reflection = true;
 	cube1->m_materialBufferData.shininess = 0.8f;
-
+	cube1->m_textureFile = L"test2.png";
 	cube1->initCubeMesh(m_device);
 	cube1->m_autoRotateX = true;
 	cube1->m_autoRotateY = true;
@@ -455,6 +455,7 @@ void DXRSetup::LoadAssets()
 
 	pBall->m_materialBufferData.triThickness = 0.05f;
 	pBall->m_materialBufferData.objectColour = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	pBall->m_textureFile = L"test2.png";
 
 	pBall->initOBJMesh(m_device, R"(Objects\ball.obj)");
 	m_app->m_drawableObjects.push_back(pBall);
@@ -491,10 +492,13 @@ void DXRSetup::LoadAssets()
 		XMFLOAT3(0.05f, 3.0f, 5.0f),
 		"Mirror 3");
 
+	pMirror3->m_textureFile = L"test2.png";
+
 	pMirror3->m_reflection = true;
 	pMirror3->m_materialBufferData.shininess = 0.23f;
 	pMirror3->m_materialBufferData.roughness = 0.019f;
 	pMirror3->m_triOutline = false;
+	pMirror3->m_textureFile = L"test2.png";
 
 	pMirror3->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(pMirror3);
@@ -557,6 +561,8 @@ void DXRSetup::LoadAssets()
 	pBetterThanText->initOBJMesh(m_device, stupidStringConversion.data());
 	m_app->m_drawableObjects.push_back(pBetterThanText);
 
+	LoadTextures();
+
 	// Create synchronization objects and wait until assets have been uploaded to
 	// the GPU.
 	{
@@ -574,6 +580,70 @@ void DXRSetup::LoadAssets()
 		// list in our main loop but for now, we just want to wait for setup to
 		// complete before continuing.
 		m_app->WaitForPreviousFrame();
+	}
+}
+
+void DXRSetup::LoadTextures()
+{
+	DXRContext* context = m_app->GetContext();
+
+	// Copy data to the intermediate upload heap and then schedule a copy
+	// from the upload heap to the Texture2D.
+
+	TextureLoader tl;
+
+	for (auto object : m_app->m_drawableObjects)
+	{
+		int imageBytesPerRow = 0;
+		BYTE* imageData = nullptr;
+
+		int imageSize = tl.LoadImageDataFromFile(&imageData, object->m_textureDesc, object->m_textureFile.c_str(), imageBytesPerRow);
+
+		// make sure we have data
+		if (imageSize <= 0)
+		{
+			assert(0 && "Failed to load texture!");
+		}
+
+		ThrowIfFailed(m_device->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+			D3D12_HEAP_FLAG_NONE,
+			&object->m_textureDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,
+			IID_PPV_ARGS(&object->m_texture)
+		));
+
+		// CREATE AN UPLOAD HEAP
+		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(object->m_texture.Get(), 0, 1);
+
+		// Create the upload heap buffer.
+		ThrowIfFailed(m_device->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&object->m_textureUploadHeap)
+		));
+
+		// SCHEDULE A COPY FROM THE UPLOAD HEAP TO THE DEFAULT HEAP TEXTURE
+		D3D12_SUBRESOURCE_DATA textureData = {};
+		textureData.pData = imageData;
+		textureData.RowPitch = imageBytesPerRow;
+		textureData.SlicePitch = textureData.RowPitch * object->m_textureDesc.Height;
+
+		UpdateSubresources(context->m_commandList.Get(),
+			object->m_texture.Get(),
+			object->m_textureUploadHeap.Get(),
+			0, 0, 1,
+			&textureData);
+
+		context->m_commandList->ResourceBarrier(1,
+			&CD3DX12_RESOURCE_BARRIER::Transition(
+				object->m_texture.Get(),
+				D3D12_RESOURCE_STATE_COPY_DEST,
+				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 	}
 }
 
@@ -647,7 +717,26 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 	rsc.AddRootParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 1 /*b1*/); // Material buffer
 	rsc.AddHeapRangesParameter({ { 2 /*t2*/, 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1 /*2nd slot of the heap (see CreateShaderResourceHeap() */ }, });/*Top-level acceleration structure*/
 
-	return rsc.Generate(m_device.Get(), true);
+	rsc.AddHeapRangesParameter({
+	   { 3 /* shader register t3 */, m_app->m_drawableObjects.size(), 0, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3 }
+		});
+
+	D3D12_STATIC_SAMPLER_DESC sampler = {};
+	sampler.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
+	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.MipLODBias = 0;
+	sampler.MaxAnisotropy = 0;
+	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	sampler.MinLOD = 0.0f;
+	sampler.MaxLOD = D3D12_FLOAT32_MAX;
+	sampler.ShaderRegister = 0;
+	sampler.RegisterSpace = 0;
+	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	return rsc.Generate(m_device.Get(), true, 1, &sampler);
 }
 
 //-----------------------------------------------------------------------------
@@ -819,7 +908,7 @@ void DXRSetup::CreateShaderResourceHeap()
 	// Create a SRV/UAV/CBV descriptor heap. We need 2 entries - 1 UAV for the
 	// raytracing output and 1 SRV for the TLAS
 	context->m_srvUavHeap = nv_helpers_dx12::CreateDescriptorHeap(
-		m_device.Get(), 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+		m_device.Get(), 3 + m_app->m_drawableObjects.size(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
 
 	// Get a handle to the heap memory on the CPU side, to be able to write the
 	// descriptors directly
@@ -856,6 +945,22 @@ void DXRSetup::CreateShaderResourceHeap()
 	cbvDesc.BufferLocation = context->m_cameraBuffer->GetGPUVirtualAddress();
 	cbvDesc.SizeInBytes = context->m_cameraBufferSize;
 	m_device->CreateConstantBufferView(&cbvDesc, srvHandle);
+
+	// 4a. Add the texture shader resource view after the Camera (increment the handle so it is after the constant buffer view)
+	srvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	for (auto obj : m_app->m_drawableObjects)
+	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDescTex = {};
+		srvDescTex.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDescTex.Format = obj->m_textureDesc.Format;
+		srvDescTex.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDescTex.Texture2D.MipLevels = 1;
+		m_device->CreateShaderResourceView(obj->m_texture.Get(), &srvDescTex, srvHandle);
+
+		// Increment the descriptor handle for the next texture.
+		srvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -896,19 +1001,26 @@ void DXRSetup::CreateShaderBindingTable()
 
 	for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
 	{
+		srvUavHeapHandle = context->m_srvUavHeap->GetGPUDescriptorHandleForHeapStart();
+
+		srvUavHeapHandle.ptr += m_device->GetDescriptorHandleIncrementSize(
+			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * i;
+
+		auto textureHeapPointer = reinterpret_cast<UINT64*>(srvUavHeapHandle.ptr);
+
 		context->m_sbtHelper.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName,
 			{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
 				(void*)(m_app->m_drawableObjects[i]->getIndexBuffer()->GetGPUVirtualAddress()),
 				(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress()),
 			(void*)(m_app->m_drawableObjects[i]->m_materialBuffer->GetGPUVirtualAddress())
-			, heapPointer });
+			, heapPointer,textureHeapPointer });
 
 		context->m_sbtHelper.AddHitGroup(L"ShadowHitGroup",
 			{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
 				(void*)(m_app->m_drawableObjects[i]->getIndexBuffer()->GetGPUVirtualAddress()),
 				(void*)(m_app->m_DXRContext->m_lightingBuffer->GetGPUVirtualAddress()),
 				(void*)(m_app->m_drawableObjects[i]->m_materialBuffer->GetGPUVirtualAddress())
-			,heapPointer });
+			,heapPointer,textureHeapPointer });
 	}
 
 	// Compute the size of the SBT given the number of shaders and their

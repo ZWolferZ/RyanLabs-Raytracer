@@ -146,6 +146,7 @@
     <ClInclude Include="nv_helpers_dx12\TopLevelASGenerator.h" />
     <ClInclude Include="OBJLoader.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="TextureLoader.h" />
     <ClInclude Include="Win32Application.h" />
     <ClInclude Include="DXRApp.h" />
     <ClInclude Include="d3dx12.h" />
@@ -186,6 +187,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="OBJLoader.cpp" />
+    <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="Win32Application.cpp" />
     <ClCompile Include="DXRApp.cpp" />
     <ClCompile Include="DXSample.cpp" />

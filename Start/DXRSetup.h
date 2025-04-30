@@ -45,6 +45,7 @@ private:
 
 	void LoadPipeline();
 	void LoadAssets();
+	void LoadTextures();
 
 	/// Create all acceleration structures, bottom and top
 	void CreateAccelerationStructures();

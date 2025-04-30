@@ -10,7 +10,8 @@ struct STriVertex
 StructuredBuffer<STriVertex> BTriVertex : register(t0);
 StructuredBuffer<int> indices : register(t1);
 RaytracingAccelerationStructure SceneBVH : register(t2);
-
+Texture2D<float4> g_texture : register(t3);
+SamplerState g_sampler : register(s0);
 
 
 cbuffer LightParams : register(b0)
@@ -262,7 +263,17 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
 	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
 
+    float2 texCoords[3];
+    texCoords[0] = BTriVertex[indices[vertid + 0]].tex;
+    texCoords[1] = BTriVertex[indices[vertid + 1]].tex;
+    texCoords[2] = BTriVertex[indices[vertid + 2]].tex;
+
+    float2 texCoord = HitAttributeV2(texCoords, attrib);
+
+    float4 textureColor = g_texture.SampleLevel(g_sampler, texCoord,0);
+
 	float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
+  
 	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
 	float3 hitWorldPosition = HitWorldPosition();
 
@@ -276,7 +287,8 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	float4 ambientColour = CalculateAmbientLighting(roughnessNormal) * attenuation;
 	float4 specularColour = CalculateSpecularLighting(hitWorldPosition, lightDirection, roughnessNormal) * attenuation;
 
-	float3 colorOut = ambientColour;
+
+	float3 colorOut = textureColor + ambientColour;
 
 
 	colorOut = DrawTriOutlines(colorOut, barycentrics);
@@ -284,6 +296,8 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	colorOut = TraceShadowRays(colorOut, diffuseColour, specularColour, hitWorldPosition, roughnessNormal, lightDirection);
 
 	colorOut = TestReflectionRays(colorOut, hitWorldPosition, roughnessNormal, payload);
+
+   
 
 	payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
 }
