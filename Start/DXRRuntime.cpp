@@ -7,6 +7,7 @@
 #include "imgui_impl_dx12.h"
 #include "DrawableGameObject.h"
 #include "DXRSetup.h"
+#include "imgui_internal.h"
 
 DXRRuntime::DXRRuntime(DXRApp* app)
 {
@@ -142,6 +143,7 @@ void DXRRuntime::DrawIMGUI()
 		DrawSecretWindow();
 		DrawReflectionWindow();
 		DrawTextureWindow();
+		DrawSamplerWindow();
 	}
 
 	DrawHideAllWindows();
@@ -558,6 +560,34 @@ void DXRRuntime::DrawTextureWindow()
 		ImGui::End();
 	}
 }
+void DXRRuntime::DrawSamplerWindow()
+{
+	ImGui::SetNextWindowPos(ImVec2(250, 240), ImGuiCond_FirstUseEver);
+
+	ImGui::Begin("Texture Sampler Selection Window", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Text("Choose a Sampler Type for the Textures!");
+
+	string samplerTypeNames[3] = { "Linear Sampling", "Anisotropic Sampling" , "Point Sampling" };
+
+	int currentSamplerIndex = m_app->m_DXSetup->m_samplerType;
+
+	if (ImGui::BeginCombo("Sampler Type", samplerTypeNames[currentSamplerIndex].c_str()))
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			bool isSelected = (currentSamplerIndex == i);
+
+			if (ImGui::Selectable(samplerTypeNames[i].c_str(), isSelected))
+			{
+				m_app->m_DXSetup->m_samplerType = static_cast<SamplerType>(i);
+				m_app->m_DXSetup->UpdateRaytracingPipeline();
+			}
+		}
+		ImGui::EndCombo();
+	}
+	ImGui::End();
+}
 void DXRRuntime::DrawHideAllWindows()
 {
 	ImGui::SetNextWindowPos(ImVec2(680, 10), ImGuiCond_FirstUseEver);
@@ -571,6 +601,7 @@ void DXRRuntime::DrawVersionWindow()
 	ImGui::Begin("RyanLabs Path Tracer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("ImGUI version: (%s)", IMGUI_VERSION);
 	ImGui::Text("Application Runtime (%f)", m_totalTime);
+
 	ImGui::End();
 }
 

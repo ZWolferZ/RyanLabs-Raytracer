@@ -42,6 +42,9 @@ public:
 
 	UINT16 m_textureNumber = 0;
 	vector<std::pair<wstring, int>> m_textures;
+
+	SamplerType m_samplerType = POINTY;
+
 private:
 
 	void SetupIMGUI();
@@ -71,7 +74,12 @@ private:
 	ComPtr<ID3D12RootSignature> CreateMissSignature();
 	ComPtr<ID3D12RootSignature> CreateHitSignature();
 
+	D3D12_STATIC_SAMPLER_DESC CreateStaticSamplerPointDesc();
+	D3D12_STATIC_SAMPLER_DESC CreateStaticSamplerLinearDesc();
+	D3D12_STATIC_SAMPLER_DESC CreateStaticSamplerAnisotropicDesc();
+
 	void CreateRaytracingPipeline();
+	void UpdateRaytracingPipeline();
 
 	void CreateRaytracingOutputBuffer();
 	void CreateShaderResourceHeap();

@@ -812,6 +812,27 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 	   { 3 /* shader register t3 */, m_textureNumber + m_staticTextures->size() + 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3 }
 		});
 
+	D3D12_STATIC_SAMPLER_DESC staticSamplerDesc;
+
+	switch (m_samplerType)
+	{
+	case ANISOTROPIC:
+		staticSamplerDesc = CreateStaticSamplerAnisotropicDesc();
+		break;
+	case LINEAR:
+		staticSamplerDesc = CreateStaticSamplerLinearDesc();
+		break;
+	default:
+	case POINTY:
+		staticSamplerDesc = CreateStaticSamplerPointDesc();
+		break;
+	}
+
+	return rsc.Generate(m_device.Get(), true, 1, &staticSamplerDesc);
+}
+
+D3D12_STATIC_SAMPLER_DESC DXRSetup::CreateStaticSamplerPointDesc()
+{
 	D3D12_STATIC_SAMPLER_DESC sampler = {};
 	sampler.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
 	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
@@ -827,7 +848,47 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 	sampler.RegisterSpace = 0;
 	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	return rsc.Generate(m_device.Get(), true, 1, &sampler);
+	return sampler;
+}
+
+D3D12_STATIC_SAMPLER_DESC DXRSetup::CreateStaticSamplerLinearDesc()
+{
+	D3D12_STATIC_SAMPLER_DESC sampler = {};
+	sampler.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.MipLODBias = 0;
+	sampler.MaxAnisotropy = 0;
+	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	sampler.MinLOD = 0.0f;
+	sampler.MaxLOD = D3D12_FLOAT32_MAX;
+	sampler.ShaderRegister = 0;
+	sampler.RegisterSpace = 0;
+	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	return sampler;
+}
+
+D3D12_STATIC_SAMPLER_DESC DXRSetup::CreateStaticSamplerAnisotropicDesc()
+{
+	D3D12_STATIC_SAMPLER_DESC sampler = {};
+	sampler.Filter = D3D12_FILTER_COMPARISON_ANISOTROPIC;
+	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.MipLODBias = 0;
+	sampler.MaxAnisotropy = 0;
+	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	sampler.MinLOD = 0.0f;
+	sampler.MaxLOD = D3D12_FLOAT32_MAX;
+	sampler.ShaderRegister = 0;
+	sampler.RegisterSpace = 0;
+	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	return sampler;
 }
 
 //-----------------------------------------------------------------------------
@@ -879,6 +940,109 @@ void DXRSetup::CreateRaytracingPipeline()
 
 	// To be used, each DX12 shader needs a root signature defining which
 	// parameters and buffers will be accessed.
+	context->m_rayGenSignature = CreateRayGenSignature();
+	context->m_missSignature = CreateMissSignature();
+	context->m_hitSignature = CreateHitSignature();
+
+	// 3 different shaders can be invoked to obtain an intersection: an
+	// intersection shader is called
+	// when hitting the bounding box of non-triangular geometry. This is beyond
+	// the scope of this tutorial. An any-hit shader is called on potential
+	// intersections. This shader can, for example, perform alpha-testing and
+	// discard some intersections. Finally, the closest-hit program is invoked on
+	// the intersection point closest to the ray origin. Those 3 shaders are bound
+	// together into a hit group.
+
+	// Note that for triangular geometry the intersection shader is built-in. An
+	// empty any-hit shader is also defined by default, so in our simple case each
+	// hit group contains only the closest hit shader. Note that since the
+	// exported symbols are defined above the shaders can be simply referred to by
+	// name.
+
+	// Hit group for the triangles, with a shader simply interpolating vertex
+	// colors
+
+	for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
+	{
+		if (m_app->m_drawableObjects[i]->m_planeMesh)
+		{
+			pipeline.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName, L"PlaneClosestHit", L"AnyHit");
+		}
+		else
+		{
+			pipeline.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName, L"ClosestHit", L"AnyHit");
+		}
+	}
+
+	pipeline.AddHitGroup(L"ShadowHitGroup", L"ShadowHit");
+
+	// The following section associates the root signature to each shader. Note
+	// that we can explicitly show that some shaders share the same root signature
+	// (eg. Miss and ShadowMiss). Note that the hit shaders are now only referred
+	// to as hit groups, meaning that the underlying intersection, any-hit and
+	// closest-hit shaders share the same root signature.
+	pipeline.AddRootSignatureAssociation(context->m_rayGenSignature.Get(), { L"RayGen" });
+	pipeline.AddRootSignatureAssociation(context->m_missSignature.Get(), { L"Miss", L"ShadowMiss" });
+
+	for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
+	{
+		pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { m_app->m_drawableObjects[i]->m_objectHitGroupName });
+	}
+	pipeline.AddRootSignatureAssociation(context->m_hitSignature.Get(), { L"ShadowHitGroup" });
+
+	// The payload size defines the maximum size of the data carried by the rays,
+	// ie. the the data
+	// exchanged between shaders, such as the HitInfo structure in the HLSL code.
+	// It is important to keep this value as low as possible as a too high value
+	// would result in unnecessary memory consumption and cache trashing.
+	pipeline.SetMaxPayloadSize(5 * sizeof(float)); // RGB + distance + Recursion depth
+
+	// Upon hitting a surface, DXR can provide several attributes to the hit. In
+	// our sample we just use the barycentric coordinates defined by the weights
+	// u,v of the last two vertices of the triangle. The actual barycentrics can
+	// be obtained using float3 barycentrics = float3(1.f-u-v, u, v);
+	pipeline.SetMaxAttributeSize(2 * sizeof(float)); // barycentric coordinates
+
+	// The raytracing process can shoot rays from existing hit points, resulting
+	// in nested TraceRay calls. Our sample code traces only primary rays, which
+	// then requires a trace depth of 1. Note that this recursion depth should be
+	// kept to a minimum for best performance. Path tracing algorithms can be
+	// easily flattened into a simple loop in the ray generation.
+	pipeline.SetMaxRecursionDepth(30);
+
+	// Compile the pipeline for execution on the GPU
+	context->m_rtStateObject = pipeline.Generate();
+
+	// Cast the state object into a properties object, allowing to later access
+	// the shader pointers by name
+	ThrowIfFailed(
+		context->m_rtStateObject->QueryInterface(IID_PPV_ARGS(&context->m_rtStateObjectProps)));
+}
+
+void DXRSetup::UpdateRaytracingPipeline()
+{
+	DXRContext* context = m_app->GetContext();
+
+	context->m_rtStateObject->Release();
+	context->m_rtStateObject.Reset();
+
+	context->m_rtStateObjectProps->Release();
+	context->m_rtStateObjectProps.Reset();
+
+	context->m_hitSignature->Release();
+	context->m_hitSignature.Reset();
+	context->m_missSignature->Release();
+	context->m_missSignature.Reset();
+	context->m_rayGenSignature->Release();
+	context->m_rayGenSignature.Reset();
+	nv_helpers_dx12::RayTracingPipelineGenerator pipeline(m_device.Get());
+
+	pipeline.AddLibrary(context->m_rayGenLibrary.Get(), { L"RayGen" });
+	pipeline.AddLibrary(context->m_missLibrary.Get(), { L"Miss" ,L"ShadowMiss" });
+	pipeline.AddLibrary(context->m_hitLibrary.Get(), { L"ClosestHit",L"AnyHit",L"PlaneClosestHit", L"ShadowHit" });
+
+	// To be used, each DX12 shader needs a root signature defining which
+// parameters and buffers will be accessed.
 	context->m_rayGenSignature = CreateRayGenSignature();
 	context->m_missSignature = CreateMissSignature();
 	context->m_hitSignature = CreateHitSignature();

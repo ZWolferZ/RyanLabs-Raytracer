@@ -64,3 +64,10 @@ struct MaterialBuffer
 	UINT texture = 0;
 	XMFLOAT2 padding = { 0,0 };
 };
+
+enum SamplerType
+{
+	ANISOTROPIC,
+	LINEAR,
+	POINTY,
+};

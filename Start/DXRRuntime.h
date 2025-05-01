@@ -61,5 +61,6 @@ public:
 	void DrawSecretWindow();
 	void DrawReflectionWindow();
 	void DrawTextureWindow();
+	void DrawSamplerWindow();
 	void DrawHideAllWindows();
 };
