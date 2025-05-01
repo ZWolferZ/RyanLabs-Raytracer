@@ -1,22 +1,20 @@
 #include "stdafx.h"
+
+#pragma region Includes
+//Include{s}
 #include "DXRSetup.h"
-
 #include <thread>
-
 #include "DXRContext.h"
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
-
 #include "nv_helpers_dx12/BottomLevelASGenerator.h"
-
 #include "nv_helpers_dx12/RaytracingPipelineGenerator.h"
 #include "nv_helpers_dx12/RootSignatureGenerator.h"
-
 #include "DXRHelper.h"
-
 #include "DrawableGameObject.h"
 #include "TextureLoader.h"
+#pragma endregion
 
 DXRSetup::DXRSetup(DXRApp* app)
 {

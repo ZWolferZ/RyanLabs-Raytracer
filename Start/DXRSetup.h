@@ -1,7 +1,10 @@
 #pragma once
 
+#pragma region Includes
+//Include{s}
 #include "DXRApp.h"
 #include "common.h"
+#pragma endregion
 
 class DXRSetup
 {

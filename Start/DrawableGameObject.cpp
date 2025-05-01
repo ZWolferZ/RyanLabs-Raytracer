@@ -1,16 +1,13 @@
 #include "stdafx.h"
+
+#pragma region Includes
+//Include{s}
 #include "DrawableGameObject.h"
-
 using namespace std;
-
-//#define NUM_VERTICES 36
+#pragma endregion
 
 DrawableGameObject::DrawableGameObject(XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale, string objectName)
 {
-	//m_pVertexBuffer = nullptr;
-	//m_pIndexBuffer = nullptr;
-	//m_pTextureResourceView = nullptr;
-	//m_pSamplerLinear = nullptr;
 	m_position = position;
 	m_rotation = rotation;
 	m_scale = scale;

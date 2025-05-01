@@ -1,9 +1,11 @@
 #pragma once
 
+#pragma region Includes
+//Include{s}
 #include "common.h"
 #include "OBJLoader.h"
-
 using Microsoft::WRL::ComPtr;
+#pragma endregion
 
 class DrawableGameObject
 {

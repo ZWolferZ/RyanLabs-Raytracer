@@ -11,10 +11,12 @@
 
 #pragma once
 
+#pragma region Includes
+//Include{s}
 #include <stdexcept>
 #include "DXSample.h"
-
 class DXSample;
+#pragma endregion
 
 class Win32Application
 {

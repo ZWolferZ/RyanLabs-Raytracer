@@ -1,11 +1,15 @@
 #include "stdafx.h"
+
+#pragma region Includes
+//Include{s}
 #include "OBJLoader.h"
 #include <string>
+#pragma endregion
 
 bool OBJLoader::FindSimilarVertex(const SimpleVertex& vertex, std::map<SimpleVertex, unsigned short>& vertToIndexMap, unsigned short& index)
 {
 	auto it = vertToIndexMap.find(vertex);
-	
+
 	if (it == vertToIndexMap.end())
 	{
 		return false;
@@ -17,13 +21,13 @@ bool OBJLoader::FindSimilarVertex(const SimpleVertex& vertex, std::map<SimpleVer
 	}
 }
 
-void OBJLoader::CreateIndices(const std::vector<XMFLOAT3>& inVertices, 
-							  const std::vector<XMFLOAT2>& inTexCoords, 
-							  const std::vector<XMFLOAT4>& inNormals, 
-							  std::vector<unsigned short>& outIndices, 
-							  std::vector<XMFLOAT3>& outVertices, 
-							  std::vector<XMFLOAT2>& outTexCoords, 
-							  std::vector<XMFLOAT4>& outNormals)
+void OBJLoader::CreateIndices(const std::vector<XMFLOAT3>& inVertices,
+	const std::vector<XMFLOAT2>& inTexCoords,
+	const std::vector<XMFLOAT4>& inNormals,
+	std::vector<unsigned short>& outIndices,
+	std::vector<XMFLOAT3>& outVertices,
+	std::vector<XMFLOAT2>& outTexCoords,
+	std::vector<XMFLOAT4>& outNormals)
 {
 	// Mapping from an already-existing SimpleVertex to its corresponding index
 	std::map<SimpleVertex, unsigned short> vertToIndexMap;
@@ -31,16 +35,16 @@ void OBJLoader::CreateIndices(const std::vector<XMFLOAT3>& inVertices,
 	std::pair<SimpleVertex, unsigned short> pair;
 
 	int numVertices = inVertices.size();
-	
-	for(int i = 0; i < numVertices; ++i) //For each vertex
+
+	for (int i = 0; i < numVertices; ++i) //For each vertex
 	{
-		SimpleVertex vertex = {inVertices[i], inNormals[i],  inTexCoords[i]}; 
+		SimpleVertex vertex = { inVertices[i], inNormals[i],  inTexCoords[i] };
 
 		unsigned short index;
 		// See if a vertex already exists in the buffer that has the same attributes as this one
-		bool found = FindSimilarVertex(vertex, vertToIndexMap, index); 
-		
-		if(found) //if found, re-use it's index for the index buffer
+		bool found = FindSimilarVertex(vertex, vertToIndexMap, index);
+
+		if (found) //if found, re-use it's index for the index buffer
 		{
 			outIndices.push_back(index);
 		}
@@ -49,22 +53,22 @@ void OBJLoader::CreateIndices(const std::vector<XMFLOAT3>& inVertices,
 			outVertices.push_back(vertex.Pos);
 			outTexCoords.push_back(vertex.TexC);
 			outNormals.push_back(vertex.Normal);
-			
+
 			unsigned short newIndex = (unsigned short)outVertices.size() - 1;
-			
+
 			outIndices.push_back(newIndex);
-			
+
 			//Add it to the map
 			pair.first = vertex;
 			pair.second = newIndex;
-			
+
 			//vertToIndexMap.insert(pair);
 		}
 	}
 }
 
 //WARNING: This code makes a big assumption -- that your models have texture coordinates AND normals which they should have anyway (else you can't do texturing and lighting!)
-//If your .obj file has no lines beginning with "vt" or "vn", then you'll need to change the Export settings in your modelling software so that it exports the texture coordinates 
+//If your .obj file has no lines beginning with "vt" or "vn", then you'll need to change the Export settings in your modelling software so that it exports the texture coordinates
 //and normals. If you still have no "vt" lines, you'll need to do some texture unwrapping, also known as UV unwrapping.
 MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertTexCoords)
 {
@@ -73,12 +77,12 @@ MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertT
 	std::ifstream binaryInFile;
 	binaryInFile.open(binaryFilename, std::ios::in | std::ios::binary);
 
-	if(!binaryInFile.good())
+	if (!binaryInFile.good())
 	{
 		std::ifstream inFile;
 		inFile.open(filename);
 
-		if(!inFile.good())
+		if (!inFile.good())
 		{
 			return MeshData();
 		}
@@ -108,12 +112,12 @@ MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertT
 			std::string afterFirstSlash;
 			std::string afterSecondSlash;
 
-			while(!inFile.eof()) //While we have yet to reach the end of the file...
+			while (!inFile.eof()) //While we have yet to reach the end of the file...
 			{
 				inFile >> input; //Get the next input from the file
 
 				//Check what type of input it was, we are only interested in vertex positions, texture coordinates, normals and indices, nothing else
-				if(input.compare("v") == 0) //Vertex position
+				if (input.compare("v") == 0) //Vertex position
 				{
 					inFile >> vert.x;
 					inFile >> vert.y;
@@ -121,16 +125,16 @@ MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertT
 
 					verts.push_back(vert);
 				}
-				else if(input.compare("vt") == 0) //Texture coordinate
+				else if (input.compare("vt") == 0) //Texture coordinate
 				{
 					inFile >> texCoord.x;
 					inFile >> texCoord.y;
 
-					if(invertTexCoords) texCoord.y = 1.0f - texCoord.y;
+					if (invertTexCoords) texCoord.y = 1.0f - texCoord.y;
 
 					texCoords.push_back(texCoord);
 				}
-				else if(input.compare("vn") == 0) //Normal
+				else if (input.compare("vn") == 0) //Normal
 				{
 					inFile >> normal.x;
 					inFile >> normal.y;
@@ -139,9 +143,9 @@ MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertT
 
 					normals.push_back(normal);
 				}
-				else if(input.compare("f") == 0) //Face
+				else if (input.compare("f") == 0) //Face
 				{
-					for(int i = 0; i < 3; ++i)
+					for (int i = 0; i < 3; ++i)
 					{
 						inFile >> input;
 						int slash = input.find("/"); //Find first forward slash
@@ -159,10 +163,10 @@ MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertT
 					}
 
 					//Place into vectors
-					for(int i = 0; i < 3; ++i)
+					for (int i = 0; i < 3; ++i)
 					{
 						vertIndices.push_back(vInd[i] - 1);		//Minus 1 from each as these as OBJ indexes start from 1 whereas C++ arrays start from 0
-						textureIndices.push_back(tInd[i] - 1);	//which is really annoying. Apart from Lua and SQL, there's not much else that has indexing 
+						textureIndices.push_back(tInd[i] - 1);	//which is really annoying. Apart from Lua and SQL, there's not much else that has indexing
 						normalIndices.push_back(nInd[i] - 1);	//starting at 1. So many more languages index from 0, the .OBJ people screwed up there.
 					}
 				}
@@ -174,7 +178,7 @@ MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertT
 			std::vector<XMFLOAT4> expandedNormals;
 			std::vector<XMFLOAT2> expandedTexCoords;
 			unsigned int numIndices = vertIndices.size();
-			for(unsigned int i = 0; i < numIndices; i++)
+			for (unsigned int i = 0; i < numIndices; i++)
 			{
 				expandedVertices.push_back(verts[vertIndices[i]]);
 				expandedTexCoords.push_back(texCoords[textureIndices[i]]);
@@ -198,7 +202,7 @@ MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertT
 			//Turn data from vector form to arrays
 			SimpleVertex* finalVerts = new SimpleVertex[meshVertices.size()];
 			unsigned int numMeshVertices = meshVertices.size();
-			for(unsigned int i = 0; i < numMeshVertices; ++i)
+			for (unsigned int i = 0; i < numMeshVertices; ++i)
 			{
 				finalVerts[i].Pos = meshVertices[i];
 				finalVerts[i].Normal = meshNormals[i];
@@ -237,7 +241,7 @@ MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertT
 			meshData.VertexBuffer->Unmap(0, nullptr);
 
 			// INDEX BUFFER ------------------------------------------------------------------------------------------
-			
+
 			const UINT indexBufferSize = sizeof(unsigned int) * numMeshIndices;
 			meshData.IndexCount = numMeshIndices;
 
@@ -255,11 +259,11 @@ MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertT
 			memcpy(pIndexDataBegin, indicesArray, indexBufferSize);
 			meshData.IndexBuffer->Unmap(0, nullptr);
 
-			delete [] indicesArray;
-			delete [] finalVerts;
+			delete[] indicesArray;
+			delete[] finalVerts;
 
 			return meshData;
-		}	
+		}
 	}
 	else
 	{
@@ -302,7 +306,7 @@ MeshData OBJLoader::Load(char* filename, ID3D12Device* _pd3dDevice, bool invertT
 
 		//ZeroMemory(&bd, sizeof(bd));
 		//bd.Usage = D3D11_USAGE_DEFAULT;
-		//bd.ByteWidth = sizeof(WORD) * numIndices;     
+		//bd.ByteWidth = sizeof(WORD) * numIndices;
 		//bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 		//bd.CPUAccessFlags = 0;
 

@@ -1,4 +1,9 @@
+
+#pragma region Includes
+//Include{s}
 #include "Common.hlsl"
+#pragma endregion
+
 
 struct STriVertex
 { // IMPORTANT - the C++ version of this is 'Vertex' found in the common.h file

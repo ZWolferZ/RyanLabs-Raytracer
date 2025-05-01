@@ -1,6 +1,9 @@
 #include "stdafx.h"
-#include "TextureLoader.h"
 
+#pragma region Includes
+//Include{s}
+#include "TextureLoader.h"
+#pragma endregion
 // get the dxgi format equivilent of a wic format
 DXGI_FORMAT TextureLoader::GetDXGIFormatFromWICFormat(WICPixelFormatGUID& wicFormatGUID)
 {

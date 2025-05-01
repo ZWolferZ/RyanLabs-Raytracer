@@ -1,10 +1,11 @@
 #pragma once
 
+#pragma region Includes
+//Include{s}
 #include "DXSample.h"
-
 #include "DXRApp.h"
-
 using namespace DirectX;
+#pragma endregion
 
 struct Vertex { // IMPORTANT - the hlsl version of this is STriVertex
 	XMFLOAT3 position;

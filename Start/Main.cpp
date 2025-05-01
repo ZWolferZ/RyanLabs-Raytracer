@@ -11,7 +11,10 @@
 
 #include "stdafx.h"
 
+#pragma region Includes
+//Include{s}
 #include "DXRApp.h"
+#pragma endregion
 
 _Use_decl_annotations_
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)

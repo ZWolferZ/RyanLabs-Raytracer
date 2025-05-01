@@ -1,4 +1,7 @@
 #include "stdafx.h"
+
+#pragma region Includes
+//Include{s}
 #include "DXRRuntime.h"
 #include <chrono>
 #include "DXRContext.h"
@@ -8,6 +11,7 @@
 #include "DrawableGameObject.h"
 #include "DXRSetup.h"
 #include "imgui_internal.h"
+#pragma endregion
 
 DXRRuntime::DXRRuntime(DXRApp* app)
 {

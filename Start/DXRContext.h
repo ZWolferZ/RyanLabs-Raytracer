@@ -1,11 +1,13 @@
 #pragma once
 
+#pragma region Includes
+//Include{s}
 #include "Camera.h"
 #include "DXRApp.h"
-
 #include "nv_helpers_dx12/TopLevelASGenerator.h"
 #include "nv_helpers_dx12/ShaderBindingTableGenerator.h"
 #include "common.h"
+#pragma endregion
 
 class DXRContext
 {

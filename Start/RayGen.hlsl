@@ -1,4 +1,8 @@
+
+#pragma region Includes
+//Include{s}
 #include "Common.hlsl"
+#pragma endregion
 
 // Raytracing output texture, accessed as a UAV
 RWTexture2D<float4> gOutput : register(u0);

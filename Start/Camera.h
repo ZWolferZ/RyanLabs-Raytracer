@@ -1,15 +1,18 @@
 #pragma once
 
+#pragma region Includes
+//Include{s}
 #include <DirectXMath.h>
 #include <windows.h>
 #include <windowsx.h>
 #include  <vector>
-
 using namespace DirectX;
+#pragma endregion
 
 class Camera
 {
 public:
+
 	Camera(XMFLOAT3 posIn, XMFLOAT3 lookDirIn, XMFLOAT3 upIn)
 	{
 		position = posIn;
@@ -22,8 +25,6 @@ public:
 
 		XMStoreFloat4x4(&viewMatrix, XMMatrixIdentity());
 	}
-
-	float m_splineTransition = 0.0f;
 
 	XMFLOAT3 GetPosition() { return position; }
 	void SetPosition(XMFLOAT3 newPosition) { position = newPosition; }
@@ -132,6 +133,8 @@ public:
 			(-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3
 			);
 	}
+
+	float m_splineTransition = 0.0f;
 
 	void CameraSplineAnimation(float deltaTime, std::vector<XMVECTOR> controlPoints, float duration)
 	{

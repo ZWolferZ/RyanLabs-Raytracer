@@ -1,4 +1,7 @@
+#pragma region Includes
+//Include{s}
 #include "Common.hlsl"
+#pragma endregion
 
 cbuffer CameraParams : register(b0)
 {

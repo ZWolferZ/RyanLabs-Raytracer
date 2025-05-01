@@ -11,10 +11,12 @@
 
 #include "stdafx.h"
 
+#pragma region Includes
+//Include{s}
 #include "Win32Application.h"
-
 #include "DXRApp.h"
 #include "resource.h"
+#pragma endregion
 
 HWND Win32Application::m_hwnd = nullptr;
 

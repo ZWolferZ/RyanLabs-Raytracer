@@ -10,13 +10,14 @@
 //*********************************************************
 #include "stdafx.h"
 
+#pragma region Includes
+//Include{s}
 #include "DXRApp.h"
-
 #include "DXRSetup.h"
 #include "DXRContext.h"
 #include "DXRRuntime.h"
-
 #include "DrawableGameObject.h"
+#pragma endregion
 
 DXRApp::DXRApp(UINT width, UINT height,
 	std::wstring name)

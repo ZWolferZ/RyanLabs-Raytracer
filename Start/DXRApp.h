@@ -11,23 +11,19 @@
 
 #pragma once
 
+#pragma region Includes
+//Include{s}
 #include <stdexcept>
 #include "DXSample.h"
-
 #include <dxcapi.h>
 #include <vector>
-
 class DrawableGameObject;
-
 using namespace DirectX;
 using namespace std;
-
 class DXRContext;
 class DXRSetup;
 class DXRRuntime;
-
 typedef std::vector<DrawableGameObject*> vecDrawables;
-
 #define FRAME_COUNT 2
 
 // Note that while ComPtr is used to manage the lifetime of resources on the
@@ -36,6 +32,7 @@ typedef std::vector<DrawableGameObject*> vecDrawables;
 // that may still be referenced by the GPU. An example of this can be found in
 // the class method: OnDestroy().
 using Microsoft::WRL::ComPtr;
+#pragma endregion
 
 class DXRApp : public DXSample {
 	friend class DXRSetup;
