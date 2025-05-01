@@ -9,10 +9,21 @@
 using namespace DirectX;
 #pragma endregion
 
+// I have no clue why resharper sometimes chooses between the different summery comments styles,
+// but I am going to roll with it.
+
+/// <summary>
+/// The User Interactable Camera class. Right Click to look around. WASDQE to move.
+/// </summary>
 class Camera
 {
 public:
+#pragma region Constructors
 
+	/// The Camera constructor, which takes in the position, look direction and up vector.
+	/// @param posIn The starting position of the camera.
+	/// @param lookDirIn The direction the camera is looking at.
+	/// @param upIn The up vector of the camera.
 	Camera(XMFLOAT3 posIn, XMFLOAT3 lookDirIn, XMFLOAT3 upIn)
 	{
 		position = posIn;
@@ -26,10 +37,32 @@ public:
 		XMStoreFloat4x4(&viewMatrix, XMMatrixIdentity());
 	}
 
+#pragma endregion
+
+#pragma region Getters and Setters
+	/// <summary>
+	/// Gets the position of the camera.
+	/// </summary>
+	/// <returns>The position of the camera as a XMFLOAT3</returns>
 	XMFLOAT3 GetPosition() { return position; }
+
+	/// Sets the position of the camera.
+	/// @param newPosition The new position of the camera it will be set to.
 	void SetPosition(XMFLOAT3 newPosition) { position = newPosition; }
 	void SetPosition(XMVECTOR newPosition) { XMStoreFloat3(&position, newPosition); }
 
+	/// Gets the current view matrix.
+	/// @return The current view matrix as a XMMATRIX.
+	XMMATRIX GetViewMatrix() const
+	{
+		UpdateViewMatrix();
+		return XMLoadFloat4x4(&viewMatrix);
+	}
+#pragma endregion
+
+#pragma region Camera Movement
+	/// Will move the camera forward in the direction it is looking.
+	/// @param distance The distance the camera will move.
 	void MoveForward(float distance)
 	{
 		// Get the normalized forward vector (camera's look direction)
@@ -40,6 +73,10 @@ public:
 		XMStoreFloat3(&position, XMVectorMultiplyAdd(XMVectorReplicate(distance), forwardVec, posVec));
 	}
 
+	/// <summary>
+	/// Will strafe the camera left by the given distance.
+	/// </summary>
+	/// <param name="distance">The distance the camera will move.</param>
 	void StrafeLeft(float distance)
 	{
 		// Get the current look direction and up vector
@@ -54,18 +91,30 @@ public:
 		XMStoreFloat3(&position, XMVectorMultiplyAdd(XMVectorReplicate(-distance), rightVec, posVec));
 	}
 
+	/// <summary>
+	/// Will move the camera backward in the direction it is looking.
+	/// </summary>
+	/// <param name="distance">The distance the camera will move.</param>
 	void MoveBackward(float distance)
 	{
 		// Call MoveForward with negative distance to move backward
 		MoveForward(-distance);
 	}
 
+	/// <summary>
+	/// Will strafe the camera right by the given distance.
+	/// </summary>
+	/// <param name="distance">The distance the camera will move.</param>
 	void StrafeRight(float distance)
 	{
 		// Call StrafeLeft with negative distance to move right
 		StrafeLeft(-distance);
 	}
 
+	/// <summary>
+	/// Will move the camera up by the given distance.
+	/// </summary>
+	/// <param name="distance">The distance the camera will move.</param>
 	void MoveUp(float distance) {
 		XMVECTOR upVec = XMLoadFloat3(&up);
 		XMVECTOR posVec = XMLoadFloat3(&position);
@@ -73,10 +122,16 @@ public:
 		XMStoreFloat3(&position, XMVectorMultiplyAdd(XMVectorReplicate(distance), upVec, posVec));
 	}
 
+	/// Will move the camera down by the given distance.
+	/// @param distance The distance the camera will move.
 	void MoveDown(float distance) {
 		MoveUp(-distance);
 	}
 
+	/// <summary>
+	/// Rotates the camera around the Y-axis (yaw).
+	/// </summary>
+	/// <param name="angle">The angle the camera will rotate.</param>
 	void RotateYaw(float angle) {
 		XMVECTOR upVec = XMLoadFloat3(&up);
 		XMVECTOR lookDirVec = XMLoadFloat3(&lookDir);
@@ -87,6 +142,10 @@ public:
 		XMStoreFloat3(&lookDir, lookDirVec);
 	}
 
+	/// <summary>
+	/// Rotates the camera around the Z-axis (roll).
+	/// </summary>
+	/// <param name="angle">The angle the camera will rotate.</param>
 	void RotateRoll(float angle) {
 		XMVECTOR lookDirVec = XMLoadFloat3(&lookDir);
 		XMVECTOR upVec = XMLoadFloat3(&up);
@@ -97,6 +156,10 @@ public:
 		XMStoreFloat3(&up, upVec);
 	}
 
+	/// <summary>
+	/// Rotates the camera around the X-axis (pitch).
+	/// </summary>
+	/// <param name="angle">The angle the camera will rotate.</param>
 	void RotatePitch(float angle) {
 		//ROTATE AROUND THE RIGHT VECTOR YOU FOOL
 
@@ -115,6 +178,9 @@ public:
 		XMStoreFloat3(&up, upVec);
 	}
 
+	/// <summary>
+	/// Resets the camera to its original position, look direction, and up vector.
+	/// </summary>
 	void Reset()
 	{
 		position = originalPosition;
@@ -122,6 +188,18 @@ public:
 		up = originalUp;
 	}
 
+#pragma endregion
+
+#pragma region Spline Animation
+	/// <summary>
+	/// The Catmull-Rom spline function.
+	/// </summary>
+	/// <param name="p0">The initial velocity.</param>
+	/// <param name="p1">The first point.</param>
+	/// <param name="p2">The second point.</param>
+	/// <param name="p3">The final velocity</param>
+	/// <param name="t">The time.</param>
+	/// <returns>The updated position at the time specified</returns>
 	XMVECTOR CatmullRom(XMVECTOR p0, XMVECTOR p1, XMVECTOR p2, XMVECTOR p3, float t)
 	{
 		float t2 = t * t;
@@ -136,6 +214,12 @@ public:
 
 	float m_splineTransition = 0.0f;
 
+	/// <summary>
+	/// Animates the camera along a Catmull-Rom spline.
+	/// </summary>
+	/// <param name="deltaTime">The change in time.</param>
+	/// <param name="controlPoints">The points along the spline.</param>
+	/// <param name="duration">The length of the spline animation.</param>
 	void CameraSplineAnimation(float deltaTime, std::vector<XMVECTOR> controlPoints, float duration)
 	{
 		m_splineTransition += deltaTime / duration;
@@ -200,7 +284,13 @@ public:
 
 		XMStoreFloat4x4(&viewMatrix, splineViewMatrix); */
 	}
+#pragma endregion
 
+#pragma region Update
+	/// <summary>
+	/// Updates the camera's look direction based on mouse movement.
+	/// </summary>
+	/// <param name="delta">Change in mouse movement</param>
 	void UpdateLookAt(POINTS delta)
 	{
 		// Sensitivity factor for mouse movement
@@ -241,16 +331,16 @@ public:
 		XMStoreFloat3(&up, upVec);
 	}
 
+	/// <summary>
+	/// Updates the view matrix.
+	/// </summary>
 	void Update() { UpdateViewMatrix(); }
-
-	XMMATRIX GetViewMatrix() const
-	{
-		UpdateViewMatrix();
-		return XMLoadFloat4x4(&viewMatrix);
-	}
 
 private:
 
+	/// <summary>
+	/// Updates the view matrix.
+	/// </summary>
 	void UpdateViewMatrix() const
 	{
 		// Calculate the look-at point based on the position and look direction
@@ -262,6 +352,10 @@ private:
 		XMStoreFloat4x4(&viewMatrix, XMMatrixLookAtLH(posVec, lookAtPoint, XMLoadFloat3(&up)));
 	}
 
+#pragma endregion
+
+#pragma region Private Variables
+
 	XMFLOAT3 position;
 	XMFLOAT3 lookDir;
 	XMFLOAT3 up;
@@ -270,4 +364,5 @@ private:
 	XMFLOAT3 originalLookDir;
 	XMFLOAT3 originalUp;
 	mutable XMFLOAT4X4 viewMatrix;
+#pragma endregion
 };
