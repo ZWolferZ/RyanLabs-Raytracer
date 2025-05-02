@@ -82,6 +82,8 @@ public:
 	// I dont know why I pass the pointer to the context here, I was a young boy okay.
 	void KeyInputs(DXRContext* context);
 
+	// Okay some of these summaries are a bit on the nose, but I am commited now.
+
 	/// <summary>
 	/// Draws the ImGui UI.
 	/// </summary>

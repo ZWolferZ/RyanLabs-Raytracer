@@ -14,6 +14,7 @@ struct Attributes {
   float2 bary;
 };
 
+// Hit information for shadow rays
 struct ShadowHitInfo
 {
     bool isHit;

@@ -47,7 +47,7 @@ cbuffer MaterialBuffer : register(b1)
 	float2 padding2;
 }
 
-float3 HitAttributeV3(float3 vertexAttributes[3], Attributes attr)
+float3 HitAttribute(float3 vertexAttributes[3], Attributes attr)
 {
 	return vertexAttributes[0] +
 		attr.bary.x * (vertexAttributes[1] - vertexAttributes[0]) +
@@ -55,7 +55,7 @@ float3 HitAttributeV3(float3 vertexAttributes[3], Attributes attr)
 
 }
 
-float2 HitAttributeV2(float2 vertexAttribute[3], Attributes attr)
+float2 HitAttribute(float2 vertexAttribute[3], Attributes attr)
 {
 	return vertexAttribute[0] +
 		attr.bary.x * (vertexAttribute[1] - vertexAttribute[0]) +
@@ -258,17 +258,8 @@ float3 CalculateRoughnessNormal(float3 hitWorldPosition,float3 worldNormal)
 	return normalize(worldNormal + randomVector);
 }
 
-[shader("closesthit")]
-void ClosestHit(inout HitInfo payload, Attributes attrib)
+float4 CalculateTextureColour(uint vertid, Attributes attrib)
 {
-	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
-	uint vertid = 3 * PrimitiveIndex();
-
-	float3 vertexNormals[3];
-	vertexNormals[0] = BTriVertex[indices[vertid + 0]].normal.xyz;
-	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
-	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
-
 	float4 textureColour = { 0, 0, 0, 0 };
 
 	if (texture == 1)
@@ -278,13 +269,33 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 		texCoords[1] = BTriVertex[indices[vertid + 1]].tex;
 		texCoords[2] = BTriVertex[indices[vertid + 2]].tex;
 
-		float2 texCoord = HitAttributeV2(texCoords, attrib);
+		float2 texCoord = HitAttribute(texCoords, attrib);
 
-		textureColour = g_texture.SampleLevel(g_sampler, texCoord, 0);
+	   textureColour = g_texture.SampleLevel(g_sampler, texCoord, 0);
 	}
 
+	return textureColour;
+}
 
-	float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
+float3 CalculateTriangleNormal(uint vertid,Attributes attrib)
+{
+	float3 vertexNormals[3];
+	vertexNormals[0] = BTriVertex[indices[vertid + 0]].normal.xyz;
+	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
+	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
+	float3 triangleNormal = HitAttribute(vertexNormals, attrib);
+	return triangleNormal;
+}
+
+[shader("closesthit")]
+void ClosestHit(inout HitInfo payload, Attributes attrib)
+{
+	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
+	uint vertid = 3 * PrimitiveIndex();
+
+	float4 textureColour = CalculateTextureColour(vertid,attrib);
+
+	float3 triangleNormal = CalculateTriangleNormal(vertid, attrib);
 
 	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
 	float3 hitWorldPosition = HitWorldPosition();
@@ -299,17 +310,13 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	float4 ambientColour = CalculateAmbientLighting(roughnessNormal) * attenuation;
 	float4 specularColour = CalculateSpecularLighting(hitWorldPosition, lightDirection, roughnessNormal) * attenuation;
 
-
 	float3 colorOut = textureColour + ambientColour;
-
 
 	colorOut = DrawTriOutlines(colorOut, barycentrics);
 
 	colorOut = TraceShadowRays(colorOut, diffuseColour, specularColour, hitWorldPosition, roughnessNormal, lightDirection);
 
 	colorOut = TestReflectionRays(colorOut, hitWorldPosition, roughnessNormal, payload);
-
-
 
 	payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
 }
@@ -332,28 +339,9 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 	uint vertid = 3 * PrimitiveIndex();
 
-	float3 vertexNormals[3];
+	float4 textureColour = CalculateTextureColour(vertid, attrib);
+	float3 triangleNormal = CalculateTriangleNormal(vertid, attrib);
 
-	vertexNormals[0] = BTriVertex[indices[vertid + 0]].normal.xyz;
-	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
-	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
-
-	float4 textureColour = { 0, 0, 0, 0 };
-
-	if (texture == 1)
-	{
-		float2 texCoords[3];
-		texCoords[0] = BTriVertex[indices[vertid + 0]].tex;
-		texCoords[1] = BTriVertex[indices[vertid + 1]].tex;
-		texCoords[2] = BTriVertex[indices[vertid + 2]].tex;
-
-		float2 texCoord = HitAttributeV2(texCoords, attrib);
-
-		textureColour = g_texture.SampleLevel(g_sampler, texCoord, 0);
-	}
-
-
-	float3 triangleNormal = HitAttributeV3(vertexNormals, attrib);
 	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
 	float3 hitWorldPosition = HitWorldPosition();
 
