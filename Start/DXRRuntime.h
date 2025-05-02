@@ -36,23 +36,14 @@ private:
 	bool m_hideWindows = true;
 #pragma endregion
 
-#pragma region Private Methods
+#pragma region Render / Update Methods
 	/// <summary>
 	/// Populates the command list with rendering commands.
 	/// </summary>
 	void PopulateCommandList();
-#pragma endregion
 
 public:
-#pragma region Constructors and Destructors
-	/// <summary>
-	/// Initializes a new instance of the DXRRuntime class.
-	/// </summary>
-	/// <param name="app">Pointer to the DXR application instance.</param>
-	DXRRuntime(DXRApp* app);
-#pragma endregion
 
-#pragma region Public Methods
 	/// <summary>
 	/// Renders the current frame.
 	/// </summary>
@@ -62,6 +53,18 @@ public:
 	/// Updates the runtime state.
 	/// </summary>
 	void Update();
+
+#pragma endregion
+
+#pragma region Constructors and Destructors
+	/// <summary>
+	/// Initializes a new instance of the DXRRuntime class.
+	/// </summary>
+	/// <param name="app">Pointer to the DXR application instance.</param>
+	DXRRuntime(DXRApp* app);
+#pragma endregion
+
+#pragma region Control Methods
 
 	/// <summary>
 	/// Handles key release events.
@@ -81,6 +84,10 @@ public:
 	/// <param name="context">Pointer to the DXR context.</param>
 	// I dont know why I pass the pointer to the context here, I was a young boy okay.
 	void KeyInputs(DXRContext* context);
+
+#pragma endregion
+
+#pragma region IMGUI Methods
 
 	// Okay some of these summaries are a bit on the nose, but I am commited now.
 

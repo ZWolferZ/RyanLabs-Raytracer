@@ -4,12 +4,14 @@
 #include "Common.hlsl"
 #pragma endregion
 
+#pragma region Shader Data
 // Raytracing output texture, accessed as a UAV
 RWTexture2D<float4> gOutput : register(u0);
 
 // Raytracing acceleration structure, accessed as a SRV
 RaytracingAccelerationStructure SceneBVH : register(t0);
 
+// Camera parameters for the scene.
 cbuffer CameraParams : register(b0)
 {
 	float4x4 viewI;
@@ -21,8 +23,9 @@ cbuffer CameraParams : register(b0)
 	float3 morePadding;
 
 }
+#pragma endregion
 
-
+#pragma region Ray Generation Shader
 [shader("raygeneration")] void RayGen() {
   // Initialize the ray payload
   HitInfo payload;
@@ -103,3 +106,4 @@ cbuffer CameraParams : register(b0)
 
   gOutput[launchIndex] = float4(payload.colorAndDistance.rgb, 1.f);
 }
+#pragma endregion

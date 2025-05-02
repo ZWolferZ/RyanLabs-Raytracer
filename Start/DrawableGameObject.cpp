@@ -6,17 +6,18 @@
 using namespace std;
 #pragma endregion
 
+#pragma region Constructors and Destructors
 DrawableGameObject::DrawableGameObject(XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale, string objectName)
 {
 	m_position = position;
 	m_rotation = rotation;
 	m_scale = scale;
 
-	this->setObjectName(objectName);
+	this->setObjectName(objectName); // This is used for UI and debugging purposes
 
 	objectName += " Hit Group";
 
-	m_objectHitGroupName.assign(objectName.begin(), objectName.end());
+	m_objectHitGroupName.assign(objectName.begin(), objectName.end()); // This is used for the hit group name per object.
 
 	XMMATRIX newRotation = XMMatrixRotationX(XMConvertToRadians(m_rotation.x)) * XMMatrixRotationY(XMConvertToRadians(m_rotation.y)) * XMMatrixRotationZ(m_rotation.z);
 	XMMATRIX newTranslation = XMMatrixTranslation(m_position.x, m_position.y, m_position.z);
@@ -25,7 +26,7 @@ DrawableGameObject::DrawableGameObject(XMFLOAT3 position, XMFLOAT3 rotation, XMF
 	// Initialize the world matrix
 	XMStoreFloat4x4(&m_World, newTranslation * newRotation * newScale);
 
-	this->setOrginalTransformValues(this->getPosition(), this->getRotation(), this->getScale());
+	this->setOrginalTransformValues(this->getPosition(), this->getRotation(), this->getScale()); // Record the original transform values
 
 	this->update(0.0f);
 }
@@ -58,6 +59,11 @@ void DrawableGameObject::cleanup()
 	//	m_pMaterialConstantBuffer->Release();
 	//m_pMaterialConstantBuffer = nullptr;
 }
+#pragma endregion
+
+#pragma region Init Methods
+
+// If I had a nickel for every time I had to write cube data for a graphics module, I would have three nickels.
 
 HRESULT DrawableGameObject::initCubeMesh(ComPtr<ID3D12Device5> device)
 {
@@ -252,7 +258,9 @@ DrawableGameObject* DrawableGameObject::createCopy()
 	*pobj = *this;
 	return pobj;
 }
+#pragma endregion
 
+#pragma region Getters and Setters
 void DrawableGameObject::setPosition(XMFLOAT3 position)
 {
 	m_position = position;
@@ -275,6 +283,9 @@ void DrawableGameObject::setOrginalTransformValues(XMFLOAT3 position, XMFLOAT3 r
 	m_orginalScale = scale;
 }
 
+#pragma endregion
+
+#pragma region Update Methods
 void DrawableGameObject::resetTransform()
 {
 	m_position = m_orginalPosition;
@@ -291,6 +302,7 @@ void DrawableGameObject::update(float t)
 	static float cummulativeTime = 0;
 	cummulativeTime += t;
 
+	// Some basic checks to make sure the object isn't going to explode.
 	if (m_reflection)
 	{
 		m_materialBufferData.reflection = 1;
@@ -352,3 +364,4 @@ void DrawableGameObject::update(float t)
 
 	XMStoreFloat4x4(&m_World, scale * rotation * translation);
 }
+#pragma endregion

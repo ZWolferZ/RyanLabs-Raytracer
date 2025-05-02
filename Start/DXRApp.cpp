@@ -19,17 +19,22 @@
 #include "DrawableGameObject.h"
 #pragma endregion
 
+#pragma region Constructors and Destructors
 DXRApp::DXRApp(UINT width, UINT height,
 	std::wstring name)
 	: DXSample(width, height, name)
 
 {
+	// Set a random seed for the random number generator.
 	srand(static_cast<unsigned int>(time(0)));
+
 	m_DXRContext = new DXRContext(width, height);
 	m_DXSetup = new DXRSetup(this);
 	m_DXRuntime = new DXRRuntime(this);
 }
+#pragma endregion
 
+#pragma region Main Application Methods
 void DXRApp::OnInit()
 {
 	m_DXSetup->initialise();
@@ -41,17 +46,19 @@ void DXRApp::OnUpdate()
 	m_DXRuntime->Update();
 }
 
-// Render the scene.
-void DXRApp::OnRender() {
-	m_DXRuntime->Render();
-}
-
 void DXRApp::OnDestroy() {
 	// Ensure that the GPU is no longer referencing resources that are about to be
 	// cleaned up by the destructor.
 	WaitForPreviousFrame();
 
 	CloseHandle(m_DXRContext->m_fenceEvent);
+}
+#pragma endregion
+
+#pragma region Render Methods
+// Render the scene.
+void DXRApp::OnRender() {
+	m_DXRuntime->Render();
 }
 
 void DXRApp::WaitForPreviousFrame() {
@@ -72,9 +79,9 @@ void DXRApp::WaitForPreviousFrame() {
 
 	m_DXRContext->m_frameIndex = m_DXRContext->m_swapChain->GetCurrentBackBufferIndex();
 }
+#pragma endregion
 
-//-----------------------------------------------------------------------------
-//
+#pragma region Control Methods
 void DXRApp::OnKeyUp(UINT8 key) {
 	m_DXRuntime->OnKeyUp(key);
 }
@@ -92,3 +99,4 @@ void DXRApp::OnMouseMoveDelta(POINTS Delta)
 void DXRApp::OnMouseMove(int x, int y)
 {
 }
+#pragma endregion

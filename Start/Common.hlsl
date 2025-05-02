@@ -1,3 +1,12 @@
+#pragma region Data Structures
+
+struct STriVertex
+{ // IMPORTANT - the C++ version of this is 'Vertex' found in the common.h file
+    float3 vertex;
+    float4 normal;
+    float2 tex;
+};
+
 // Hit information, aka ray payload
 // This sample only carries a shading color and hit distance.
 // Note that the payload should be kept as small as possible,
@@ -19,4 +28,4 @@ struct ShadowHitInfo
 {
     bool isHit;
 };
-
+#pragma endregion

@@ -5,20 +5,24 @@
 #pragma endregion
 
 
-struct STriVertex
-{ // IMPORTANT - the C++ version of this is 'Vertex' found in the common.h file
-	float3 vertex;
-	float4 normal;
-	float2 tex;
-};
+#pragma region Shader Data
 
+// Object Tri Data
 StructuredBuffer<STriVertex> BTriVertex : register(t0);
+
+// Object Index Data
 StructuredBuffer<int> indices : register(t1);
+
+// Acceleration Structure for the object
 RaytracingAccelerationStructure SceneBVH : register(t2);
+
+// Texture Data for the object
 Texture2D<float4> g_texture : register(t3);
+
+// Sampler for the object for the texture
 SamplerState g_sampler : register(s0);
 
-
+// Scene Light Data
 cbuffer LightParams : register(b0)
 {
 	float4 lightPosition;
@@ -33,6 +37,7 @@ cbuffer LightParams : register(b0)
 
 }
 
+// Material Data for the object
 cbuffer MaterialBuffer : register(b1)
 {
 	uint reflection;
@@ -46,7 +51,11 @@ cbuffer MaterialBuffer : register(b1)
 	uint texture;
 	float2 padding2;
 }
+#pragma endregion
 
+#pragma region Hit Attribute Functions
+
+// Finds the interpolated value of the attribute at the hit point for the triangle normal.
 float3 HitAttribute(float3 vertexAttributes[3], Attributes attr)
 {
 	return vertexAttributes[0] +
@@ -55,6 +64,7 @@ float3 HitAttribute(float3 vertexAttributes[3], Attributes attr)
 
 }
 
+// Finds the interpolated value of the attribute at the hit point for the triangle tex-coords.
 float2 HitAttribute(float2 vertexAttribute[3], Attributes attr)
 {
 	return vertexAttribute[0] +
@@ -62,11 +72,24 @@ float2 HitAttribute(float2 vertexAttribute[3], Attributes attr)
 		attr.bary.y * (vertexAttribute[2] - vertexAttribute[0]);
 }
 
+// Returns the hit position in world space.
 float3 HitWorldPosition()
 {
 	return WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
 }
 
+// Yoinked Random Function from Louise
+float random(float2 uv)
+{
+	return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
+}
+
+#pragma endregion
+
+
+#pragma region Lighting Functions
+
+// Calculates the diffuse lighting for the object.
 float4 CalculateDiffuseLighting(float3 lightDirection, float3 worldNormal)
 {
 	float diffuseAmount = saturate(dot(lightDirection, normalize(worldNormal)));
@@ -78,16 +101,18 @@ float4 CalculateDiffuseLighting(float3 lightDirection, float3 worldNormal)
 	return diffuseOut;
 }
 
-float4 CalculateAmbientLighting(float3 worldnormal)
+// Calculates the ambient lighting for the object.
+float4 CalculateAmbientLighting(float3 worldNormal)
 {
 
 	float4 ambientColorMin = lightAmbientColor - 0.1;
-	float a = 1 - saturate(dot(worldnormal, float3(0, -1, 0)));
+	float a = 1 - saturate(dot(worldNormal, float3(0, -1, 0)));
 	float4 ambientOut = objectColour * lerp(ambientColorMin, lightAmbientColor, a);
 
 	return ambientOut;
 }
 
+// Calculates the specular lighting for the object.
 float4 CalculateSpecularLighting(float3 hitWorldPosition, float3 lightDirection, float3 worldNormal)
 {
 	// Blinn-Phong ALERT!
@@ -103,15 +128,12 @@ float4 CalculateSpecularLighting(float3 hitWorldPosition, float3 lightDirection,
 
 	return specularOut;
 }
-
-// Yoinked Random Function from Louise
-float random(float2 uv)
-{
-	return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
-}
+#pragma endregion
 
 
+#pragma region RayTracing Functions
 
+// Calculates the reflection ray for the object.
 float4 TraceReflectionRay(in RayDesc reflectionRay,in uint recursionDepth)
 {
 	if (recursionDepth >= maxRecursionDepth)
@@ -130,19 +152,19 @@ float4 TraceReflectionRay(in RayDesc reflectionRay,in uint recursionDepth)
 	return reflectionPayload.colorAndDistance;
 }
 
+// Calculates the fresnel reflectance for the object.
 float3 FresnelReflectanceSchlick(float3 worldNormal, float3 albedo)
 {
 	float cosi = saturate(dot(-WorldRayDirection(), worldNormal));
 	return albedo + (1 - albedo) * pow(1 - cosi, 5);
 }
 
+// Test if the object has reflection rays
 float3 TestReflectionRays(float3 colorOut, float3 hitWorldPosition, float3 worldNormal, HitInfo payload)
 {
 
 	if (reflection == 1)
 	{
-
-
 		RayDesc reflectionRay;
 
 		reflectionRay.Origin = hitWorldPosition + (worldNormal * 0.01f);
@@ -164,6 +186,7 @@ float3 TestReflectionRays(float3 colorOut, float3 hitWorldPosition, float3 world
 	return colorOut;
 }
 
+// Calculates the shadow rays for the object and adds the diffuse and specular lighting to the colorOut.
 float3 TraceShadowRays(float3 colorOut, float4 diffuseColour, float4 specularColour, float3 hitWorldPosition, float3 worldNormal, float3 lightDirection)
 {
 	if (shadows == 0)
@@ -221,7 +244,11 @@ float3 TraceShadowRays(float3 colorOut, float4 diffuseColour, float4 specularCol
 
 	return colorOut;
 }
+#pragma endregion
 
+#pragma region Outline Functions
+
+// Draws the triangle outlines for the object.
 float3 DrawTriOutlines(float3 colorOut, float3 barycentrics)
 {
 
@@ -236,6 +263,22 @@ float3 DrawTriOutlines(float3 colorOut, float3 barycentrics)
 	}
 	return colorOut;
 }
+#pragma endregion
+
+
+#pragma region Normal Functions
+// Calculates the triangle normal for the object.
+float3 CalculateTriangleNormal(uint vertid, Attributes attrib)
+{
+	float3 vertexNormals[3];
+	vertexNormals[0] = BTriVertex[indices[vertid + 0]].normal.xyz;
+	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
+	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
+	float3 triangleNormal = HitAttribute(vertexNormals, attrib);
+	return triangleNormal;
+}
+
+// Calculates the roughness normal for the object.
 float3 CalculateRoughnessNormal(float3 hitWorldPosition,float3 worldNormal)
 {
 
@@ -257,7 +300,10 @@ float3 CalculateRoughnessNormal(float3 hitWorldPosition,float3 worldNormal)
 
 	return normalize(worldNormal + randomVector);
 }
+#pragma endregion
 
+#pragma region Texture Functions
+// Calculates the texture colour for the object.
 float4 CalculateTextureColour(uint vertid, Attributes attrib)
 {
 	float4 textureColour = { 0, 0, 0, 0 };
@@ -276,24 +322,18 @@ float4 CalculateTextureColour(uint vertid, Attributes attrib)
 
 	return textureColour;
 }
+#pragma endregion
 
-float3 CalculateTriangleNormal(uint vertid,Attributes attrib)
-{
-	float3 vertexNormals[3];
-	vertexNormals[0] = BTriVertex[indices[vertid + 0]].normal.xyz;
-	vertexNormals[1] = BTriVertex[indices[vertid + 1]].normal.xyz;
-	vertexNormals[2] = BTriVertex[indices[vertid + 2]].normal.xyz;
-	float3 triangleNormal = HitAttribute(vertexNormals, attrib);
-	return triangleNormal;
-}
 
+#pragma region Hit Shaders
+// Hit shader for objects that are not planes.
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
 {
 	float3 barycentrics = float3(1.0f - attrib.bary.x - attrib.bary.y, attrib.bary.x, attrib.bary.y);
 	uint vertid = 3 * PrimitiveIndex();
 
-	float4 textureColour = CalculateTextureColour(vertid,attrib);
+
 
 	float3 triangleNormal = CalculateTriangleNormal(vertid, attrib);
 
@@ -305,7 +345,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	float attenuation = saturate(1.0 - distance / lightRange);
 
 	float3 roughnessNormal = CalculateRoughnessNormal(hitWorldPosition, worldNormal);
-
+	float4 textureColour = CalculateTextureColour(vertid, attrib) * attenuation;
 	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, roughnessNormal) * attenuation;
 	float4 ambientColour = CalculateAmbientLighting(roughnessNormal) * attenuation;
 	float4 specularColour = CalculateSpecularLighting(hitWorldPosition, lightDirection, roughnessNormal) * attenuation;
@@ -321,6 +361,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 	payload.colorAndDistance += float4(colorOut.xyz, RayTCurrent());
 }
 
+// Anyhit shader for objects.
 [shader("anyhit")]
 void AnyHit(inout HitInfo payload, Attributes attrib)
 {
@@ -330,7 +371,7 @@ void AnyHit(inout HitInfo payload, Attributes attrib)
 }
 
 
-
+// Hit shader for objects that are planes.
 [shader("closesthit")]
 void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 {
@@ -339,7 +380,6 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 
 	uint vertid = 3 * PrimitiveIndex();
 
-	float4 textureColour = CalculateTextureColour(vertid, attrib);
 	float3 triangleNormal = CalculateTriangleNormal(vertid, attrib);
 
 	float3 worldNormal = normalize(mul(triangleNormal, (float3x3) ObjectToWorld4x3()));
@@ -350,7 +390,7 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 	float attenuation = saturate(1.0 - distance / lightRange);
 
 	float3 roughnessNormal = CalculateRoughnessNormal(hitWorldPosition, worldNormal);
-
+	float4 textureColour = CalculateTextureColour(vertid, attrib) * attenuation;
 	float4 diffuseColour = CalculateDiffuseLighting(lightDirection, roughnessNormal) * attenuation;
 	float4 ambientColour = CalculateAmbientLighting(roughnessNormal) * attenuation;
 
@@ -365,8 +405,10 @@ void PlaneClosestHit(inout HitInfo payload, Attributes attrib)
 	payload.colorAndDistance = float4(colorOut.xyz, RayTCurrent());
 }
 
+// Shadow hit shader for objects.
 [shader("closesthit")]
 void ShadowHit(inout ShadowHitInfo payload, Attributes attrib)
 {
 	payload.isHit = true;
 }
+#pragma endregion

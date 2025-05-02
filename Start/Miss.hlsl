@@ -3,6 +3,8 @@
 #include "Common.hlsl"
 #pragma endregion
 
+#pragma region Shader Data
+// Camera parameters for the scene.
 cbuffer CameraParams : register(b0)
 {
     float4x4 viewI;
@@ -14,7 +16,10 @@ cbuffer CameraParams : register(b0)
     float3 morePadding;
 
 }
+#pragma endregion
 
+#pragma region Miss Shaders
+// Miss Shader for non-shadow rays.
 [shader("miss")]
 void Miss(inout HitInfo payload : SV_RayPayload)
 {
@@ -36,6 +41,7 @@ void Miss(inout HitInfo payload : SV_RayPayload)
     float3 colorOut = float3(0.2f, 0.2f, 0.2f);
 
 
+    // Draws the trans flag inside the miss shader.
     if (transMode == 1.0f)
     {
 
@@ -63,8 +69,10 @@ void Miss(inout HitInfo payload : SV_RayPayload)
     payload.colorAndDistance = float4(colorOut, 1.0f);
 }
 
+// Miss Shader for shadow rays.
 [shader("miss")]
 void ShadowMiss(inout ShadowHitInfo payload : SV_RayPayload)
 {
     payload.isHit = false;
 }
+#pragma endregion

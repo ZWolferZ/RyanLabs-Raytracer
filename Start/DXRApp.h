@@ -52,7 +52,7 @@ public:
 	DXRApp(UINT width, UINT height, std::wstring name);
 #pragma endregion
 
-#pragma region Public Methods
+#pragma region Main Application Methods
 	/// <summary>
 	/// Initializes the application.
 	/// </summary>
@@ -64,15 +64,13 @@ public:
 	virtual void OnUpdate();
 
 	/// <summary>
-	/// Renders the application.
-	/// </summary>
-	virtual void OnRender();
-
-	/// <summary>
 	/// Cleans up resources used by the application.
 	/// </summary>
 	virtual void OnDestroy();
 
+#pragma endregion
+
+#pragma region Getter Methods
 	/// <summary>
 	/// Gets the DXR context.
 	/// </summary>
@@ -84,6 +82,8 @@ public:
 	/// </summary>
 	/// <returns>The aspect ratio as a float.</returns>
 	float GetAspectRatio() const { return m_aspectRatio; }
+
+#pragma region Control Methods
 
 	/// <summary>
 	/// Handles key release events.
@@ -109,14 +109,24 @@ public:
 	/// <param name="x">The x-coordinate of the mouse.</param>
 	/// <param name="y">The y-coordinate of the mouse.</param>
 	void OnMouseMove(int x, int y);
+
 #pragma endregion
 
+#pragma endregion
+
+#pragma region Render Methods
+	/// <summary>
+	/// Renders the application.
+	/// </summary>
+	virtual void OnRender();
+
 private:
-#pragma region Private Methods
+
 	/// <summary>
 	/// Waits for the GPU to finish processing the previous frame.
 	/// </summary>
 	void WaitForPreviousFrame();
+
 #pragma endregion
 
 #pragma region Private Variables

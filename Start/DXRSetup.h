@@ -42,7 +42,7 @@ private:
 	SamplerType m_samplerType = POINTY;
 #pragma endregion
 
-#pragma region Private Methods
+#pragma region Init Methods
 	/// <summary>
 	/// Sets up the ImGui interface.
 	/// </summary>
@@ -57,6 +57,17 @@ private:
 	/// Loads the rendering pipeline.
 	/// </summary>
 	void LoadPipeline();
+
+public:
+	/// <summary>
+	/// Initializes the raytracing setup.
+	/// </summary>
+	void initialise();
+private:
+
+#pragma endregion
+
+#pragma region Object / Asset Methods
 
 	/// <summary>
 	/// Loads assets required for the objects.
@@ -88,7 +99,9 @@ private:
 	/// <returns>AccelerationStructureBuffers for the BLAS.</returns>
 	AccelerationStructureBuffers CreateBottomLevelAS(std::vector<std::pair<ComPtr<ID3D12Resource>, uint32_t>> vVertexBuffers,
 		std::vector<std::pair<ComPtr<ID3D12Resource>, uint32_t>> vIndexBuffers);
+#pragma endregion
 
+#pragma region Shader Signature Methods
 	/// <summary>
 	/// Creates the root signature for the ray generation shader.
 	/// </summary>
@@ -107,6 +120,9 @@ private:
 	/// <returns>A ComPtr to the root signature.</returns>
 	ComPtr<ID3D12RootSignature> CreateHitSignature();
 
+#pragma endregion
+
+#pragma region Sampler Methods
 	/// <summary>
 	/// Creates a static sampler descriptor for point sampling.
 	/// </summary>
@@ -125,6 +141,9 @@ private:
 	/// <returns>A anisotropic sampler.</returns>
 	D3D12_STATIC_SAMPLER_DESC CreateStaticSamplerAnisotropicDesc();
 
+#pragma endregion
+
+#pragma region Raytracing Methods
 	/// <summary>
 	/// Creates the raytracing pipeline state object.
 	/// </summary>
@@ -165,11 +184,7 @@ public:
 	DXRSetup(DXRApp* app);
 #pragma endregion
 
-#pragma region Public Methods
-	/// <summary>
-	/// Initializes the raytracing setup.
-	/// </summary>
-	void initialise();
+#pragma region  CBuffer Methods
 
 	/// <summary>
 	/// Creates the camera buffer for the scene.

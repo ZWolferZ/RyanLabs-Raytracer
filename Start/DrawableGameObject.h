@@ -27,13 +27,14 @@ public:
 	/// Destructor for the GameObject class.
 	/// </summary>
 	~DrawableGameObject();
-#pragma endregion
 
-#pragma region Public Methods
-	/// <summary>
 	/// Cleans up resources used by the object.
 	/// </summary>
 	void cleanup();
+#pragma endregion
+
+#pragma region Mesh Initialization
+	/// <summary>
 
 	/// <summary>
 	/// Creates a copy of the current GameObject.
@@ -63,6 +64,9 @@ public:
 	/// <returns>HRESULT indicating success or failure.</returns>
 	HRESULT initOBJMesh(ComPtr<ID3D12Device5> device, char* szOBJName);
 
+#pragma endregion
+
+#pragma region Update Methods
 	/// <summary>
 	/// Updates the object based on the elapsed time.
 	/// </summary>
@@ -73,6 +77,7 @@ public:
 	/// Resets the object's transform to its original values.
 	/// </summary>
 	void resetTransform();
+
 #pragma endregion
 
 #pragma region Getters and Setters
