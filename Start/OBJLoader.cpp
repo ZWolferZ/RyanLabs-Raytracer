@@ -6,6 +6,8 @@
 #include <string>
 #pragma endregion
 
+// This is not my file I ain't commenting this.
+
 bool OBJLoader::FindSimilarVertex(const SimpleVertex& vertex, std::map<SimpleVertex, unsigned short>& vertToIndexMap, unsigned short& index)
 {
 	auto it = vertToIndexMap.find(vertex);

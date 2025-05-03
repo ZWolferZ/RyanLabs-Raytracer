@@ -16,12 +16,16 @@
 #include "TextureLoader.h"
 #pragma endregion
 
+#pragma region Constructors and Destructors
+
 DXRSetup::DXRSetup(DXRApp* app)
 {
 	m_app = app;
 	m_device = m_app->GetContext()->m_device;
 }
+#pragma endregion
 
+#pragma region Init Methods
 void DXRSetup::initialise()
 {
 	LoadPipeline();
@@ -62,139 +66,6 @@ void DXRSetup::initialise()
 	CreateShaderBindingTable();
 
 	SetupIMGUI();
-}
-
-void DXRSetup::CreateCamera()
-{
-	DXRContext* context = m_app->GetContext();
-
-	context->m_pCamera = new Camera(XMFLOAT3(0, 0, 5), XMFLOAT3(0, 0, -1.0f), XMFLOAT3(0, 1, 0));
-
-	context->m_cameraBuffer = nv_helpers_dx12::CreateBuffer(
-		m_device.Get(), context->m_cameraBufferSize, D3D12_RESOURCE_FLAG_NONE,
-		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
-}
-
-void DXRSetup::UpdateCamera(float rX, float rY)
-{
-	DXRContext* context = m_app->GetContext();
-
-	XMMATRIX view = context->m_pCamera->GetViewMatrix();
-
-	XMMATRIX perspective = XMMatrixPerspectiveFovLH(m_fovAngleY, m_app->GetAspectRatio(), 0.1f, 1000.0f);
-
-	XMMATRIX invView = XMMatrixInverse(nullptr, view);
-	XMMATRIX invProj = XMMatrixInverse(nullptr, perspective);
-
-	CameraBuffer cb;
-	cb.invView = invView;
-	cb.invProj = invProj;
-	cb.rX = rX;
-	cb.rY = rY;
-	cb.transBackgroundMode = 0;
-
-	if (m_transBackgroundMode)
-	{
-		cb.transBackgroundMode = 1;
-	}
-
-	// Map and update the constant buffer
-	uint8_t* pData = nullptr;
-	ThrowIfFailed(context->m_cameraBuffer->Map(0, nullptr, reinterpret_cast<void**>(&pData)));
-	memcpy(pData, &cb, sizeof(CameraBuffer));
-	context->m_cameraBuffer->Unmap(0, nullptr);
-}
-
-void DXRSetup::CreateLightingBuffer()
-{
-	DXRContext* context = m_app->GetContext();
-
-	context->m_lightingBuffer = nv_helpers_dx12::CreateBuffer(
-		m_device.Get(), context->m_lightingBufferSize, D3D12_RESOURCE_FLAG_NONE,
-		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
-
-	LightParams cb;
-	cb.lightPosition = m_originalLightPosition;
-	cb.lightAmbientColor = m_originalLightAmbientColor;
-	cb.lightDiffuseColor = m_originalLightDiffuseColor;
-	cb.lightSpecularColor = m_originalLightSpecularColor;
-	cb.lightSpecularPower = m_originalLightSpecularPower;
-	cb.pointLightRange = m_originalPointLightRange;
-
-	if (m_shadows)
-	{
-		cb.shadows = 1;
-	}
-	else
-	{
-		cb.shadows = 0;
-	}
-
-	cb.shawdowRayCount = m_originalShadowRayCount;
-
-	uint8_t* pData;
-
-	ThrowIfFailed(context->m_lightingBuffer->Map(0, nullptr, (void**)&pData));
-	memcpy(pData, &cb, sizeof(LightParams));
-	context->m_lightingBuffer->Unmap(0, nullptr);
-}
-
-void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor, XMFLOAT4 lightSpecularColor, float lightSpecularPower, float pointLightRange, UINT shadowRayCount)
-{
-	DXRContext* context = m_app->GetContext();
-
-	LightParams cb;
-	cb.lightPosition = lightPosition;
-	cb.lightAmbientColor = lightAmbientColor;
-	cb.lightDiffuseColor = lightDiffuseColor;
-	cb.lightSpecularColor = lightSpecularColor;
-	cb.lightSpecularPower = lightSpecularPower;
-	cb.pointLightRange = pointLightRange;
-
-	if (m_shadows)
-	{
-		cb.shadows = 1;
-	}
-	else
-	{
-		cb.shadows = 0;
-	}
-
-	cb.shawdowRayCount = shadowRayCount;
-
-	uint8_t* pData;
-
-	ThrowIfFailed(context->m_lightingBuffer->Map(0, nullptr, (void**)&pData));
-	memcpy(pData, &cb, sizeof(LightParams));
-	context->m_lightingBuffer->Unmap(0, nullptr);
-}
-
-void DXRSetup::CreateMaterialBuffers()
-{
-	for (auto& object : m_app->m_drawableObjects)
-	{
-		object->m_materialBuffer = nv_helpers_dx12::CreateBuffer(
-			m_device.Get(), object->m_materialBufferSize, D3D12_RESOURCE_FLAG_NONE,
-			D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
-
-		uint8_t* pData;
-
-		ThrowIfFailed(object->m_materialBuffer->Map(0, nullptr, (void**)&pData));
-		memcpy(pData, &object->m_materialBufferData, sizeof(MaterialBuffer));
-		object->m_materialBuffer->Unmap(0, nullptr);
-	}
-}
-
-void DXRSetup::UpdateMaterialBuffers()
-{
-	for (auto& object : m_app->m_drawableObjects)
-	{
-		uint8_t* pData;
-
-		ThrowIfFailed(object->m_materialBuffer->Map(0, nullptr, (void**)&pData));
-		memcpy(pData, &object->m_materialBufferData, sizeof(MaterialBuffer));
-		object->m_materialBuffer->Unmap(0, nullptr);
-	}
 }
 
 void DXRSetup::SetupIMGUI()
@@ -338,7 +209,152 @@ void DXRSetup::LoadPipeline()
 	ThrowIfFailed(m_device->CreateCommandAllocator(
 		D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&context->m_commandAllocator)));
 }
+#pragma endregion
 
+#pragma region CBuffer Methods
+
+// Most of these buffer methods are pretty similar, a create method makes the buffer,
+// then an update method just uses the buffer and writes data to it.
+
+// Create the camera buffer and initialize the camera.
+void DXRSetup::CreateCamera()
+{
+	DXRContext* context = m_app->GetContext();
+
+	// Init the camera with the default values
+	context->m_pCamera = new Camera(XMFLOAT3(0, 0, 5), XMFLOAT3(0, 0, -1.0f), XMFLOAT3(0, 1, 0));
+
+	context->m_cameraBuffer = nv_helpers_dx12::CreateBuffer(
+		m_device.Get(), context->m_cameraBufferSize, D3D12_RESOURCE_FLAG_NONE,
+		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
+}
+
+void DXRSetup::UpdateCamera(float rX, float rY)
+{
+	DXRContext* context = m_app->GetContext();
+
+	XMMATRIX view = context->m_pCamera->GetViewMatrix();
+
+	XMMATRIX perspective = XMMatrixPerspectiveFovLH(m_fovAngleY, m_app->GetAspectRatio(), 0.1f, 1000.0f);
+
+	XMMATRIX invView = XMMatrixInverse(nullptr, view);
+	XMMATRIX invProj = XMMatrixInverse(nullptr, perspective);
+
+	CameraBuffer cb;
+	cb.invView = invView;
+	cb.invProj = invProj;
+	cb.rX = rX;
+	cb.rY = rY;
+	cb.transBackgroundMode = 0;
+
+	if (m_transBackgroundMode)
+	{
+		cb.transBackgroundMode = 1;
+	}
+
+	// Map and update the constant buffer
+	uint8_t* pData = nullptr;
+	ThrowIfFailed(context->m_cameraBuffer->Map(0, nullptr, reinterpret_cast<void**>(&pData)));
+	memcpy(pData, &cb, sizeof(CameraBuffer));
+	context->m_cameraBuffer->Unmap(0, nullptr);
+}
+
+void DXRSetup::CreateLightingBuffer()
+{
+	DXRContext* context = m_app->GetContext();
+
+	context->m_lightingBuffer = nv_helpers_dx12::CreateBuffer(
+		m_device.Get(), context->m_lightingBufferSize, D3D12_RESOURCE_FLAG_NONE,
+		D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
+
+	LightParams cb;
+	cb.lightPosition = m_originalLightPosition;
+	cb.lightAmbientColor = m_originalLightAmbientColor;
+	cb.lightDiffuseColor = m_originalLightDiffuseColor;
+	cb.lightSpecularColor = m_originalLightSpecularColor;
+	cb.lightSpecularPower = m_originalLightSpecularPower;
+	cb.pointLightRange = m_originalPointLightRange;
+
+	if (m_shadows)
+	{
+		cb.shadows = 1;
+	}
+	else
+	{
+		cb.shadows = 0;
+	}
+
+	cb.shawdowRayCount = m_originalShadowRayCount;
+
+	uint8_t* pData;
+
+	ThrowIfFailed(context->m_lightingBuffer->Map(0, nullptr, (void**)&pData));
+	memcpy(pData, &cb, sizeof(LightParams));
+	context->m_lightingBuffer->Unmap(0, nullptr);
+}
+
+void DXRSetup::UpdateLightingBuffer(XMFLOAT4 lightPosition, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor, XMFLOAT4 lightSpecularColor, float lightSpecularPower, float pointLightRange, UINT shadowRayCount)
+{
+	DXRContext* context = m_app->GetContext();
+
+	LightParams cb;
+	cb.lightPosition = lightPosition;
+	cb.lightAmbientColor = lightAmbientColor;
+	cb.lightDiffuseColor = lightDiffuseColor;
+	cb.lightSpecularColor = lightSpecularColor;
+	cb.lightSpecularPower = lightSpecularPower;
+	cb.pointLightRange = pointLightRange;
+
+	if (m_shadows)
+	{
+		cb.shadows = 1;
+	}
+	else
+	{
+		cb.shadows = 0;
+	}
+
+	cb.shawdowRayCount = shadowRayCount;
+
+	uint8_t* pData;
+
+	ThrowIfFailed(context->m_lightingBuffer->Map(0, nullptr, (void**)&pData));
+	memcpy(pData, &cb, sizeof(LightParams));
+	context->m_lightingBuffer->Unmap(0, nullptr);
+}
+
+// The material buffers are looped for each object in the scene.
+
+void DXRSetup::CreateMaterialBuffers()
+{
+	for (auto& object : m_app->m_drawableObjects)
+	{
+		object->m_materialBuffer = nv_helpers_dx12::CreateBuffer(
+			m_device.Get(), object->m_materialBufferSize, D3D12_RESOURCE_FLAG_NONE,
+			D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
+
+		uint8_t* pData;
+
+		ThrowIfFailed(object->m_materialBuffer->Map(0, nullptr, (void**)&pData));
+		memcpy(pData, &object->m_materialBufferData, sizeof(MaterialBuffer));
+		object->m_materialBuffer->Unmap(0, nullptr);
+	}
+}
+
+void DXRSetup::UpdateMaterialBuffers()
+{
+	for (auto& object : m_app->m_drawableObjects)
+	{
+		uint8_t* pData;
+
+		ThrowIfFailed(object->m_materialBuffer->Map(0, nullptr, (void**)&pData));
+		memcpy(pData, &object->m_materialBufferData, sizeof(MaterialBuffer));
+		object->m_materialBuffer->Unmap(0, nullptr);
+	}
+}
+#pragma endregion
+
+#pragma region Object / Asset Methods
 // Load the sample assets.
 void DXRSetup::LoadAssets()
 {
@@ -378,6 +394,8 @@ void DXRSetup::LoadAssets()
 		0, D3D12_COMMAND_LIST_TYPE_DIRECT, context->m_commandAllocator.Get(),
 		nullptr, IID_PPV_ARGS(&context->m_commandList)));
 
+	//////////////////////////////////////////////////////////
+	///// Every Object in the scene is created here //////////
 	DrawableGameObject* cubeFloor = new DrawableGameObject(
 		XMFLOAT3(0.0f, -1.1f, 0.0f),
 		XMFLOAT3(0, 0, 0),
@@ -389,7 +407,9 @@ void DXRSetup::LoadAssets()
 	cubeFloor->m_materialBufferData.roughness = 0.01f;
 	cubeFloor->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(cubeFloor);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* cube1 = new DrawableGameObject(
 		XMFLOAT3(0.0f, 0.0f, -1.2f),
 		XMFLOAT3(0, 0, 0),
@@ -403,7 +423,9 @@ void DXRSetup::LoadAssets()
 	cube1->m_autoRotateX = true;
 	cube1->m_autoRotateY = true;
 	m_app->m_drawableObjects.push_back(cube1);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pPlane = new DrawableGameObject(
 		XMFLOAT3(0.0f, -1.5f, 0.0f),
 		XMFLOAT3(-90.0f, 0.0f, 0.0f),
@@ -414,7 +436,9 @@ void DXRSetup::LoadAssets()
 
 	pPlane->initPlaneMesh(m_device);
 	m_app->m_drawableObjects.push_back(pPlane);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pPlaneCopy = new DrawableGameObject(
 		XMFLOAT3(0.0f, 0.0f, -0.3f),
 		XMFLOAT3(0.0f, 0.0f, 0.0f),
@@ -431,7 +455,9 @@ void DXRSetup::LoadAssets()
 
 	pPlaneCopy->initPlaneMesh(m_device);
 	m_app->m_drawableObjects.push_back(pPlaneCopy);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pDonut = new DrawableGameObject(
 		XMFLOAT3(0.8f, -0.775f, 0.0f),
 		XMFLOAT3(45, 0, 0),
@@ -446,7 +472,9 @@ void DXRSetup::LoadAssets()
 
 	pDonut->initOBJMesh(m_device, R"(Objects\donut.obj)");
 	m_app->m_drawableObjects.push_back(pDonut);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pBall = new DrawableGameObject(
 		XMFLOAT3(-0.8f, -0.8f, 0.0f),
 		XMFLOAT3(0, 0, 0),
@@ -458,7 +486,9 @@ void DXRSetup::LoadAssets()
 
 	pBall->initOBJMesh(m_device, R"(Objects\ball.obj)");
 	m_app->m_drawableObjects.push_back(pBall);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pMirror1 = new DrawableGameObject(
 		XMFLOAT3(5.0f, 1.8f, 0.0f),
 		XMFLOAT3(0, 0, 0),
@@ -471,7 +501,9 @@ void DXRSetup::LoadAssets()
 
 	pMirror1->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(pMirror1);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pMirror2 = new DrawableGameObject(
 		XMFLOAT3(-5.0f, 1.8f, 0.0f),
 		XMFLOAT3(0, 0, 0),
@@ -484,7 +516,9 @@ void DXRSetup::LoadAssets()
 
 	pMirror2->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(pMirror2);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pMirror3 = new DrawableGameObject(
 		XMFLOAT3(0.04f, 1.8f, -5.0f),
 		XMFLOAT3(0, 90, 0),
@@ -498,7 +532,9 @@ void DXRSetup::LoadAssets()
 
 	pMirror3->initCubeMesh(m_device);
 	m_app->m_drawableObjects.push_back(pMirror3);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pImageBillboard = new DrawableGameObject(
 		XMFLOAT3(2.0f, 0.0f, -0.3f),
 		XMFLOAT3(0.0f, 180.0f, 0.0f),
@@ -510,7 +546,9 @@ void DXRSetup::LoadAssets()
 	pImageBillboard->m_triOutline = false;
 	pImageBillboard->initPlaneMesh(m_device);
 	m_app->m_drawableObjects.push_back(pImageBillboard);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pImageBillboard2 = new DrawableGameObject(
 		XMFLOAT3(-2.0f, 0.0f, -0.3f),
 		XMFLOAT3(0.0f, 180.0f, 0.0f),
@@ -522,7 +560,9 @@ void DXRSetup::LoadAssets()
 	pImageBillboard2->m_triOutline = false;
 	pImageBillboard2->initPlaneMesh(m_device);
 	m_app->m_drawableObjects.push_back(pImageBillboard2);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pText = new DrawableGameObject(
 		XMFLOAT3(2.745f, 1.575f, -3.0f),
 		XMFLOAT3(-90, 20.0f, 180.0f),
@@ -538,7 +578,9 @@ void DXRSetup::LoadAssets()
 
 	pText->initOBJMesh(m_device, R"(Objects\Text.obj)");
 	m_app->m_drawableObjects.push_back(pText);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pText2 = new DrawableGameObject(
 		XMFLOAT3(2.745f, 1.32f, -3.0f),
 		XMFLOAT3(-90, 20.0f, 180.0f),
@@ -554,7 +596,9 @@ void DXRSetup::LoadAssets()
 
 	pText2->initOBJMesh(m_device, R"(Objects\Text2.obj)");
 	m_app->m_drawableObjects.push_back(pText2);
+	//////////////////////////////////////////////////////
 
+	//////////////////////////////////////////////////////
 	DrawableGameObject* pBetterThanText = new DrawableGameObject(
 		XMFLOAT3(2.745f, 1.0f, -3.0f),
 		XMFLOAT3(-90, 14.5f, 180.0f),
@@ -568,19 +612,28 @@ void DXRSetup::LoadAssets()
 
 	pBetterThanText->m_materialBufferData.objectColour = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
+	// Start the beginning of the string
 	string randomisedText = R"(Objects\BetterThan)";
 
+	//Get an array of names from the module that I am better than.
 	string nameArray[] = { "Jacob.obj", "Aidan.obj", "James.obj", "Louise.obj", "Scott.obj", "Jack.obj" };
 
+	// Get a random number between 0 and the size of the array
 	int randomIndex = rand() % std::size(nameArray);
 
+	// Append the random name to the string
 	randomisedText += nameArray[randomIndex];
 
+	// Do a stupid string conversion to get the char array
 	std::vector<char> stupidStringConversion(randomisedText.c_str(), randomisedText.c_str() + randomisedText.size() + 1);
 
+	// Create the object with the randomised name
 	pBetterThanText->initOBJMesh(m_device, stupidStringConversion.data());
-	m_app->m_drawableObjects.push_back(pBetterThanText);
 
+	m_app->m_drawableObjects.push_back(pBetterThanText);
+	//////////////////////////////////////////////////////
+
+	// Load all the textures into the GPU
 	LoadTextures();
 
 	// Create synchronization objects and wait until assets have been uploaded to
@@ -602,6 +655,10 @@ void DXRSetup::LoadAssets()
 		m_app->WaitForPreviousFrame();
 	}
 }
+
+// I have two kinds of textures, static and dynamic.
+// Static textures are loaded without the need of an object through the string array.
+// Dynamic textures are loaded through the object itself, and are set in the object.
 
 void DXRSetup::LoadTextures()
 {
@@ -777,6 +834,136 @@ void DXRSetup::CreateAccelerationStructures()
 }
 
 //-----------------------------------------------------------------------------
+//
+// Create a bottom-level acceleration structure based on a list of vertex
+// buffers in GPU memory along with their vertex count. The build is then done
+// in 3 steps: gathering the geometry, computing the sizes of the required
+// buffers, and building the actual AS
+//
+AccelerationStructureBuffers DXRSetup::CreateBottomLevelAS(std::vector<std::pair<ComPtr<ID3D12Resource>, uint32_t>> vVertexBuffers,
+	std::vector<std::pair<ComPtr<ID3D12Resource>, uint32_t>> vIndexBuffers)
+{
+	DXRContext* context = m_app->GetContext();
+	nv_helpers_dx12::BottomLevelASGenerator bottomLevelAS;
+
+	// Adding all vertex buffers and not transforming their position.
+	for (size_t i = 0; i < vVertexBuffers.size(); i++) {
+		if (i < vIndexBuffers.size() && vIndexBuffers[i].second > 0)
+		{
+			bottomLevelAS.AddVertexBuffer(vVertexBuffers[i].first.Get(), 0,
+				vVertexBuffers[i].second, sizeof(Vertex),
+				vIndexBuffers[i].first.Get(), 0,
+				vIndexBuffers[i].second, nullptr, 0, true);
+		}
+		else
+		{
+			bottomLevelAS.AddVertexBuffer(vVertexBuffers[i].first.Get(), 0, vVertexBuffers[i].second,
+				sizeof(Vertex), 0, 0);
+		}
+	}
+
+	// The AS build requires some scratch space to store temporary information.
+	// The amount of scratch memory is dependent on the scene complexity.
+	UINT64 scratchSizeInBytes = 0;
+	// The final AS also needs to be stored in addition to the existing vertex
+	// buffers. It size is also dependent on the scene complexity.
+	UINT64 resultSizeInBytes = 0;
+
+	bottomLevelAS.ComputeASBufferSizes(m_device.Get(), false, &scratchSizeInBytes,
+		&resultSizeInBytes);
+
+	// Once the sizes are obtained, the application is responsible for allocating
+	// the necessary buffers. Since the entire generation will be done on the GPU,
+	// we can directly allocate those on the default heap
+	AccelerationStructureBuffers buffers;
+	buffers.pScratch = nv_helpers_dx12::CreateBuffer(
+		m_device.Get(), scratchSizeInBytes,
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON,
+		nv_helpers_dx12::kDefaultHeapProps);
+	buffers.pResult = nv_helpers_dx12::CreateBuffer(
+		m_device.Get(), resultSizeInBytes,
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+		nv_helpers_dx12::kDefaultHeapProps);
+
+	// Build the acceleration structure. Note that this call integrates a barrier
+	// on the generated AS, so that it can be used to compute a top-level AS right
+	// after this method.
+	bottomLevelAS.Generate(context->m_commandList.Get(), buffers.pScratch.Get(),
+		buffers.pResult.Get(), false, nullptr);
+
+	return buffers;
+}
+
+//-----------------------------------------------------------------------------
+// Create the main acceleration structure that holds all instances of the scene.
+// Similarly to the bottom-level AS generation, it is done in 3 steps: gathering
+// the instances, computing the memory requirements for the AS, and building the
+// AS itself
+//
+void DXRSetup::CreateTopLevelAS(
+	const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>
+	& instances, bool update // pair of bottom level AS and matrix of the instance
+) {
+	DXRContext* context = m_app->GetContext();
+
+	context->m_topLevelASGenerator.RemoveAllInstances();
+
+	// Gather all the instances into the builder helper
+	for (int i = 0; i < instances.size(); i++)
+	{
+		context->m_topLevelASGenerator.AddInstance(
+			instances[i].first.Get(),
+			instances[i].second,
+			static_cast<UINT>(i),
+			static_cast<UINT>(i * 2)
+		);
+	}
+
+	if (!update)
+	{
+		// As for the bottom-level AS, the building the AS requires some scratch space
+		// to store temporary data in addition to the actual AS. In the case of the
+		// top-level AS, the instance descriptors also need to be stored in GPU
+		// memory. This call outputs the memory requirements for each (scratch,
+		// results, instance descriptors) so that the application can allocate the
+		// corresponding memory
+		UINT64 scratchSize, resultSize, instanceDescsSize;
+
+		context->m_topLevelASGenerator.ComputeASBufferSizes(m_device.Get(), true, &scratchSize,
+			&resultSize, &instanceDescsSize);
+
+		// Create the scratch and result buffers. Since the build is all done on GPU,
+		// those can be allocated on the default heap
+		context->m_topLevelASBuffers.pScratch = nv_helpers_dx12::CreateBuffer(
+			m_device.Get(), scratchSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			nv_helpers_dx12::kDefaultHeapProps);
+		context->m_topLevelASBuffers.pResult = nv_helpers_dx12::CreateBuffer(
+			m_device.Get(), resultSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+			nv_helpers_dx12::kDefaultHeapProps);
+
+		// The buffer describing the instances: ID, shader binding information,
+		// matrices ... Those will be copied into the buffer by the helper through
+		// mapping, so the buffer has to be allocated on the upload heap.
+		context->m_topLevelASBuffers.pInstanceDesc = nv_helpers_dx12::CreateBuffer(
+			m_device.Get(), instanceDescsSize, D3D12_RESOURCE_FLAG_NONE,
+			D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
+	}
+	// After all the buffers are allocated, or if only an update is required, we
+	// can build the acceleration structure. Note that in the case of the update
+	// we also pass the existing AS as the 'previous' AS, so that it can be
+	// refitted in place.
+	context->m_topLevelASGenerator.Generate(context->m_commandList.Get(),
+		context->m_topLevelASBuffers.pScratch.Get(),
+		context->m_topLevelASBuffers.pResult.Get(),
+		context->m_topLevelASBuffers.pInstanceDesc.Get());
+}
+#pragma endregion
+
+#pragma region Shader Signature Methods
+//-----------------------------------------------------------------------------
 // The ray generation shader needs to access 2 resources: the raytracing output
 // and the top-level acceleration structure
 //
@@ -812,6 +999,7 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 
 	D3D12_STATIC_SAMPLER_DESC staticSamplerDesc;
 
+	// Create the sampler descriptor based on what the user has selected.
 	switch (m_samplerType)
 	{
 	case ANISOTROPIC:
@@ -829,10 +1017,29 @@ ComPtr<ID3D12RootSignature> DXRSetup::CreateHitSignature() {
 	return rsc.Generate(m_device.Get(), true, 1, &staticSamplerDesc);
 }
 
+//-----------------------------------------------------------------------------
+// The miss shader communicates only through the ray payload, and therefore
+// does not require any resources
+//
+ComPtr<ID3D12RootSignature> DXRSetup::CreateMissSignature() {
+	nv_helpers_dx12::RootSignatureGenerator rsc;
+	rsc.AddHeapRangesParameter(
+		{ {0 /*u0*/, 1 /*1 descriptor */, 0 /*use the implicit register space 0*/,
+		  D3D12_DESCRIPTOR_RANGE_TYPE_UAV /* UAV representing the output buffer*/,
+		  0 /*heap slot where the UAV is defined*/},
+		 {0 /*t0*/, 1, 0,
+		  D3D12_DESCRIPTOR_RANGE_TYPE_SRV /*Top-level acceleration structure*/,
+		  1},{0 /*b0*/, 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_CBV /*Camera parameters*/, 2} });
+	return rsc.Generate(m_device.Get(), true);
+}
+
+#pragma endregion
+
+#pragma region Sampler Methods
 D3D12_STATIC_SAMPLER_DESC DXRSetup::CreateStaticSamplerPointDesc()
 {
 	D3D12_STATIC_SAMPLER_DESC sampler = {};
-	sampler.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
+	sampler.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT; // Point Sampler
 	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
@@ -852,7 +1059,7 @@ D3D12_STATIC_SAMPLER_DESC DXRSetup::CreateStaticSamplerPointDesc()
 D3D12_STATIC_SAMPLER_DESC DXRSetup::CreateStaticSamplerLinearDesc()
 {
 	D3D12_STATIC_SAMPLER_DESC sampler = {};
-	sampler.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+	sampler.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR; // Linear Sampler
 	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
@@ -872,7 +1079,7 @@ D3D12_STATIC_SAMPLER_DESC DXRSetup::CreateStaticSamplerLinearDesc()
 D3D12_STATIC_SAMPLER_DESC DXRSetup::CreateStaticSamplerAnisotropicDesc()
 {
 	D3D12_STATIC_SAMPLER_DESC sampler = {};
-	sampler.Filter = D3D12_FILTER_COMPARISON_ANISOTROPIC;
+	sampler.Filter = D3D12_FILTER_COMPARISON_ANISOTROPIC; // Anisotropic Sampler
 	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
@@ -888,22 +1095,9 @@ D3D12_STATIC_SAMPLER_DESC DXRSetup::CreateStaticSamplerAnisotropicDesc()
 
 	return sampler;
 }
+#pragma endregion
 
-//-----------------------------------------------------------------------------
-// The miss shader communicates only through the ray payload, and therefore
-// does not require any resources
-//
-ComPtr<ID3D12RootSignature> DXRSetup::CreateMissSignature() {
-	nv_helpers_dx12::RootSignatureGenerator rsc;
-	rsc.AddHeapRangesParameter(
-		{ {0 /*u0*/, 1 /*1 descriptor */, 0 /*use the implicit register space 0*/,
-		  D3D12_DESCRIPTOR_RANGE_TYPE_UAV /* UAV representing the output buffer*/,
-		  0 /*heap slot where the UAV is defined*/},
-		 {0 /*t0*/, 1, 0,
-		  D3D12_DESCRIPTOR_RANGE_TYPE_SRV /*Top-level acceleration structure*/,
-		  1},{0 /*b0*/, 1, 0, D3D12_DESCRIPTOR_RANGE_TYPE_CBV /*Camera parameters*/, 2} });
-	return rsc.Generate(m_device.Get(), true);
-}
+#pragma region Raytracing Methods
 
 //-----------------------------------------------------------------------------
 //
@@ -960,6 +1154,7 @@ void DXRSetup::CreateRaytracingPipeline()
 	// Hit group for the triangles, with a shader simply interpolating vertex
 	// colors
 
+	// Super based way of giving each object a hit group.
 	for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
 	{
 		if (m_app->m_drawableObjects[i]->m_planeMesh)
@@ -1016,6 +1211,8 @@ void DXRSetup::CreateRaytracingPipeline()
 	ThrowIfFailed(
 		context->m_rtStateObject->QueryInterface(IID_PPV_ARGS(&context->m_rtStateObjectProps)));
 }
+
+// Just the same again, but this time we are releasing the old pipeline.
 
 void DXRSetup::UpdateRaytracingPipeline()
 {
@@ -1202,6 +1399,11 @@ void DXRSetup::CreateShaderResourceHeap()
 	// 4a. Add the texture shader resource view after the Camera (increment the handle so it is after the constant buffer view)
 	srvHandle.ptr += m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+	// Super Cracked way of giving each object a texture.
+
+	// We need to keep track of where the texture is in the heap, so we can pass it in per object.
+
+	// You can use this one for free David, per object texture heap.
 	int heapPointer = 0;
 
 	for (auto staticTexture : m_staticTexturesVector)
@@ -1288,14 +1490,14 @@ void DXRSetup::CreateShaderBindingTable()
 
 	for (int i = 0; i < m_app->m_drawableObjects.size(); i++)
 	{
-		if (m_app->m_drawableObjects[i]->m_textureFile != L"NULL")
+		if (m_app->m_drawableObjects[i]->m_textureFile != L"NULL") // Make sure the object has a texture.
 		{
-			srvUavHeapHandle = context->m_srvUavHeap->GetGPUDescriptorHandleForHeapStart();
+			srvUavHeapHandle = context->m_srvUavHeap->GetGPUDescriptorHandleForHeapStart(); // Go to the start of the heap.
 
 			srvUavHeapHandle.ptr += m_device->GetDescriptorHandleIncrementSize(
-				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * m_app->m_drawableObjects[i]->m_heapTextureNumber;
+				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * m_app->m_drawableObjects[i]->m_heapTextureNumber; // Get the texture from the heap
 
-			auto textureHeapPointer = reinterpret_cast<UINT64*>(srvUavHeapHandle.ptr);
+			auto textureHeapPointer = reinterpret_cast<UINT64*>(srvUavHeapHandle.ptr); // Get the pointer to the texture.
 
 			context->m_sbtHelper.AddHitGroup(m_app->m_drawableObjects[i]->m_objectHitGroupName,
 				{ (void*)(m_app->m_drawableObjects[i]->getVertexBuffer()->GetGPUVirtualAddress()),
@@ -1345,6 +1547,8 @@ void DXRSetup::CreateShaderBindingTable()
 	// Compile the SBT from the shader and parameters info
 	context->m_sbtHelper.Generate(context->m_sbtStorage.Get(), context->m_rtStateObjectProps.Get());
 }
+
+// The same again, but this time we are releasing the old SBT.
 
 void DXRSetup::UpdateShaderBindingTable()
 {
@@ -1433,131 +1637,4 @@ void DXRSetup::UpdateShaderBindingTable()
 	// Compile the SBT from the shader and parameters info
 	context->m_sbtHelper.Generate(context->m_sbtStorage.Get(), context->m_rtStateObjectProps.Get());
 }
-
-//-----------------------------------------------------------------------------
-//
-// Create a bottom-level acceleration structure based on a list of vertex
-// buffers in GPU memory along with their vertex count. The build is then done
-// in 3 steps: gathering the geometry, computing the sizes of the required
-// buffers, and building the actual AS
-//
-AccelerationStructureBuffers DXRSetup::CreateBottomLevelAS(std::vector<std::pair<ComPtr<ID3D12Resource>, uint32_t>> vVertexBuffers,
-	std::vector<std::pair<ComPtr<ID3D12Resource>, uint32_t>> vIndexBuffers)
-{
-	DXRContext* context = m_app->GetContext();
-	nv_helpers_dx12::BottomLevelASGenerator bottomLevelAS;
-
-	// Adding all vertex buffers and not transforming their position.
-	for (size_t i = 0; i < vVertexBuffers.size(); i++) {
-		if (i < vIndexBuffers.size() && vIndexBuffers[i].second > 0)
-		{
-			bottomLevelAS.AddVertexBuffer(vVertexBuffers[i].first.Get(), 0,
-				vVertexBuffers[i].second, sizeof(Vertex),
-				vIndexBuffers[i].first.Get(), 0,
-				vIndexBuffers[i].second, nullptr, 0, true);
-		}
-		else
-		{
-			bottomLevelAS.AddVertexBuffer(vVertexBuffers[i].first.Get(), 0, vVertexBuffers[i].second,
-				sizeof(Vertex), 0, 0);
-		}
-	}
-
-	// The AS build requires some scratch space to store temporary information.
-	// The amount of scratch memory is dependent on the scene complexity.
-	UINT64 scratchSizeInBytes = 0;
-	// The final AS also needs to be stored in addition to the existing vertex
-	// buffers. It size is also dependent on the scene complexity.
-	UINT64 resultSizeInBytes = 0;
-
-	bottomLevelAS.ComputeASBufferSizes(m_device.Get(), false, &scratchSizeInBytes,
-		&resultSizeInBytes);
-
-	// Once the sizes are obtained, the application is responsible for allocating
-	// the necessary buffers. Since the entire generation will be done on the GPU,
-	// we can directly allocate those on the default heap
-	AccelerationStructureBuffers buffers;
-	buffers.pScratch = nv_helpers_dx12::CreateBuffer(
-		m_device.Get(), scratchSizeInBytes,
-		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON,
-		nv_helpers_dx12::kDefaultHeapProps);
-	buffers.pResult = nv_helpers_dx12::CreateBuffer(
-		m_device.Get(), resultSizeInBytes,
-		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
-		nv_helpers_dx12::kDefaultHeapProps);
-
-	// Build the acceleration structure. Note that this call integrates a barrier
-	// on the generated AS, so that it can be used to compute a top-level AS right
-	// after this method.
-	bottomLevelAS.Generate(context->m_commandList.Get(), buffers.pScratch.Get(),
-		buffers.pResult.Get(), false, nullptr);
-
-	return buffers;
-}
-
-//-----------------------------------------------------------------------------
-// Create the main acceleration structure that holds all instances of the scene.
-// Similarly to the bottom-level AS generation, it is done in 3 steps: gathering
-// the instances, computing the memory requirements for the AS, and building the
-// AS itself
-//
-void DXRSetup::CreateTopLevelAS(
-	const std::vector<std::pair<ComPtr<ID3D12Resource>, DirectX::XMMATRIX>>
-	& instances, bool update // pair of bottom level AS and matrix of the instance
-) {
-	DXRContext* context = m_app->GetContext();
-
-	context->m_topLevelASGenerator.RemoveAllInstances();
-
-	// Gather all the instances into the builder helper
-	for (int i = 0; i < instances.size(); i++)
-	{
-		context->m_topLevelASGenerator.AddInstance(
-			instances[i].first.Get(),
-			instances[i].second,
-			static_cast<UINT>(i),
-			static_cast<UINT>(i * 2)
-		);
-	}
-
-	if (!update)
-	{
-		// As for the bottom-level AS, the building the AS requires some scratch space
-		// to store temporary data in addition to the actual AS. In the case of the
-		// top-level AS, the instance descriptors also need to be stored in GPU
-		// memory. This call outputs the memory requirements for each (scratch,
-		// results, instance descriptors) so that the application can allocate the
-		// corresponding memory
-		UINT64 scratchSize, resultSize, instanceDescsSize;
-
-		context->m_topLevelASGenerator.ComputeASBufferSizes(m_device.Get(), true, &scratchSize,
-			&resultSize, &instanceDescsSize);
-
-		// Create the scratch and result buffers. Since the build is all done on GPU,
-		// those can be allocated on the default heap
-		context->m_topLevelASBuffers.pScratch = nv_helpers_dx12::CreateBuffer(
-			m_device.Get(), scratchSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-			nv_helpers_dx12::kDefaultHeapProps);
-		context->m_topLevelASBuffers.pResult = nv_helpers_dx12::CreateBuffer(
-			m_device.Get(), resultSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-			D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
-			nv_helpers_dx12::kDefaultHeapProps);
-
-		// The buffer describing the instances: ID, shader binding information,
-		// matrices ... Those will be copied into the buffer by the helper through
-		// mapping, so the buffer has to be allocated on the upload heap.
-		context->m_topLevelASBuffers.pInstanceDesc = nv_helpers_dx12::CreateBuffer(
-			m_device.Get(), instanceDescsSize, D3D12_RESOURCE_FLAG_NONE,
-			D3D12_RESOURCE_STATE_GENERIC_READ, nv_helpers_dx12::kUploadHeapProps);
-	}
-	// After all the buffers are allocated, or if only an update is required, we
-	// can build the acceleration structure. Note that in the case of the update
-	// we also pass the existing AS as the 'previous' AS, so that it can be
-	// refitted in place.
-	context->m_topLevelASGenerator.Generate(context->m_commandList.Get(),
-		context->m_topLevelASBuffers.pScratch.Get(),
-		context->m_topLevelASBuffers.pResult.Get(),
-		context->m_topLevelASBuffers.pInstanceDesc.Get());
-}
+#pragma endregion

@@ -45,6 +45,11 @@ private:
 public:
 
 	/// <summary>
+	/// Calculates the dynamic window title based on the current state.
+	/// </summary>
+	void DynamicWindowTitle();
+
+	/// <summary>
 	/// Renders the current frame.
 	/// </summary>
 	void Render();

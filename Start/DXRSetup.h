@@ -192,10 +192,10 @@ public:
 	void CreateCamera();
 
 	/// <summary>
-	/// Updates the camera's rotation.
+	/// Updates the camera's position,rotation and view matrix.
 	/// </summary>
-	/// <param name="rX">The rotation around the X-axis.</param>
-	/// <param name="rY">The rotation around the Y-axis.</param>
+	/// <param name="rX">The amount of rays on the X axis, 1 is every pixel and 10 is ten times less.</param>
+	/// <param name="rY">The amount of rays on the Y axis, 1 is every pixel and 10 is ten times less</param>
 	void UpdateCamera(float rX, float rY);
 
 	/// <summary>

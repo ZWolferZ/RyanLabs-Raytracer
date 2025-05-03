@@ -4,6 +4,9 @@
 //Include{s}
 #include "TextureLoader.h"
 #pragma endregion
+
+// This is not my file I ain't commenting this.
+
 // get the dxgi format equivilent of a wic format
 DXGI_FORMAT TextureLoader::GetDXGIFormatFromWICFormat(WICPixelFormatGUID& wicFormatGUID)
 {
