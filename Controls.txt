@@ -1,0 +1,18 @@
+RyanLabs Ray-tracer Controls:
+
+Camera Controls:
+
+WASD - Move Around.
+
+Q and E - Move Up and Down.
+
+Right Click / Mouse Move - Move Viewport around.
+
+
+UI:
+
+Use Mouse to Click On Windows.
+
+Some Windows have values that can be dragged or numbers entered.
+
+Use the Hide Windows Button if it gets to cluttered.

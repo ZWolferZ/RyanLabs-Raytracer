@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <FxCompile Include="Hit.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Miss.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="RayGen.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Common.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="imgui.cpp">
+      <Filter>IMGui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_demo.cpp">
+      <Filter>IMGui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_draw.cpp">
+      <Filter>IMGui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_impl_dx12.cpp">
+      <Filter>IMGui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_impl_win32.cpp">
+      <Filter>IMGui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_tables.cpp">
+      <Filter>IMGui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_widgets.cpp">
+      <Filter>IMGui</Filter>
+    </ClCompile>
+    <ClCompile Include="nv_helpers_dx12\BottomLevelASGenerator.cpp">
+      <Filter>NVidia Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="nv_helpers_dx12\RaytracingPipelineGenerator.cpp">
+      <Filter>NVidia Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="nv_helpers_dx12\RootSignatureGenerator.cpp">
+      <Filter>NVidia Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="nv_helpers_dx12\ShaderBindingTableGenerator.cpp">
+      <Filter>NVidia Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="nv_helpers_dx12\TopLevelASGenerator.cpp">
+      <Filter>NVidia Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="DXSample.cpp">
+      <Filter>Microsoft Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawableGameObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DXRApp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DXRContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DXRRuntime.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DXRSetup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32Application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OBJLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="imconfig.h">
+      <Filter>IMGui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui.h">
+      <Filter>IMGui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_impl_dx12.h">
+      <Filter>IMGui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_impl_win32.h">
+      <Filter>IMGui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_internal.h">
+      <Filter>IMGui</Filter>
+    </ClInclude>
+    <ClInclude Include="imstb_rectpack.h">
+      <Filter>IMGui</Filter>
+    </ClInclude>
+    <ClInclude Include="imstb_textedit.h">
+      <Filter>IMGui</Filter>
+    </ClInclude>
+    <ClInclude Include="imstb_truetype.h">
+      <Filter>IMGui</Filter>
+    </ClInclude>
+    <ClInclude Include="nv_helpers_dx12\BottomLevelASGenerator.h">
+      <Filter>NVidia Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="nv_helpers_dx12\RaytracingPipelineGenerator.h">
+      <Filter>NVidia Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="nv_helpers_dx12\RootSignatureGenerator.h">
+      <Filter>NVidia Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="nv_helpers_dx12\ShaderBindingTableGenerator.h">
+      <Filter>NVidia Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="nv_helpers_dx12\TopLevelASGenerator.h">
+      <Filter>NVidia Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="DXRHelper.h">
+      <Filter>NVidia Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dx12.h">
+      <Filter>Microsoft Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="DXSample.h">
+      <Filter>Microsoft Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="DXSampleHelper.h">
+      <Filter>Microsoft Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawableGameObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DXRApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DXRContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DXRRuntime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DXRSetup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32Application.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OBJLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="IMGui">
+      <UniqueIdentifier>{599ca087-b3cf-4c5b-8631-1f0fa6cab3e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NVidia Helpers">
+      <UniqueIdentifier>{29231412-411d-485b-bdb4-b4c0f132b44f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Microsoft Helpers">
+      <UniqueIdentifier>{f7f193b4-e66b-42eb-b184-5941906e4763}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{1d267285-86db-4fc9-a84f-49c809db0105}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{1b5a13b0-160b-48fe-ae96-1aa372f204ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{acd441f0-cc0f-4b03-ad9b-dfbf86c9567c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{26fb4630-caf4-4ac1-a37c-13aa7f2d15f4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="RyanLabs.ico">
+      <Filter>Resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
